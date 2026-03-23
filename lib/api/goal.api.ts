@@ -34,7 +34,7 @@ export type CreateGoalParams = {
 export const fetchGoals = async () => {
 	const { data, error } = await supabase
 		.from("goals")
-		.select("*, goal_participants(*)")
+		.select("*, goal_participants!inner(*)")
 		.order("created_at", { ascending: false });
 
 	if (error) throw error;
