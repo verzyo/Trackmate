@@ -139,7 +139,7 @@ export default function EditGoalModal() {
 		try {
 			await deleteGoalMutation.mutateAsync(id as string);
 			router.dismissAll();
-		} catch (e) {
+		} catch (_e) {
 			const errorMessage = "Failed to delete goal";
 			if (Platform.OS === "web") {
 				window.alert(errorMessage);
