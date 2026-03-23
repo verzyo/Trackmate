@@ -19,6 +19,7 @@ import { Screen } from "@/components/layout/Screen";
 import { useCreateInvite } from "@/hooks/goal/useCreateInvite";
 import { useDeleteGoal } from "@/hooks/goal/useDeleteGoal";
 import { useGoal } from "@/hooks/goal/useGoal";
+import { useLeaveGoal } from "@/hooks/goal/useLeaveGoal";
 import { useUpdateGoal } from "@/hooks/goal/useUpdateGoal";
 import type { UpdateGoalParams } from "@/lib/api/goal.api";
 import { fetchProfileByUsername } from "@/lib/api/profile.api";
@@ -37,9 +38,12 @@ export default function EditGoalModal() {
 	const updateGoalMutation = useUpdateGoal();
 	const deleteGoalMutation = useDeleteGoal();
 	const createInviteMutation = useCreateInvite();
+	const leaveGoalMutation = useLeaveGoal();
 
 	const { user } = useAuthStore();
 	const userId = user?.id;
+
+	const isOwner = goal?.owner_id === userId;
 
 	const [inviteUsername, setInviteUsername] = useState("");
 
@@ -150,6 +154,21 @@ export default function EditGoalModal() {
 			router.dismissAll();
 		} catch (_e) {
 			const errorMessage = "Failed to delete goal";
+			if (Platform.OS === "web") {
+				window.alert(errorMessage);
+			} else {
+				Alert.alert("Error", errorMessage);
+			}
+		}
+	};
+
+	const handleLeave = async () => {
+		if (!userId) return;
+		try {
+			await leaveGoalMutation.mutateAsync({ goalId: id as string, userId });
+			router.dismissAll();
+		} catch (_e) {
+			const errorMessage = "Failed to leave goal";
 			if (Platform.OS === "web") {
 				window.alert(errorMessage);
 			} else {
@@ -331,29 +350,44 @@ export default function EditGoalModal() {
 					/>
 				</View>
 
-				<View className="mt-8 pt-4 w-full items-center">
-					<Text>Invite User</Text>
-					<TextInput
-						value={inviteUsername}
-						onChangeText={setInviteUsername}
-						placeholder="username"
-						autoCapitalize="none"
-						className="text-center mt-2 mb-4"
-					/>
-					<Button
-						title={createInviteMutation.isPending ? "Inviting..." : "Invite"}
-						onPress={handleInvite}
-						disabled={createInviteMutation.isPending || !inviteUsername.trim()}
-					/>
-				</View>
+				{isOwner && (
+					<View className="mt-8 pt-4 w-full items-center">
+						<Text>Invite User</Text>
+						<TextInput
+							value={inviteUsername}
+							onChangeText={setInviteUsername}
+							placeholder="username"
+							autoCapitalize="none"
+							className="text-center mt-2 mb-4"
+						/>
+						<Button
+							title={createInviteMutation.isPending ? "Inviting..." : "Invite"}
+							onPress={handleInvite}
+							disabled={
+								createInviteMutation.isPending || !inviteUsername.trim()
+							}
+						/>
+					</View>
+				)}
 
 				<View className="mt-4">
-					<Button
-						title={deleteGoalMutation.isPending ? "Deleting..." : "Delete goal"}
-						color="red"
-						onPress={handleDelete}
-						disabled={isLoading || deleteGoalMutation.isPending}
-					/>
+					{isOwner ? (
+						<Button
+							title={
+								deleteGoalMutation.isPending ? "Deleting..." : "Delete goal"
+							}
+							color="red"
+							onPress={handleDelete}
+							disabled={isLoading || deleteGoalMutation.isPending}
+						/>
+					) : (
+						<Button
+							title={leaveGoalMutation.isPending ? "Leaving..." : "Leave goal"}
+							color="red"
+							onPress={handleLeave}
+							disabled={isLoading || leaveGoalMutation.isPending}
+						/>
+					)}
 				</View>
 			</ScrollView>
 		</Screen>

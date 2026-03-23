@@ -97,6 +97,16 @@ export const deleteGoal = async (id: string) => {
 	if (error) throw error;
 };
 
+export const leaveGoal = async (goalId: string, userId: string) => {
+	const { error } = await supabase
+		.from("goal_participants")
+		.delete()
+		.eq("goal_id", goalId)
+		.eq("user_id", userId);
+
+	if (error) throw error;
+};
+
 export const createInvite = async (
 	goalId: string,
 	inviterId: string,
