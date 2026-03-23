@@ -48,6 +48,10 @@ export default function NewGoalModal() {
 	});
 
 	const onChangeDate = (_event: DateTimePickerEvent, selectedDate?: Date) => {
+		if (Platform.OS === "android") {
+			setShowDatePicker(false);
+		}
+
 		const currentDate = selectedDate || anchorDate;
 		setAnchorDate(currentDate);
 	};
