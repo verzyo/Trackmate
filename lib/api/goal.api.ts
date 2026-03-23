@@ -96,3 +96,17 @@ export const deleteGoal = async (id: string) => {
 	const { error } = await supabase.from("goals").delete().eq("id", id);
 	if (error) throw error;
 };
+
+export const createInvite = async (
+	goalId: string,
+	inviterId: string,
+	inviteeId: string,
+) => {
+	const { error } = await supabase.from("goal_invites").insert({
+		goal_id: goalId,
+		inviter_id: inviterId,
+		invitee_id: inviteeId,
+	});
+
+	if (error) throw error;
+};

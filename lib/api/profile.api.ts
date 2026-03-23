@@ -18,6 +18,17 @@ export const fetchProfile = async (userId: string) => {
 	return data;
 };
 
+export const fetchProfileByUsername = async (username: string) => {
+	const { data, error } = await supabase
+		.from("profiles")
+		.select("*")
+		.ilike("username", username)
+		.maybeSingle();
+
+	if (error) throw error;
+	return data;
+};
+
 export const updateProfile = async (
 	userId: string,
 	updates: ProfileUpdates,

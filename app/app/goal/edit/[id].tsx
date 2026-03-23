@@ -16,10 +16,13 @@ import {
 	View,
 } from "react-native";
 import { Screen } from "@/components/layout/Screen";
+import { useCreateInvite } from "@/hooks/goal/useCreateInvite";
 import { useDeleteGoal } from "@/hooks/goal/useDeleteGoal";
 import { useGoal } from "@/hooks/goal/useGoal";
 import { useUpdateGoal } from "@/hooks/goal/useUpdateGoal";
 import type { UpdateGoalParams } from "@/lib/api/goal.api";
+import { fetchProfileByUsername } from "@/lib/api/profile.api";
+import { useAuthStore } from "@/lib/store/auth.store";
 
 type GoalForm = {
 	title: string;
@@ -33,6 +36,12 @@ export default function EditGoalModal() {
 	const { data: goal, isLoading: isGoalLoading } = useGoal(id as string);
 	const updateGoalMutation = useUpdateGoal();
 	const deleteGoalMutation = useDeleteGoal();
+	const createInviteMutation = useCreateInvite();
+
+	const { user } = useAuthStore();
+	const userId = user?.id;
+
+	const [inviteUsername, setInviteUsername] = useState("");
 
 	const [frequencyType, setFrequencyType] = useState<"interval" | "weekly">(
 		"interval",
@@ -141,6 +150,41 @@ export default function EditGoalModal() {
 			router.dismissAll();
 		} catch (_e) {
 			const errorMessage = "Failed to delete goal";
+			if (Platform.OS === "web") {
+				window.alert(errorMessage);
+			} else {
+				Alert.alert("Error", errorMessage);
+			}
+		}
+	};
+
+	const handleInvite = async () => {
+		if (!inviteUsername.trim() || !userId) return;
+		try {
+			const profile = await fetchProfileByUsername(inviteUsername.trim());
+			if (!profile) {
+				const errorMessage = "User not found";
+				if (Platform.OS === "web") {
+					window.alert(errorMessage);
+				} else {
+					Alert.alert("Error", errorMessage);
+				}
+				return;
+			}
+			await createInviteMutation.mutateAsync({
+				goalId: id as string,
+				inviterId: userId,
+				inviteeId: profile.id,
+			});
+			setInviteUsername("");
+			const successMessage = "Invite sent!";
+			if (Platform.OS === "web") {
+				window.alert(successMessage);
+			} else {
+				Alert.alert("Success", successMessage);
+			}
+		} catch (_e) {
+			const errorMessage = "Failed to send invite";
 			if (Platform.OS === "web") {
 				window.alert(errorMessage);
 			} else {
@@ -284,6 +328,22 @@ export default function EditGoalModal() {
 										goal?.goal_participants?.[0]?.anchor_date || Date.now(),
 									).toISOString())
 						}
+					/>
+				</View>
+
+				<View className="mt-8 pt-4 w-full items-center">
+					<Text>Invite User</Text>
+					<TextInput
+						value={inviteUsername}
+						onChangeText={setInviteUsername}
+						placeholder="username"
+						autoCapitalize="none"
+						className="text-center mt-2 mb-4"
+					/>
+					<Button
+						title={createInviteMutation.isPending ? "Inviting..." : "Invite"}
+						onPress={handleInvite}
+						disabled={createInviteMutation.isPending || !inviteUsername.trim()}
 					/>
 				</View>
 
