@@ -16,6 +16,7 @@ import {
 	View,
 } from "react-native";
 import { Screen } from "@/components/layout/Screen";
+import { useDeleteGoal } from "@/hooks/goal/useDeleteGoal";
 import { useGoal } from "@/hooks/goal/useGoal";
 import { useUpdateGoal } from "@/hooks/goal/useUpdateGoal";
 import type { UpdateGoalParams } from "@/lib/api/goal.api";
@@ -31,6 +32,7 @@ export default function EditGoalModal() {
 	const { id } = useLocalSearchParams<{ id: string }>();
 	const { data: goal, isLoading: isGoalLoading } = useGoal(id as string);
 	const updateGoalMutation = useUpdateGoal();
+	const deleteGoalMutation = useDeleteGoal();
 
 	const [frequencyType, setFrequencyType] = useState<"interval" | "weekly">(
 		"interval",
@@ -132,6 +134,20 @@ export default function EditGoalModal() {
 			</Screen>
 		);
 	}
+
+	const handleDelete = async () => {
+		try {
+			await deleteGoalMutation.mutateAsync(id as string);
+			router.dismissAll();
+		} catch (e) {
+			const errorMessage = "Failed to delete goal";
+			if (Platform.OS === "web") {
+				window.alert(errorMessage);
+			} else {
+				Alert.alert("Error", errorMessage);
+			}
+		}
+	};
 
 	return (
 		<Screen className="px-6 py-4">
@@ -268,6 +284,15 @@ export default function EditGoalModal() {
 										goal?.goal_participants?.[0]?.anchor_date || Date.now(),
 									).toISOString())
 						}
+					/>
+				</View>
+
+				<View className="mt-4">
+					<Button
+						title={deleteGoalMutation.isPending ? "Deleting..." : "Delete goal"}
+						color="red"
+						onPress={handleDelete}
+						disabled={isLoading || deleteGoalMutation.isPending}
 					/>
 				</View>
 			</ScrollView>

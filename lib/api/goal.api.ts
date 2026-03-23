@@ -91,3 +91,8 @@ export const updateGoal = async (params: UpdateGoalParams) => {
 
 	if (participantError) throw participantError;
 };
+
+export const deleteGoal = async (id: string) => {
+	const { error } = await supabase.from("goals").delete().eq("id", id);
+	if (error) throw error;
+};
