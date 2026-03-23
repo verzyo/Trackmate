@@ -1,7 +1,9 @@
+import { QueryClientProvider } from "@tanstack/react-query";
 import { Analytics } from "@vercel/analytics/react";
 import { Stack } from "expo-router";
 import { useEffect } from "react";
 import { Platform } from "react-native";
+import { queryClient } from "@/lib/queryClient";
 import { useAuthStore } from "@/lib/store/auth.store";
 
 import "@/global.css";
@@ -17,7 +19,7 @@ export default function RootLayout() {
 	if (!initialized) return null;
 
 	return (
-		<>
+		<QueryClientProvider client={queryClient}>
 			{Platform.OS === "web" && <Analytics />}
 			<Stack screenOptions={{ headerShown: false }}>
 				<Stack.Protected guard={!session}>
@@ -33,6 +35,6 @@ export default function RootLayout() {
 					<Stack.Screen name="index" />
 				</Stack.Protected>
 			</Stack>
-		</>
+		</QueryClientProvider>
 	);
 }
