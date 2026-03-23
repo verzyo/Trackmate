@@ -8,7 +8,6 @@ export type Goal = {
 	created_at: string;
 };
 
-
 export const fetchGoals = async () => {
 	const { data, error } = await supabase
 		.from("goals")
