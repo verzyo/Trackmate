@@ -8,7 +8,7 @@ export default function RootLayout() {
 	return (
 		<>
 			{Platform.OS === "web" && <Analytics />}
-			<Stack />
+			<Stack screenOptions={{ headerShown: false }} />
 		</>
 	);
 }
