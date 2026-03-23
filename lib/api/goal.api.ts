@@ -8,6 +8,20 @@ export type Goal = {
 	created_at: string;
 };
 
+export type GoalParticipant = {
+	goal_id: string;
+	user_id: string;
+	joined_at: string;
+	interval_days: number | null;
+	weekly_days: number[] | null;
+	anchor_date: string;
+	frequency_type: "interval" | "weekly";
+};
+
+export type GoalWithParticipant = Goal & {
+	goal_participants: GoalParticipant[];
+};
+
 export type CreateGoalParams = {
 	title: string;
 	description: string;
@@ -20,11 +34,22 @@ export type CreateGoalParams = {
 export const fetchGoals = async () => {
 	const { data, error } = await supabase
 		.from("goals")
-		.select("*")
+		.select("*, goal_participants(*)")
 		.order("created_at", { ascending: false });
 
 	if (error) throw error;
-	return data as Goal[];
+	return data as GoalWithParticipant[];
+};
+
+export const fetchGoal = async (id: string) => {
+	const { data, error } = await supabase
+		.from("goals")
+		.select("*, goal_participants(*)")
+		.eq("id", id)
+		.single();
+
+	if (error) throw error;
+	return data as GoalWithParticipant;
 };
 
 export const createGoal = async (params: CreateGoalParams) => {

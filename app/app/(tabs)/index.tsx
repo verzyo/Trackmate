@@ -1,25 +1,10 @@
-import { useEffect } from "react";
 import { type Href, router } from "expo-router";
-import { Button, ScrollView, Text, View, Pressable } from "react-native";
+import { Button, Pressable, ScrollView, Text } from "react-native";
 import { Screen } from "@/components/layout/Screen";
 import { useGoals } from "@/hooks/goal/useGoals";
-import { fetchGoal } from "@/lib/api/goal.api";
-import { queryClient } from "@/lib/queryClient";
-import { goalQueryKeys } from "@/hooks/goal/useGoal";
 
 export default function HomeScreen() {
 	const { data: goals, isLoading, error } = useGoals();
-
-	useEffect(() => {
-		if (goals) {
-			for (const goal of goals) {
-				queryClient.prefetchQuery({
-					queryKey: goalQueryKeys.goal(goal.id),
-					queryFn: () => fetchGoal(goal.id),
-				});
-			}
-		}
-	}, [goals]);
 
 	return (
 		<Screen className="px-6 py-4">
