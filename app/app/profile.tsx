@@ -1,5 +1,5 @@
 import { Image } from "expo-image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Alert, Button, Platform, Text, TextInput, View } from "react-native";
 import { Screen } from "@/components/layout/Screen";
@@ -27,6 +27,7 @@ export default function ProfileScreen() {
 		useUpdateProfile(userId);
 
 	const [pendingAvatarUri, setPendingAvatarUri] = useState<string | null>(null);
+	const [avatarKey, setAvatarKey] = useState(Date.now());
 	const [pendingAvatarMime, setPendingAvatarMime] =
 		useState<string>("image/jpeg");
 	const [removeAvatarFlag, setRemoveAvatarFlag] = useState(false);
@@ -34,22 +35,39 @@ export default function ProfileScreen() {
 	const {
 		control,
 		handleSubmit,
+		reset,
 		formState: { isSubmitting },
 	} = useForm<ProfileForm>({
-		values: {
-			username: profile?.username ?? "",
-			nickname: profile?.nickname ?? "",
-			email: user?.email ?? "",
+		defaultValues: {
+			username: "",
+			nickname: "",
+			email: "",
 		},
 	});
 
-	const handlePickAvatar = async () => {
-		const asset = await pickAvatar();
+	useEffect(() => {
+		if (profile) {
+			reset({
+				username: profile.username ?? "",
+				nickname: profile.nickname ?? "",
+				email: user?.email ?? "",
+			});
+			if (profile.avatar_url) setAvatarKey(Date.now());
+		}
+	}, [profile, user, reset]);
 
-		if (asset) {
-			setPendingAvatarUri(asset.uri);
-			setPendingAvatarMime(asset.mimeType ?? "image/jpeg");
-			setRemoveAvatarFlag(false);
+	const handlePickAvatar = async () => {
+		try {
+			const asset = await pickAvatar();
+
+			if (asset) {
+				setPendingAvatarUri(asset.uri);
+				setPendingAvatarMime(asset.mimeType ?? "image/jpeg");
+				setRemoveAvatarFlag(false);
+			}
+		} catch (e: unknown) {
+			const message = (e as Error)?.message || "Failed to pick avatar";
+			handleAlert(message);
 		}
 	};
 
@@ -59,7 +77,12 @@ export default function ProfileScreen() {
 	};
 
 	const displayedAvatar =
-		pendingAvatarUri ?? (removeAvatarFlag ? null : profile?.avatar_url);
+		pendingAvatarUri ??
+		(removeAvatarFlag
+			? null
+			: profile?.avatar_url
+				? `${profile.avatar_url}?t=${avatarKey}`
+				: null);
 
 	const handleAlert = (message: string) => {
 		if (Platform.OS === "web") window.alert(message);
@@ -95,11 +118,22 @@ export default function ProfileScreen() {
 			setRemoveAvatarFlag(false);
 
 			queryClient.invalidateQueries({ queryKey: ["profile", userId] });
+			setAvatarKey(Date.now());
 
 			handleAlert("Profile updated successfully");
 		} catch (e: unknown) {
 			const message = (e as Error)?.message || "Something went wrong";
 			handleAlert(message);
+
+			if (profile) {
+				reset({
+					username: profile.username ?? "",
+					nickname: profile.nickname ?? "",
+					email: user?.email ?? "",
+				});
+			}
+			setPendingAvatarUri(null);
+			setRemoveAvatarFlag(false);
 		}
 	};
 
@@ -110,7 +144,7 @@ export default function ProfileScreen() {
 			{displayedAvatar ? (
 				<Image
 					source={{ uri: displayedAvatar }}
-					className="h-20 w-20 rounded-full"
+					className="h-20 w-20 rounded-full bg-neutral-300"
 				/>
 			) : (
 				<View className="h-20 w-20 rounded-full bg-neutral-300" />

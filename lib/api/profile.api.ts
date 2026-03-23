@@ -1,3 +1,4 @@
+import { Platform } from "react-native";
 import { supabase } from "@/lib/supabase";
 
 type ProfileUpdates = {
@@ -39,20 +40,39 @@ export const uploadAvatar = async (
 ) => {
 	const path = `${userId}/avatar`;
 
-	const response = await fetch(uri);
-	const blob = await response.blob();
+	let fileBody: FormData | Blob;
+	const options: { upsert: boolean; contentType?: string } = { upsert: true };
+
+	if (Platform.OS === "web") {
+		const response = await fetch(uri);
+		fileBody = await response.blob();
+		options.contentType = mimeType;
+	} else {
+		fileBody = new FormData();
+		fileBody.append("file", {
+			uri: uri,
+			name: "avatar.jpg",
+			type: mimeType,
+		} as unknown as Blob);
+	}
 
 	const { error } = await supabase.storage
 		.from("avatars")
-		.upload(path, blob, { contentType: mimeType, upsert: true });
+		.upload(path, fileBody, options);
 
 	if (error) throw error;
 
 	const { data } = supabase.storage.from("avatars").getPublicUrl(path);
-	const urlWithBuster = `${data.publicUrl}?t=${Date.now()}`;
+	const cleanUrl = data.publicUrl;
 
-	await updateProfile(userId, { avatar_url: urlWithBuster });
-	return urlWithBuster;
+	try {
+		await updateProfile(userId, { avatar_url: cleanUrl });
+	} catch (error) {
+		await supabase.storage.from("avatars").remove([path]);
+		throw error;
+	}
+
+	return `${cleanUrl}?t=${Date.now()}`;
 };
 
 export const removeAvatar = async (userId: string) => {

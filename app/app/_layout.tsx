@@ -4,7 +4,7 @@ import { useAuthStore } from "@/lib/store/auth.store";
 export default function AppLayout() {
 	const { user } = useAuthStore();
 
-	useProfile(user?.id ?? "");
+	useProfile(user?.id);
 
 	return (
 		<Tabs screenOptions={{ headerShown: false }}>
