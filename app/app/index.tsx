@@ -1,10 +1,10 @@
 import { Text } from "react-native";
 import { Screen } from "@/components/layout/Screen";
 
-export default function LandingScreen() {
+export default function HomeScreen() {
 	return (
 		<Screen className="items-center justify-center">
-			<Text>Landing screen</Text>
+			<Text>Home screen</Text>
 		</Screen>
 	);
 }
