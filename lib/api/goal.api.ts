@@ -110,3 +110,40 @@ export const createInvite = async (
 
 	if (error) throw error;
 };
+
+export type GoalInviteWithDetails = {
+	id: string;
+	goal_id: string;
+	inviter_id: string;
+	invitee_id: string;
+	created_at: string;
+	goal: { title: string; description: string | null };
+	inviter: { username: string; avatar_url: string | null };
+};
+
+export const fetchInvites = async (userId: string) => {
+	const { data, error } = await supabase
+		.from("goal_invites")
+		.select(
+			"*, goal:goals(title, description), inviter:profiles!inviter_id(username, avatar_url)",
+		)
+		.eq("invitee_id", userId);
+
+	if (error) throw error;
+	return data as unknown as GoalInviteWithDetails[];
+};
+
+export const acceptInvite = async (inviteId: string) => {
+	const { error } = await supabase.rpc("accept_invite", {
+		p_invite_id: inviteId,
+	});
+	if (error) throw error;
+};
+
+export const declineInvite = async (inviteId: string) => {
+	const { error } = await supabase
+		.from("goal_invites")
+		.delete()
+		.eq("id", inviteId);
+	if (error) throw error;
+};

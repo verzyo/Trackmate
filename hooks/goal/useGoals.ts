@@ -15,6 +15,7 @@ export const useGoals = () => {
 			for (const goal of goals) {
 				queryClient.setQueryData(goalQueryKeys.goal(goal.id), goal);
 			}
+
 			return goals;
 		},
 	});
