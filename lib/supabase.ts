@@ -69,12 +69,18 @@ if (!supabaseUrl) throw new Error("Missing Supabase URL");
 if (!supabasePublishableKey)
 	throw new Error("Missing Supabase publishable key");
 
+const getStorage = () => {
+	if (Platform.OS !== "web") return new LargeSecureStore();
+	if (typeof window === "undefined") return undefined; // SSR fix
+	return AsyncStorage;
+};
+
 export const supabase: SupabaseClient = createClient(
 	supabaseUrl,
 	supabasePublishableKey,
 	{
 		auth: {
-			storage: Platform.OS !== "web" ? new LargeSecureStore() : AsyncStorage,
+			storage: getStorage(),
 			autoRefreshToken: true,
 			persistSession: true,
 			detectSessionInUrl: false,
