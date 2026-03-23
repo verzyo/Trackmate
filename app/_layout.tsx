@@ -29,7 +29,6 @@ export default function RootLayout() {
 
 				<Stack.Protected guard={!!session}>
 					<Stack.Screen name="app" />
-					<Stack.Screen name="goal/new" options={{ presentation: "modal" }} />
 				</Stack.Protected>
 
 				<Stack.Protected guard={Platform.OS === "web"}>

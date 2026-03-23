@@ -1,15 +1,10 @@
-import { Tabs } from "expo-router";
-import { useProfile } from "@/hooks/profile/useProfile";
-import { useAuthStore } from "@/lib/store/auth.store";
+import { Stack } from "expo-router";
+
 export default function AppLayout() {
-	const { user } = useAuthStore();
-
-	useProfile(user?.id);
-
 	return (
-		<Tabs screenOptions={{ headerShown: false }}>
-			<Tabs.Screen name="index" options={{ title: "Home" }} />
-			<Tabs.Screen name="profile" options={{ title: "Profile" }} />
-		</Tabs>
+		<Stack screenOptions={{ headerShown: false }}>
+			<Stack.Screen name="(tabs)" />
+			<Stack.Screen name="goal/new" options={{ presentation: "modal" }} />
+		</Stack>
 	);
 }
