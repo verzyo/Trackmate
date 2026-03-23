@@ -1,4 +1,7 @@
+import { cssInterop } from "nativewind";
 import { Image } from "expo-image";
+
+cssInterop(Image, { className: "style" });
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Alert, Button, Platform, Text, TextInput, View } from "react-native";
