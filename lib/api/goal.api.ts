@@ -65,3 +65,29 @@ export const createGoal = async (params: CreateGoalParams) => {
 	if (error) throw error;
 	return data;
 };
+
+export type UpdateGoalParams = CreateGoalParams & { goal_id: string };
+
+export const updateGoal = async (params: UpdateGoalParams) => {
+	const { error: goalError } = await supabase
+		.from("goals")
+		.update({
+			title: params.title,
+			description: params.description,
+		})
+		.eq("id", params.goal_id);
+
+	if (goalError) throw goalError;
+
+	const { error: participantError } = await supabase
+		.from("goal_participants")
+		.update({
+			frequency_type: params.frequency_type,
+			interval_days: params.interval_days,
+			weekly_days: params.weekly_days,
+			anchor_date: params.anchor_date,
+		})
+		.eq("goal_id", params.goal_id);
+
+	if (participantError) throw participantError;
+};

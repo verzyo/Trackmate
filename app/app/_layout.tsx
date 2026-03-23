@@ -6,6 +6,7 @@ export default function AppLayout() {
 			<Stack.Screen name="(tabs)" />
 			<Stack.Screen name="goal/new" options={{ presentation: "modal" }} />
 			<Stack.Screen name="goal/[id]" options={{ presentation: "modal" }} />
+			<Stack.Screen name="goal/edit/[id]" options={{ presentation: "modal" }} />
 		</Stack>
 	);
 }

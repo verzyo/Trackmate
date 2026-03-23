@@ -1,5 +1,5 @@
-import { useLocalSearchParams } from "expo-router";
-import { ScrollView, Text } from "react-native";
+import { type Href, router, useLocalSearchParams } from "expo-router";
+import { Button, ScrollView, Text, View } from "react-native";
 import { Screen } from "@/components/layout/Screen";
 import { useGoal } from "@/hooks/goal/useGoal";
 
@@ -51,6 +51,13 @@ export default function GoalDetailsModal() {
 						</Text>
 					</>
 				)}
+
+				<View className="mt-8 w-full max-w-xs">
+					<Button
+						title="EDIT GOAL"
+						onPress={() => router.push(`/app/goal/edit/${id}` as Href)}
+					/>
+				</View>
 			</ScrollView>
 		</Screen>
 	);
