@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createGoal, type CreateGoalParams } from "@/lib/api/goal.api";
+import { type CreateGoalParams, createGoal } from "@/lib/api/goal.api";
 import { queryKeys } from "./useGoals";
 
 export const useCreateGoal = () => {

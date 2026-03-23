@@ -1,4 +1,6 @@
-import DateTimePicker from "@react-native-community/datetimepicker";
+import DateTimePicker, {
+	type DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
 import { router } from "expo-router";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -45,7 +47,7 @@ export default function NewGoalModal() {
 		},
 	});
 
-	const onChangeDate = (_event: any, selectedDate?: Date) => {
+	const onChangeDate = (_event: DateTimePickerEvent, selectedDate?: Date) => {
 		const currentDate = selectedDate || anchorDate;
 		setAnchorDate(currentDate);
 	};
@@ -74,8 +76,9 @@ export default function NewGoalModal() {
 
 			await createGoalMutation.mutateAsync(params);
 			router.back();
-		} catch (error: any) {
-			let errorMessage = error.message || "Failed to create goal";
+		} catch (error) {
+			let errorMessage =
+				error instanceof Error ? error.message : "Failed to create goal";
 
 			if (errorMessage.includes("title_not_empty")) {
 				errorMessage = "Goal title cannot be empty.";
