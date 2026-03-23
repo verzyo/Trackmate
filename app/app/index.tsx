@@ -1,4 +1,5 @@
-import { ScrollView, Text, View } from "react-native";
+import { Button, ScrollView, Text, View } from "react-native";
+import { router } from "expo-router";
 import { Screen } from "@/components/layout/Screen";
 import { useGoals } from "@/hooks/goal/useGoals";
 
@@ -8,16 +9,15 @@ export default function HomeScreen() {
 	return (
 		<Screen className="px-6 py-4">
 			<ScrollView contentContainerClassName="flex-grow items-center justify-center gap-4">
+				<Button title="NEW GOAL" onPress={() => router.push("/goal/new" as any)} />
+				
 				{isLoading && <Text>Loading goals...</Text>}
 				{error && <Text className="text-red-500">Failed to load goals</Text>}
-
+				
 				{goals?.length === 0 && <Text>You don't have any goals yet</Text>}
-
+				
 				{goals?.map((goal) => (
-					<View
-						key={goal.id}
-						className="py-3 border-b border-neutral-200 w-full items-center"
-					>
+					<View key={goal.id} className="py-3 border-b border-neutral-200 w-full items-center">
 						<Text className="text-lg">{goal.title}</Text>
 					</View>
 				))}
