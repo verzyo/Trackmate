@@ -6,16 +6,16 @@ export type Goal = {
 	description: string | null;
 	owner_id: string;
 	created_at: string;
+	frequency_type: "interval" | "weekly";
+	frequency_value: number;
 };
 
 export type GoalParticipant = {
 	goal_id: string;
 	user_id: string;
 	joined_at: string;
-	interval_days: number | null;
 	weekly_days: number[] | null;
-	anchor_date: string;
-	frequency_type: "interval" | "weekly";
+	anchor_date: string | null;
 };
 
 export type GoalWithParticipant = Goal & {
@@ -26,9 +26,9 @@ export type CreateGoalParams = {
 	title: string;
 	description: string;
 	frequency_type: "interval" | "weekly";
-	interval_days: number | null;
+	frequency_value: number;
 	weekly_days: number[] | null;
-	anchor_date: string;
+	anchor_date: string | null;
 };
 
 export const fetchGoals = async () => {
@@ -54,55 +54,59 @@ export const fetchGoal = async (id: string) => {
 
 export const createGoal = async (params: CreateGoalParams) => {
 	const { data, error } = await supabase.rpc("create_goal", {
-		title: params.title,
-		description: params.description,
-		frequency_type: params.frequency_type,
-		interval_days: params.interval_days,
-		weekly_days: params.weekly_days,
-		anchor_date: params.anchor_date,
+		p_title: params.title,
+		p_description: params.description,
+		p_frequency_type: params.frequency_type,
+		p_frequency_value: params.frequency_value,
+		p_weekly_days: params.weekly_days,
+		p_anchor_date: params.anchor_date,
 	});
 
 	if (error) throw error;
 	return data;
 };
 
-export type UpdateGoalParams = CreateGoalParams & { goal_id: string };
-
-export const updateGoal = async (params: UpdateGoalParams) => {
-	const { error: goalError } = await supabase
-		.from("goals")
-		.update({
-			title: params.title,
-			description: params.description,
-		})
-		.eq("id", params.goal_id);
-
-	if (goalError) throw goalError;
-
-	const { error: participantError } = await supabase
-		.from("goal_participants")
-		.update({
-			frequency_type: params.frequency_type,
-			interval_days: params.interval_days,
-			weekly_days: params.weekly_days,
-			anchor_date: params.anchor_date,
-		})
-		.eq("goal_id", params.goal_id);
-
-	if (participantError) throw participantError;
+export type UpdateGoalParams = {
+	goal_id: string;
+	title: string;
+	description: string;
 };
 
-export const deleteGoal = async (id: string) => {
-	const { error } = await supabase.from("goals").delete().eq("id", id);
+export const updateGoal = async (params: UpdateGoalParams) => {
+	const { error } = await supabase.rpc("update_goal", {
+		p_goal_id: params.goal_id,
+		p_new_title: params.title,
+		p_new_description: params.description,
+	});
+
 	if (error) throw error;
 };
 
-export const leaveGoal = async (goalId: string, userId: string) => {
-	const { error } = await supabase
-		.from("goal_participants")
-		.delete()
-		.eq("goal_id", goalId)
-		.eq("user_id", userId);
+export const updateGoalParticipant = async (
+	goalId: string,
+	newAnchorDate: string | null,
+	newWeeklyDays: number[] | null,
+) => {
+	const { error } = await supabase.rpc("update_goal_participant", {
+		p_goal_id: goalId,
+		p_new_anchor_date: newAnchorDate,
+		p_new_weekly_days: newWeeklyDays,
+	});
+
+	if (error) throw error;
+};
+
+export const deleteGoal = async (id: string) => {
+	const { error } = await supabase.rpc("delete_goal", {
+		p_goal_id: id,
+	});
+	if (error) throw error;
+};
+
+export const leaveGoal = async (goalId: string) => {
+	const { error } = await supabase.rpc("leave_goal", {
+		p_goal_id: goalId,
+	});
 
 	if (error) throw error;
 };

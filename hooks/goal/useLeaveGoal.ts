@@ -6,8 +6,7 @@ export const useLeaveGoal = () => {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: ({ goalId, userId }: { goalId: string; userId: string }) =>
-			leaveGoal(goalId, userId),
+		mutationFn: (goalId: string) => leaveGoal(goalId),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: goalsQueryKeys.goals });
 		},

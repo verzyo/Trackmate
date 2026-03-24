@@ -58,10 +58,7 @@ export default function NewGoalModal() {
 
 	const onSubmit = async (data: GoalForm) => {
 		try {
-			const activeInterval =
-				frequencyType === "interval" ? parseInt(data.interval_days, 10) : null;
 			let activeWeekly: number[] | null = null;
-
 			if (frequencyType === "weekly") {
 				activeWeekly = data.weekly_days
 					.split(",")
@@ -69,13 +66,21 @@ export default function NewGoalModal() {
 					.filter((d) => !Number.isNaN(d));
 			}
 
+			let frequencyValue = 1;
+			if (frequencyType === "interval") {
+				frequencyValue = parseInt(data.interval_days, 10);
+			} else if (frequencyType === "weekly" && activeWeekly) {
+				frequencyValue = activeWeekly.length;
+			}
+
 			const params: CreateGoalParams = {
 				title: data.title,
 				description: data.description,
 				frequency_type: frequencyType,
-				interval_days: activeInterval,
-				weekly_days: activeWeekly,
-				anchor_date: anchorDate.toISOString(),
+				frequency_value: frequencyValue,
+				weekly_days: frequencyType === "weekly" ? activeWeekly : null,
+				anchor_date:
+					frequencyType === "interval" ? anchorDate.toISOString() : null,
 			};
 
 			await createGoalMutation.mutateAsync(params);
@@ -180,43 +185,47 @@ export default function NewGoalModal() {
 					</>
 				)}
 
-				<Text className="mt-4">Anchor Date*</Text>
-				{Platform.OS === "web" ? (
-					<View className="mb-4">
-						<input
-							type="date"
-							value={anchorDate.toISOString().split("T")[0]}
-							max={new Date().toISOString().split("T")[0]}
-							onChange={(e) => {
-								if (e.target.value) {
-									const [year, month, day] = e.target.value
-										.split("-")
-										.map(Number);
-									setAnchorDate(new Date(year, month - 1, day));
-								}
-							}}
-							className="border-0 outline-none bg-transparent text-center"
-						/>
-					</View>
-				) : (
-					<Pressable
-						onPress={() => setShowDatePicker(true)}
-						className="p-3 mb-4"
-					>
-						<Text className="text-center text-blue-500">
-							{anchorDate.toLocaleDateString()}
-						</Text>
-					</Pressable>
-				)}
+				{frequencyType === "interval" && (
+					<>
+						<Text className="mt-4">Anchor Date*</Text>
+						{Platform.OS === "web" ? (
+							<View className="mb-4">
+								<input
+									type="date"
+									value={anchorDate.toISOString().split("T")[0]}
+									max={new Date().toISOString().split("T")[0]}
+									onChange={(e) => {
+										if (e.target.value) {
+											const [year, month, day] = e.target.value
+												.split("-")
+												.map(Number);
+											setAnchorDate(new Date(year, month - 1, day));
+										}
+									}}
+									className="border-0 outline-none bg-transparent text-center"
+								/>
+							</View>
+						) : (
+							<Pressable
+								onPress={() => setShowDatePicker(true)}
+								className="p-3 mb-4"
+							>
+								<Text className="text-center text-blue-500">
+									{anchorDate.toLocaleDateString()}
+								</Text>
+							</Pressable>
+						)}
 
-				{Platform.OS !== "web" && showDatePicker && (
-					<DateTimePicker
-						value={anchorDate}
-						mode="date"
-						display={"default"}
-						maximumDate={new Date()}
-						onChange={onChangeDate}
-					/>
+						{Platform.OS !== "web" && showDatePicker && (
+							<DateTimePicker
+								value={anchorDate}
+								mode="date"
+								display={"default"}
+								maximumDate={new Date()}
+								onChange={onChangeDate}
+							/>
+						)}
+					</>
 				)}
 
 				<View className="mt-4">

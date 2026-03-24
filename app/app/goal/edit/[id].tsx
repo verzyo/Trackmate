@@ -21,6 +21,7 @@ import { useDeleteGoal } from "@/hooks/goal/useDeleteGoal";
 import { useGoal } from "@/hooks/goal/useGoal";
 import { useLeaveGoal } from "@/hooks/goal/useLeaveGoal";
 import { useUpdateGoal } from "@/hooks/goal/useUpdateGoal";
+import { useUpdateGoalParticipant } from "@/hooks/goal/useUpdateGoalParticipant";
 import type { UpdateGoalParams } from "@/lib/api/goal.api";
 import { fetchProfileByUsername } from "@/lib/api/profile.api";
 import { useAuthStore } from "@/lib/store/auth.store";
@@ -28,14 +29,13 @@ import { useAuthStore } from "@/lib/store/auth.store";
 type GoalForm = {
 	title: string;
 	description: string;
-	interval_days: string;
-	weekly_days: string;
 };
 
 export default function EditGoalModal() {
 	const { id } = useLocalSearchParams<{ id: string }>();
 	const { data: goal, isLoading: isGoalLoading } = useGoal(id as string);
 	const updateGoalMutation = useUpdateGoal();
+	const updateParticipantMutation = useUpdateGoalParticipant();
 	const deleteGoalMutation = useDeleteGoal();
 	const createInviteMutation = useCreateInvite();
 	const leaveGoalMutation = useLeaveGoal();
@@ -47,23 +47,19 @@ export default function EditGoalModal() {
 
 	const [inviteUsername, setInviteUsername] = useState("");
 
-	const [frequencyType, setFrequencyType] = useState<"interval" | "weekly">(
-		"interval",
-	);
 	const [anchorDate, setAnchorDate] = useState(new Date());
+	const [weeklyDaysInput, setWeeklyDaysInput] = useState("1");
 	const [showDatePicker, setShowDatePicker] = useState(false);
 
 	const {
 		control,
 		handleSubmit,
 		reset,
-		formState: { isSubmitting, isDirty },
+		formState: { isSubmitting },
 	} = useForm<GoalForm>({
 		defaultValues: {
 			title: "",
 			description: "",
-			interval_days: "1",
-			weekly_days: "1",
 		},
 	});
 
@@ -71,22 +67,17 @@ export default function EditGoalModal() {
 		if (goal) {
 			const participant = goal.goal_participants?.[0];
 			if (participant) {
-				setFrequencyType(participant.frequency_type);
-				setAnchorDate(new Date(participant.anchor_date));
-				reset({
-					title: goal.title,
-					description: goal.description || "",
-					interval_days: participant.interval_days?.toString() || "1",
-					weekly_days: participant.weekly_days?.join(", ") || "1",
-				});
-			} else {
-				reset({
-					title: goal.title,
-					description: goal.description || "",
-					interval_days: "1",
-					weekly_days: "1",
-				});
+				if (participant.anchor_date) {
+					setAnchorDate(new Date(participant.anchor_date));
+				}
+				if (participant.weekly_days) {
+					setWeeklyDaysInput(participant.weekly_days.join(", "));
+				}
 			}
+			reset({
+				title: goal.title,
+				description: goal.description || "",
+			});
 		}
 	}, [goal, reset]);
 
@@ -99,25 +90,10 @@ export default function EditGoalModal() {
 
 	const onSubmit = async (data: GoalForm) => {
 		try {
-			const activeInterval =
-				frequencyType === "interval" ? parseInt(data.interval_days, 10) : null;
-			let activeWeekly: number[] | null = null;
-
-			if (frequencyType === "weekly") {
-				activeWeekly = data.weekly_days
-					.split(",")
-					.map((d) => parseInt(d.trim(), 10))
-					.filter((d) => !Number.isNaN(d));
-			}
-
 			const params: UpdateGoalParams = {
 				goal_id: id as string,
 				title: data.title,
 				description: data.description,
-				frequency_type: frequencyType,
-				interval_days: activeInterval,
-				weekly_days: activeWeekly,
-				anchor_date: anchorDate.toISOString(),
 			};
 
 			await updateGoalMutation.mutateAsync(params);
@@ -138,9 +114,12 @@ export default function EditGoalModal() {
 		}
 	};
 
-	const isLoading = isSubmitting || updateGoalMutation.isPending;
+	const isLoading =
+		isSubmitting ||
+		updateGoalMutation.isPending ||
+		updateParticipantMutation.isPending;
 
-	if (isGoalLoading) {
+	if (isGoalLoading || !goal) {
 		return (
 			<Screen className="px-6 py-4 justify-center items-center">
 				<ActivityIndicator size="large" />
@@ -165,7 +144,7 @@ export default function EditGoalModal() {
 	const handleLeave = async () => {
 		if (!userId) return;
 		try {
-			await leaveGoalMutation.mutateAsync({ goalId: id as string, userId });
+			await leaveGoalMutation.mutateAsync(id as string);
 			router.dismissAll();
 		} catch (_e) {
 			const errorMessage = "Failed to leave goal";
@@ -225,6 +204,7 @@ export default function EditGoalModal() {
 							onChangeText={onChange}
 							placeholder="e.g. Morning Run"
 							className="text-center"
+							editable={isOwner}
 						/>
 					)}
 				/>
@@ -239,116 +219,159 @@ export default function EditGoalModal() {
 							onChangeText={onChange}
 							placeholder="Optional details"
 							className="text-center"
+							editable={isOwner}
 						/>
 					)}
 				/>
 
-				<Text className="mt-4">Frequency Type*</Text>
-				<View className="flex-row gap-4 mb-2">
-					<Button
-						title="Interval"
-						color={frequencyType === "interval" ? "#007AFF" : "gray"}
-						onPress={() => setFrequencyType("interval")}
-					/>
-					<Button
-						title="Weekly"
-						color={frequencyType === "weekly" ? "#007AFF" : "gray"}
-						onPress={() => setFrequencyType("weekly")}
-					/>
-				</View>
-
-				{frequencyType === "interval" && (
-					<>
-						<Text>Every X Days*</Text>
-						<Controller
-							control={control}
-							name="interval_days"
-							render={({ field: { onChange, value } }) => (
-								<TextInput
-									value={value}
-									onChangeText={onChange}
-									keyboardType="number-pad"
-									placeholder="e.g. 1 for everyday"
-									className="text-center"
-								/>
-							)}
-						/>
-					</>
-				)}
-
-				{frequencyType === "weekly" && (
-					<>
-						<Text>Days of the Week (1=Mon, 7=Sun)*</Text>
-						<Controller
-							control={control}
-							name="weekly_days"
-							render={({ field: { onChange, value } }) => (
-								<TextInput
-									value={value}
-									onChangeText={onChange}
-									placeholder="e.g. 1, 3, 5"
-									className="text-center"
-								/>
-							)}
-						/>
-					</>
-				)}
-
-				<Text className="mt-4">Anchor Date*</Text>
-				{Platform.OS === "web" ? (
-					<View className="mb-4">
-						<input
-							type="date"
-							value={anchorDate.toISOString().split("T")[0]}
-							max={new Date().toISOString().split("T")[0]}
-							onChange={(e) => {
-								if (e.target.value) {
-									const [year, month, day] = e.target.value
-										.split("-")
-										.map(Number);
-									setAnchorDate(new Date(year, month - 1, day));
-								}
-							}}
-							className="border-0 outline-none bg-transparent text-center"
+				{isOwner && (
+					<View className="mt-2 mb-6">
+						<Button
+							title={
+								updateGoalMutation.isPending ? "Updating..." : "Update Goal"
+							}
+							onPress={handleSubmit(onSubmit)}
+							disabled={isLoading}
 						/>
 					</View>
-				) : (
-					<Pressable
-						onPress={() => setShowDatePicker(true)}
-						className="p-3 mb-4"
-					>
-						<Text className="text-center text-blue-500">
-							{anchorDate.toLocaleDateString()}
-						</Text>
-					</Pressable>
 				)}
 
-				{Platform.OS !== "web" && showDatePicker && (
-					<DateTimePicker
-						value={anchorDate}
-						mode="date"
-						display={"default"}
-						maximumDate={new Date()}
-						onChange={onChangeDate}
-					/>
+				<View className="h-[1px] bg-gray-300 w-full my-4" />
+
+				<Text className="font-bold text-lg">Frequency</Text>
+				<Text>
+					Type: <Text className="capitalize">{goal.frequency_type}</Text>
+				</Text>
+				<Text>
+					Value:{" "}
+					{goal.frequency_type === "interval"
+						? `${goal.frequency_value} days`
+						: `${goal.frequency_value} days per week`}
+				</Text>
+
+				<View className="h-[1px] bg-gray-300 w-full my-4" />
+
+				<Text className="font-bold text-lg">My Settings</Text>
+
+				{goal.frequency_type === "interval" && (
+					<>
+						<Text>My Anchor Date</Text>
+						{Platform.OS === "web" ? (
+							<View className="mb-4">
+								<input
+									type="date"
+									value={anchorDate.toISOString().split("T")[0]}
+									max={new Date().toISOString().split("T")[0]}
+									onChange={(e) => {
+										if (e.target.value) {
+											const [year, month, day] = e.target.value
+												.split("-")
+												.map(Number);
+											setAnchorDate(new Date(year, month - 1, day));
+										}
+									}}
+									className="border-0 outline-none bg-transparent text-center"
+								/>
+							</View>
+						) : (
+							<Pressable
+								onPress={() => setShowDatePicker(true)}
+								className="p-3 mb-4"
+							>
+								<Text className="text-center text-blue-500">
+									{anchorDate.toLocaleDateString()}
+								</Text>
+							</Pressable>
+						)}
+
+						{Platform.OS !== "web" && showDatePicker && (
+							<DateTimePicker
+								value={anchorDate}
+								mode="date"
+								display={"default"}
+								maximumDate={new Date()}
+								onChange={onChangeDate}
+							/>
+						)}
+						<View className="mt-2 mb-4">
+							<Button
+								title={
+									updateParticipantMutation.isPending
+										? "Updating..."
+										: "Update Anchor"
+								}
+								onPress={async () => {
+									try {
+										await updateParticipantMutation.mutateAsync({
+											goalId: id as string,
+											newAnchorDate: anchorDate.toISOString(),
+											newWeeklyDays: null,
+										});
+										if (Platform.OS === "web") {
+											alert("Updated successfully!");
+										} else {
+											Alert.alert("Success", "Updated successfully!");
+										}
+									} catch (_e) {
+										if (Platform.OS === "web") {
+											alert("Failed to update settings");
+										} else {
+											Alert.alert("Error", "Failed to update settings");
+										}
+									}
+								}}
+								disabled={isLoading}
+							/>
+						</View>
+					</>
 				)}
 
-				<View className="mt-4">
-					<Button
-						title={isLoading ? "Saving..." : "Save Changes"}
-						onPress={handleSubmit(onSubmit)}
-						disabled={
-							isLoading ||
-							(!isDirty &&
-								frequencyType ===
-									goal?.goal_participants?.[0]?.frequency_type &&
-								anchorDate.toISOString() ===
-									new Date(
-										goal?.goal_participants?.[0]?.anchor_date || Date.now(),
-									).toISOString())
-						}
-					/>
-				</View>
+				{goal.frequency_type === "weekly" && (
+					<>
+						<Text>My Days of Week (1=Mon, 7=Sun)</Text>
+						<TextInput
+							value={weeklyDaysInput}
+							onChangeText={setWeeklyDaysInput}
+							placeholder="e.g. 1, 3, 5"
+							className="text-center mb-4"
+						/>
+						<View className="mt-2 mb-4">
+							<Button
+								title={
+									updateParticipantMutation.isPending
+										? "Updating..."
+										: "Update Days"
+								}
+								onPress={async () => {
+									try {
+										const days = weeklyDaysInput
+											.split(",")
+											.map((n) => Number(n.trim()))
+											.filter((n) => !Number.isNaN(n) && n >= 1 && n <= 7);
+
+										await updateParticipantMutation.mutateAsync({
+											goalId: id as string,
+											newAnchorDate: null,
+											newWeeklyDays: days.length > 0 ? days : null,
+										});
+										if (Platform.OS === "web") {
+											alert("Updated successfully!");
+										} else {
+											Alert.alert("Success", "Updated successfully!");
+										}
+									} catch (_e) {
+										if (Platform.OS === "web") {
+											alert("Failed to update settings");
+										} else {
+											Alert.alert("Error", "Failed to update settings");
+										}
+									}
+								}}
+								disabled={isLoading}
+							/>
+						</View>
+					</>
+				)}
 
 				{isOwner && (
 					<View className="mt-8 pt-4 w-full items-center">

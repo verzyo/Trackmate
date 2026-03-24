@@ -33,22 +33,22 @@ export default function GoalDetailsModal() {
 
 				{participant && (
 					<>
-						<Text>Frequency: {participant.frequency_type}</Text>
-
-						{participant.frequency_type === "interval" &&
-							participant.interval_days && (
-								<Text>Every: {participant.interval_days} days</Text>
-							)}
-
-						{participant.frequency_type === "weekly" &&
-							participant.weekly_days && (
-								<Text>Days of week: {participant.weekly_days.join(", ")}</Text>
-							)}
-
-						<Text>
-							Anchor Date:{" "}
-							{new Date(participant.anchor_date).toLocaleDateString()}
-						</Text>
+						<Text>Frequency: {goal.frequency_type}</Text>
+						{goal.frequency_type === "interval" && (
+							<Text>Every: {goal.frequency_value} days</Text>
+						)}
+						{goal.frequency_type === "weekly" && (
+							<Text>Days per week: {goal.frequency_value}</Text>
+						)}
+						{goal.frequency_type === "interval" && participant.anchor_date && (
+							<Text>
+								Anchor Date:{" "}
+								{new Date(participant.anchor_date).toLocaleDateString()}
+							</Text>
+						)}
+						{goal.frequency_type === "weekly" && participant.weekly_days && (
+							<Text>Days of week: {participant.weekly_days.join(", ")}</Text>
+						)}
 					</>
 				)}
 
