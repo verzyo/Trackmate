@@ -1,13 +1,3 @@
-import { Screen } from "@/components/layout/Screen";
-import { useCreateInvite } from "@/hooks/goal/useCreateInvite";
-import { useDeleteGoal } from "@/hooks/goal/useDeleteGoal";
-import { useGoal } from "@/hooks/goal/useGoal";
-import { useLeaveGoal } from "@/hooks/goal/useLeaveGoal";
-import { useUpdateGoalMetadata } from "@/hooks/goal/useUpdateGoalMetadata";
-import { useUpdateParticipantSettings } from "@/hooks/goal/useUpdateParticipantSettings";
-import { fetchProfileByUsername } from "@/lib/api/profile.api";
-import { formatToISODate, getTodayUTC, toUTCDate } from "@/lib/date.utils";
-import { useAuthStore } from "@/lib/store/auth.store";
 import DateTimePicker, {
 	type DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
@@ -25,6 +15,16 @@ import {
 	TextInput,
 	View,
 } from "react-native";
+import { Screen } from "@/components/layout/Screen";
+import { useCreateInvite } from "@/hooks/goal/useCreateInvite";
+import { useDeleteGoal } from "@/hooks/goal/useDeleteGoal";
+import { useGoal } from "@/hooks/goal/useGoal";
+import { useLeaveGoal } from "@/hooks/goal/useLeaveGoal";
+import { useUpdateGoalMetadata } from "@/hooks/goal/useUpdateGoalMetadata";
+import { useUpdateParticipantSettings } from "@/hooks/goal/useUpdateParticipantSettings";
+import { fetchProfileByUsername } from "@/lib/api/profile.api";
+import { formatToISODate, getTodayUTC, toUTCDate } from "@/lib/date.utils";
+import { useAuthStore } from "@/lib/store/auth.store";
 
 type GoalForm = {
 	title: string;

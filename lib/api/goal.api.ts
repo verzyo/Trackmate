@@ -1,3 +1,4 @@
+import { formatToISODate, getTodayUTC } from "@/lib/date.utils";
 import { supabase } from "@/lib/supabase";
 
 export type Goal = {
@@ -168,5 +169,37 @@ export const declineInvite = async (inviteId: string) => {
 		.from("goal_invites")
 		.delete()
 		.eq("id", inviteId);
+	if (error) throw error;
+};
+
+export const completeGoal = async (goalId: string, userId: string) => {
+	const { error } = await supabase.from("goal_completions").insert({
+		goal_id: goalId,
+		user_id: userId,
+		completed_at: new Date().toISOString(),
+	});
+	if (error) throw error;
+};
+
+export const fetchTodaysCompletions = async (userId: string) => {
+	const today = formatToISODate(getTodayUTC());
+	const { data, error } = await supabase
+		.from("goal_completions")
+		.select("goal_id")
+		.eq("user_id", userId)
+		.eq("completed_date", today);
+
+	if (error) throw error;
+	return data.map((c) => c.goal_id);
+};
+
+export const uncompleteGoal = async (goalId: string, userId: string) => {
+	const today = formatToISODate(getTodayUTC());
+	const { error } = await supabase.from("goal_completions").delete().match({
+		goal_id: goalId,
+		user_id: userId,
+		completed_date: today,
+	});
+
 	if (error) throw error;
 };
