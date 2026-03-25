@@ -42,7 +42,8 @@ export default function GoalDetailsModal() {
 		if (!inviteId) return;
 		try {
 			await acceptInviteMutation.mutateAsync(inviteId);
-			router.back();
+			// Stay on the same page but remove the inviteId parameter
+			router.setParams({ inviteId: undefined });
 		} catch (_e) {
 			const errorMessage = "Failed to accept invite";
 			if (Platform.OS === "web") {

@@ -16,7 +16,7 @@ export const useCreateInvite = () => {
 		}) => createInvite(goalId, inviterId, inviteeId),
 		onSuccess: (_, variables) => {
 			queryClient.invalidateQueries({
-				queryKey: ["goal_invites", variables.goalId],
+				queryKey: ["goal_invites", variables.inviteeId],
 			});
 		},
 	});

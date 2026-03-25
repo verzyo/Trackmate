@@ -14,9 +14,10 @@ export default function InvitesScreen() {
 	const acceptInviteMutation = useAcceptInvite(userId);
 	const declineInviteMutation = useDeclineInvite(userId);
 
-	const handleAccept = async (inviteId: string) => {
+	const handleAccept = async (inviteId: string, goalId: string) => {
 		try {
 			await acceptInviteMutation.mutateAsync(inviteId);
+			router.push(`/app/goal/${goalId}`);
 		} catch (_e) {
 			const errorMessage = "Failed to accept invite";
 			if (Platform.OS === "web") {
@@ -76,7 +77,7 @@ export default function InvitesScreen() {
 							/>
 							<Button
 								title="Accept"
-								onPress={() => handleAccept(invite.id)}
+								onPress={() => handleAccept(invite.id, invite.goal_id)}
 								disabled={
 									declineInviteMutation.isPending ||
 									acceptInviteMutation.isPending
