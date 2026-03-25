@@ -203,3 +203,12 @@ export const uncompleteGoal = async (goalId: string, userId: string) => {
 
 	if (error) throw error;
 };
+
+export const fetchGoalStreak = async (goalId: string, userId: string) => {
+	const { data, error } = await supabase.rpc("get_goal_streak", {
+		p_goal_id: goalId,
+		p_user_id: userId,
+	});
+	if (error) throw error;
+	return data as number;
+};

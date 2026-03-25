@@ -4,6 +4,7 @@ import { Screen } from "@/components/layout/Screen";
 import { useAcceptInvite } from "@/hooks/goal/useAcceptInvite";
 import { useDeclineInvite } from "@/hooks/goal/useDeclineInvite";
 import { useGoal } from "@/hooks/goal/useGoal";
+import { useGoalStreak } from "@/hooks/goal/useGoalStreak";
 import { formatToISODate } from "@/lib/date.utils";
 import { useAuthStore } from "@/lib/store/auth.store";
 
@@ -14,6 +15,10 @@ export default function GoalDetailsModal() {
 	}>();
 	const userId = useAuthStore((state) => state.user?.id);
 	const { data: goal, isLoading, error } = useGoal(id as string);
+	const { data: streak, isLoading: streakLoading } = useGoalStreak(
+		id as string,
+		userId,
+	);
 
 	const acceptInviteMutation = useAcceptInvite(userId);
 	const declineInviteMutation = useDeclineInvite(userId);
@@ -94,6 +99,10 @@ export default function GoalDetailsModal() {
 						)}
 						{goal.frequency_type === "weekly" && participant.weekly_days && (
 							<Text>Days of week: {participant.weekly_days.join(", ")}</Text>
+						)}
+
+						{!streakLoading && streak !== undefined && (
+							<Text>Streak: {streak}</Text>
 						)}
 					</>
 				)}
