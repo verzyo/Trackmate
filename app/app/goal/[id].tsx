@@ -14,19 +14,24 @@ import AttachmentBottomSheet, {
 	type AttachmentBottomSheetRef,
 } from "@/components/AttachmentBottomSheet";
 import { Screen } from "@/components/layout/Screen";
-import { useAcceptInvite } from "@/hooks/goal/useAcceptInvite";
-import { useCompleteGoal } from "@/hooks/goal/useCompleteGoal";
-import { useDeclineInvite } from "@/hooks/goal/useDeclineInvite";
-import { useGoal } from "@/hooks/goal/useGoal";
-import { useGoalCompletions } from "@/hooks/goal/useGoalCompletions";
-import { useGoalMonthlyPoints } from "@/hooks/goal/useGoalMonthlyPoints";
-import { useGoalStreak } from "@/hooks/goal/useGoalStreak";
-import { useTodayCompletion } from "@/hooks/goal/useTodayCompletion";
-import { useUncompleteGoal } from "@/hooks/goal/useUncompleteGoal";
-import { useUpdateCompletion } from "@/hooks/goal/useUpdateCompletion";
-import { type AttachmentData, getSignedUrl } from "@/lib/api/goal.api";
-import { formatToISODate } from "@/lib/date.utils";
-import { useAuthStore } from "@/lib/store/auth.store";
+import {
+	useAcceptInvite,
+	useCompleteGoal,
+	useDeclineInvite,
+	useUncompleteGoal,
+	useUpdateCompletion,
+} from "@/hooks/goal/useGoalMutations";
+import {
+	useGoal,
+	useGoalCompletions,
+	useGoalMonthlyPoints,
+	useGoalStreak,
+	useTodayCompletion,
+} from "@/hooks/goal/useGoalQueries";
+import type { AttachmentData } from "@/schemas/goal.schema";
+import { getSignedUrl } from "@/services/goal.service";
+import { useAuthStore } from "@/store/auth.store";
+import { formatToISODate } from "@/utils/date.utils";
 
 function SignedImage({ path }: { path: string }) {
 	const [signedUrl, setSignedUrl] = useState<string | null>(null);
@@ -62,8 +67,8 @@ export default function GoalDetailsModal() {
 
 	const attachmentSheetRef = useRef<AttachmentBottomSheetRef>(null);
 
-	const acceptInviteMutation = useAcceptInvite(userId);
-	const declineInviteMutation = useDeclineInvite(userId);
+	const acceptInviteMutation = useAcceptInvite();
+	const declineInviteMutation = useDeclineInvite();
 	const completeMutation = useCompleteGoal();
 	const uncompleteMutation = useUncompleteGoal();
 	const updateAttachmentMutation = useUpdateCompletion();
@@ -93,7 +98,10 @@ export default function GoalDetailsModal() {
 	const handleAcceptInvite = async () => {
 		if (!inviteId) return;
 		try {
-			await acceptInviteMutation.mutateAsync(inviteId);
+			await acceptInviteMutation.mutateAsync({
+				inviteId,
+				userId: userId as string,
+			});
 
 			router.setParams({ inviteId: undefined });
 		} catch (_e) {
@@ -109,7 +117,10 @@ export default function GoalDetailsModal() {
 	const handleDeclineInvite = async () => {
 		if (!inviteId) return;
 		try {
-			await declineInviteMutation.mutateAsync(inviteId);
+			await declineInviteMutation.mutateAsync({
+				inviteId,
+				userId: userId as string,
+			});
 			router.back();
 		} catch (_e) {
 			const errorMessage = "Failed to decline invite";

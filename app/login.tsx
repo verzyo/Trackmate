@@ -1,20 +1,19 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { router } from "expo-router";
 import { Controller, useForm } from "react-hook-form";
 import { Alert, Button, Platform, Text, TextInput } from "react-native";
 import { Screen } from "@/components/layout/Screen";
 import { supabase } from "@/lib/supabase";
-
-type LoginForm = {
-	email: string;
-	password: string;
-};
+import { type LoginForm, LoginFormSchema } from "@/schemas/profile.schema";
 
 export default function LoginScreen() {
 	const {
 		control,
 		handleSubmit,
-		formState: { isSubmitting },
-	} = useForm<LoginForm>();
+		formState: { errors, isSubmitting },
+	} = useForm<LoginForm>({
+		resolver: zodResolver(LoginFormSchema),
+	});
 
 	const onSubmit = async (data: LoginForm) => {
 		const { error } = await supabase.auth.signInWithPassword({
@@ -46,6 +45,9 @@ export default function LoginScreen() {
 					/>
 				)}
 			/>
+			{errors.email && (
+				<Text className="text-red-500">{errors.email.message}</Text>
+			)}
 
 			<Text>Password*</Text>
 			<Controller
@@ -61,6 +63,9 @@ export default function LoginScreen() {
 					/>
 				)}
 			/>
+			{errors.password && (
+				<Text className="text-red-500">{errors.password.message}</Text>
+			)}
 
 			<Button
 				title={isSubmitting ? "Logging in..." : "Log in"}

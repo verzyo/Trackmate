@@ -2,9 +2,12 @@ import { BottomSheetModal, BottomSheetView } from "@gorhom/bottom-sheet";
 import * as ImagePicker from "expo-image-picker";
 import { forwardRef, useImperativeHandle, useRef, useState } from "react";
 import { Button, Text, TextInput, View } from "react-native";
-import { uploadAttachment } from "@/lib/api/attachment.api";
-import type { AttachmentData, GoalWithParticipant } from "@/lib/api/goal.api";
-import { useAuthStore } from "@/lib/store/auth.store";
+import type {
+	AttachmentData,
+	GoalWithParticipant,
+} from "@/schemas/goal.schema";
+import { uploadAttachment } from "@/services/attachment.service";
+import { useAuthStore } from "@/store/auth.store";
 
 type Props = {
 	goal: GoalWithParticipant;

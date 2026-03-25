@@ -1,22 +1,22 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { router } from "expo-router";
 import { Controller, useForm } from "react-hook-form";
 import { Alert, Button, Platform, Text, TextInput } from "react-native";
 import { Screen } from "@/components/layout/Screen";
 import { supabase } from "@/lib/supabase";
-
-type RegisterForm = {
-	email: string;
-	password: string;
-	username: string;
-	nickname?: string;
-};
+import {
+	type RegisterForm,
+	RegisterFormSchema,
+} from "@/schemas/profile.schema";
 
 export default function RegisterScreen() {
 	const {
 		control,
 		handleSubmit,
-		formState: { isSubmitting },
-	} = useForm<RegisterForm>();
+		formState: { errors, isSubmitting },
+	} = useForm<RegisterForm>({
+		resolver: zodResolver(RegisterFormSchema),
+	});
 
 	const onSubmit = async (data: RegisterForm) => {
 		const { error } = await supabase.auth.signUp({
@@ -49,6 +49,9 @@ export default function RegisterScreen() {
 					/>
 				)}
 			/>
+			{errors.email && (
+				<Text className="text-red-500">{errors.email.message}</Text>
+			)}
 
 			<Text>Password*</Text>
 			<Controller
@@ -64,6 +67,9 @@ export default function RegisterScreen() {
 					/>
 				)}
 			/>
+			{errors.password && (
+				<Text className="text-red-500">{errors.password.message}</Text>
+			)}
 
 			<Text>Username*</Text>
 			<Controller
@@ -78,6 +84,9 @@ export default function RegisterScreen() {
 					/>
 				)}
 			/>
+			{errors.username && (
+				<Text className="text-red-500">{errors.username.message}</Text>
+			)}
 
 			<Text>Nickname</Text>
 			<Controller

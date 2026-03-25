@@ -7,13 +7,15 @@ import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Alert, Button, Platform, Text, TextInput, View } from "react-native";
 import { Screen } from "@/components/layout/Screen";
-import { pickAvatar } from "@/hooks/profile/useAvatar";
-import { useProfile } from "@/hooks/profile/useProfile";
-import { useUpdateProfile } from "@/hooks/profile/useUpdateProfile";
-import { removeAvatar, uploadAvatar } from "@/lib/api/profile.api";
+import {
+	pickAvatar,
+	useProfile,
+	useUpdateProfile,
+} from "@/hooks/profile/useProfileHooks";
 import { queryClient } from "@/lib/queryClient";
-import { useAuthStore } from "@/lib/store/auth.store";
 import { supabase } from "@/lib/supabase";
+import { removeAvatar, uploadAvatar } from "@/services/profile.service";
+import { useAuthStore } from "@/store/auth.store";
 
 type ProfileForm = {
 	username: string;

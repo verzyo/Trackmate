@@ -6,7 +6,7 @@ import { useEffect } from "react";
 import { Platform } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { queryClient } from "@/lib/queryClient";
-import { useAuthStore } from "@/lib/store/auth.store";
+import { useAuthStore } from "@/store/auth.store";
 
 import "@/global.css";
 

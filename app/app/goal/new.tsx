@@ -1,3 +1,4 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import DateTimePicker, {
 	type DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
@@ -16,19 +17,12 @@ import {
 	View,
 } from "react-native";
 import { Screen } from "@/components/layout/Screen";
-import { useCreateGoal } from "@/hooks/goal/useCreateGoal";
-import { useCreateInvite } from "@/hooks/goal/useCreateInvite";
-import type { CreateGoalParams } from "@/lib/api/goal.api";
-import { fetchProfileByUsername } from "@/lib/api/profile.api";
-import { formatToISODate, getTodayUTC, toUTCDate } from "@/lib/date.utils";
-import { useAuthStore } from "@/lib/store/auth.store";
-
-type GoalForm = {
-	title: string;
-	description: string;
-	interval_days: string;
-	weekly_days: string;
-};
+import { useCreateGoal, useCreateInvite } from "@/hooks/goal/useGoalMutations";
+import type { CreateGoalParams } from "@/schemas/goal.schema";
+import { type GoalForm, GoalFormSchema } from "@/schemas/goal.schema";
+import { fetchProfileByUsername } from "@/services/profile.service";
+import { useAuthStore } from "@/store/auth.store";
+import { formatToISODate, getTodayUTC, toUTCDate } from "@/utils/date.utils";
 
 export default function NewGoalModal() {
 	const { user } = useAuthStore();
@@ -56,8 +50,9 @@ export default function NewGoalModal() {
 	const {
 		control,
 		handleSubmit,
-		formState: { isSubmitting },
+		formState: { errors, isSubmitting },
 	} = useForm<GoalForm>({
+		resolver: zodResolver(GoalFormSchema),
 		defaultValues: {
 			title: "",
 			description: "",
@@ -213,6 +208,9 @@ export default function NewGoalModal() {
 						/>
 					)}
 				/>
+				{errors.title && (
+					<Text className="text-red-500">{errors.title.message}</Text>
+				)}
 
 				<Text>Description</Text>
 				<Controller
@@ -258,6 +256,11 @@ export default function NewGoalModal() {
 								/>
 							)}
 						/>
+						{errors.interval_days && (
+							<Text className="text-red-500">
+								{errors.interval_days.message}
+							</Text>
+						)}
 					</>
 				)}
 
@@ -276,6 +279,9 @@ export default function NewGoalModal() {
 								/>
 							)}
 						/>
+						{errors.weekly_days && (
+							<Text className="text-red-500">{errors.weekly_days.message}</Text>
+						)}
 					</>
 				)}
 

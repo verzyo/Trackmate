@@ -1,7 +1,7 @@
 import { Tabs } from "expo-router";
-import { useInvites } from "@/hooks/goal/useInvites";
-import { useProfile } from "@/hooks/profile/useProfile";
-import { useAuthStore } from "@/lib/store/auth.store";
+import { useInvites } from "@/hooks/goal/useGoalQueries";
+import { useProfile } from "@/hooks/profile/useProfileHooks";
+import { useAuthStore } from "@/store/auth.store";
 
 export default function AppLayout() {
 	const { user } = useAuthStore();

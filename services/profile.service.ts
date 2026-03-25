@@ -1,11 +1,6 @@
 import { Platform } from "react-native";
 import { supabase } from "@/lib/supabase";
-
-type ProfileUpdates = {
-	username?: string;
-	nickname?: string | null;
-	avatar_url?: string | null;
-};
+import type { ProfileUpdates } from "@/schemas/profile.schema";
 
 export const fetchProfile = async (userId: string) => {
 	const { data, error } = await supabase

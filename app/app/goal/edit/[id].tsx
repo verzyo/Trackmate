@@ -16,15 +16,17 @@ import {
 	View,
 } from "react-native";
 import { Screen } from "@/components/layout/Screen";
-import { useCreateInvite } from "@/hooks/goal/useCreateInvite";
-import { useDeleteGoal } from "@/hooks/goal/useDeleteGoal";
-import { useGoal } from "@/hooks/goal/useGoal";
-import { useLeaveGoal } from "@/hooks/goal/useLeaveGoal";
-import { useUpdateGoalMetadata } from "@/hooks/goal/useUpdateGoalMetadata";
-import { useUpdateParticipantSettings } from "@/hooks/goal/useUpdateParticipantSettings";
-import { fetchProfileByUsername } from "@/lib/api/profile.api";
-import { formatToISODate, getTodayUTC, toUTCDate } from "@/lib/date.utils";
-import { useAuthStore } from "@/lib/store/auth.store";
+import {
+	useCreateInvite,
+	useDeleteGoal,
+	useLeaveGoal,
+	useUpdateGoalMetadata,
+	useUpdateParticipantSettings,
+} from "@/hooks/goal/useGoalMutations";
+import { useGoal } from "@/hooks/goal/useGoalQueries";
+import { fetchProfileByUsername } from "@/services/profile.service";
+import { useAuthStore } from "@/store/auth.store";
+import { formatToISODate, getTodayUTC, toUTCDate } from "@/utils/date.utils";
 
 type GoalForm = {
 	title: string;

@@ -1,6 +1,6 @@
 import type { ViewProps } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils/cn";
 
 type ScreenProps = ViewProps & {
 	children: React.ReactNode;

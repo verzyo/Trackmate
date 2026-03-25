@@ -1,45 +1,13 @@
-import { formatToISODate, getTodayUTC } from "@/lib/date.utils";
 import { supabase } from "@/lib/supabase";
-
-export type Goal = {
-	id: string;
-	title: string;
-	description: string | null;
-	owner_id: string;
-	created_at: string;
-	frequency_type: "interval" | "weekly";
-	frequency_value: number;
-	attachment_type: "none" | "photo" | "url" | "text";
-	require_attachment: boolean;
-};
-
-export type GoalParticipant = {
-	goal_id: string;
-	user_id: string;
-	joined_at: string;
-	weekly_days: number[] | null;
-	anchor_date: string | null;
-};
-
-export type GoalWithParticipant = Goal & {
-	goal_participants: GoalParticipant[];
-};
-
-export type AttachmentData =
-	| { type: "photo"; path: string }
-	| { type: "url"; url: string }
-	| { type: "text"; content: string };
-
-export type CreateGoalParams = {
-	title: string;
-	description: string;
-	frequency_type: "interval" | "weekly";
-	frequency_value: number;
-	weekly_days: number[] | null;
-	anchor_date: string | null;
-	attachment_type: "none" | "photo" | "url" | "text";
-	require_attachment: boolean;
-};
+import type {
+	AttachmentData,
+	CreateGoalParams,
+	GoalInviteWithDetails,
+	GoalWithParticipant,
+	UpdateGoalMetadataParams,
+	UpdateParticipantSettingsParams,
+} from "@/schemas/goal.schema";
+import { formatToISODate, getTodayUTC } from "@/utils/date.utils";
 
 export const fetchGoals = async () => {
 	const { data, error } = await supabase
@@ -65,7 +33,7 @@ export const fetchGoal = async (id: string) => {
 export const createGoal = async (params: CreateGoalParams) => {
 	const { data, error } = await supabase.rpc("create_goal", {
 		p_title: params.title,
-		p_description: params.description,
+		p_description: params.description ?? null,
 		p_frequency_type: params.frequency_type,
 		p_frequency_value: params.frequency_value,
 		p_weekly_days: params.weekly_days,
@@ -78,12 +46,6 @@ export const createGoal = async (params: CreateGoalParams) => {
 	return data;
 };
 
-export type UpdateGoalMetadataParams = {
-	goal_id: string;
-	title?: string;
-	description?: string;
-};
-
 export const updateGoalMetadata = async (params: UpdateGoalMetadataParams) => {
 	const { error } = await supabase.rpc("update_goal", {
 		p_goal_id: params.goal_id,
@@ -91,12 +53,6 @@ export const updateGoalMetadata = async (params: UpdateGoalMetadataParams) => {
 		p_description: params.description ?? null,
 	});
 	if (error) throw error;
-};
-
-export type UpdateParticipantSettingsParams = {
-	goal_id: string;
-	anchor_date?: string | null;
-	weekly_days?: number[] | null;
 };
 
 export const updateParticipantSettings = async (
@@ -139,21 +95,6 @@ export const createInvite = async (
 	if (error) throw error;
 };
 
-export type GoalInviteWithDetails = {
-	id: string;
-	goal_id: string;
-	inviter_id: string;
-	invitee_id: string;
-	created_at: string;
-	goal: {
-		title: string;
-		description: string | null;
-		frequency_type: "interval" | "weekly";
-		frequency_value: number;
-	};
-	inviter: { username: string; avatar_url: string | null };
-};
-
 export const fetchInvites = async (userId: string) => {
 	const { data, error } = await supabase
 		.from("goal_invites")
@@ -192,7 +133,7 @@ export const completeGoal = async (
 		goal_id: goalId,
 		user_id: userId,
 		completed_at: new Date().toISOString(),
-		attachment_data: attachmentData,
+		attachment_data: attachmentData ?? null,
 	});
 	if (error) throw error;
 };

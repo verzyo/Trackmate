@@ -1,22 +1,27 @@
 import { router } from "expo-router";
 import { Alert, Button, Platform, ScrollView, Text, View } from "react-native";
 import { Screen } from "@/components/layout/Screen";
-import { useAcceptInvite } from "@/hooks/goal/useAcceptInvite";
-import { useDeclineInvite } from "@/hooks/goal/useDeclineInvite";
-import { useInvites } from "@/hooks/goal/useInvites";
-import { useAuthStore } from "@/lib/store/auth.store";
+import {
+	useAcceptInvite,
+	useDeclineInvite,
+} from "@/hooks/goal/useGoalMutations";
+import { useInvites } from "@/hooks/goal/useGoalQueries";
+import { useAuthStore } from "@/store/auth.store";
 
 export default function InvitesScreen() {
 	const { user } = useAuthStore();
 	const userId = user?.id;
 
 	const { data: invites, isLoading, error } = useInvites(userId);
-	const acceptInviteMutation = useAcceptInvite(userId);
-	const declineInviteMutation = useDeclineInvite(userId);
+	const acceptInviteMutation = useAcceptInvite();
+	const declineInviteMutation = useDeclineInvite();
 
 	const handleAccept = async (inviteId: string, goalId: string) => {
 		try {
-			await acceptInviteMutation.mutateAsync(inviteId);
+			await acceptInviteMutation.mutateAsync({
+				inviteId,
+				userId: userId as string,
+			});
 			router.push(`/app/goal/${goalId}`);
 		} catch (_e) {
 			const errorMessage = "Failed to accept invite";
@@ -30,7 +35,10 @@ export default function InvitesScreen() {
 
 	const handleDecline = async (inviteId: string) => {
 		try {
-			await declineInviteMutation.mutateAsync(inviteId);
+			await declineInviteMutation.mutateAsync({
+				inviteId,
+				userId: userId as string,
+			});
 		} catch (_e) {
 			const errorMessage = "Failed to decline invite";
 			if (Platform.OS === "web") {
