@@ -28,7 +28,11 @@ import { useGoal } from "@/hooks/goal/useGoalQueries";
 import { createWeeklyDaysSchema } from "@/schemas/goal.schema";
 import { fetchProfileByUsername } from "@/services/profile.service";
 import { useAuthStore } from "@/store/auth.store";
-import { formatToISODate, getTodayUTC, toUTCDate } from "@/utils/date.utils";
+import {
+	formatToISODate,
+	getTodayUTC,
+	toUTCMidnight,
+} from "@/utils/date.utils";
 
 type GoalForm = {
 	title: string;
@@ -105,7 +109,7 @@ export default function EditGoalModal() {
 		if (Platform.OS === "android") {
 			setShowDatePicker(false);
 		}
-		if (selectedDate) setAnchorDate(toUTCDate(selectedDate));
+		if (selectedDate) setAnchorDate(toUTCMidnight(selectedDate));
 	};
 
 	const onSave = async (data: GoalForm) => {

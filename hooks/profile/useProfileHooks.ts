@@ -1,5 +1,4 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { queryClient } from "@/lib/queryClient";
 import { fetchProfile, updateProfile } from "@/services/profile.service";
@@ -8,6 +7,13 @@ const MAX_SIZE = 5 * 1024 * 1024;
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 export const pickAvatar = async () => {
+	const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+	if (status !== "granted") {
+		throw new Error(
+			"Sorry, we need camera roll permissions to make this work!",
+		);
+	}
+
 	const result = await ImagePicker.launchImageLibraryAsync({
 		mediaTypes: ["images"],
 		allowsEditing: true,
@@ -32,13 +38,6 @@ export const useProfile = (userId?: string | null) => {
 		queryFn: async () => {
 			if (!userId) return null;
 			const profile = await fetchProfile(userId);
-
-			if (profile?.avatar_url) {
-				const buster = profile.updated_at
-					? new Date(profile.updated_at).getTime()
-					: Date.now();
-				Image.prefetch(`${profile.avatar_url}?t=${buster}`);
-			}
 			return profile;
 		},
 		enabled: !!userId,

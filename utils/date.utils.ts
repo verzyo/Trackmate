@@ -1,4 +1,4 @@
-export const toUTCDate = (date: Date): Date => {
+export const toUTCMidnight = (date: Date): Date => {
 	return new Date(
 		Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()),
 	);

@@ -208,22 +208,6 @@ export const fetchGoalMonthlyPoints = async (
 	return data as number;
 };
 
-export const fetchTodayCompletionForGoal = async (
-	goalId: string,
-	userId: string,
-) => {
-	const today = formatToISODate(getTodayUTC());
-	const { data, error } = await supabase
-		.from("goal_completions")
-		.select("id")
-		.eq("goal_id", goalId)
-		.eq("user_id", userId)
-		.eq("completed_date", today)
-		.maybeSingle();
-	if (error) throw error;
-	return data !== null;
-};
-
 export const fetchGoalCompletions = async (goalId: string, userId: string) => {
 	const { data, error } = await supabase
 		.from("goal_completions")

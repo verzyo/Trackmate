@@ -27,7 +27,11 @@ import {
 } from "@/schemas/goal.schema";
 import { fetchProfileByUsername } from "@/services/profile.service";
 import { useAuthStore } from "@/store/auth.store";
-import { formatToISODate, getTodayUTC, toUTCDate } from "@/utils/date.utils";
+import {
+	formatToISODate,
+	getTodayUTC,
+	toUTCMidnight,
+} from "@/utils/date.utils";
 
 export default function NewGoalModal() {
 	const { user } = useAuthStore();
@@ -73,7 +77,7 @@ export default function NewGoalModal() {
 		}
 
 		const currentDate = selectedDate || anchorDate;
-		setAnchorDate(toUTCDate(currentDate));
+		setAnchorDate(toUTCMidnight(currentDate));
 	};
 
 	const handleAddInvite = async () => {

@@ -1,4 +1,5 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { AppState } from "react-native";
 import type { GoalWithParticipant } from "@/schemas/goal.schema";
 import {
 	addDaysUTC,
@@ -60,6 +61,31 @@ export function useGroupedGoals(
 	userId: string | undefined,
 	todaysCompletions: string[] | undefined,
 ) {
+	const [now, setNow] = useState(getTodayUTC());
+
+	useEffect(() => {
+		const interval = setInterval(() => {
+			const today = getTodayUTC();
+			if (today.getTime() !== now.getTime()) {
+				setNow(today);
+			}
+		}, 60000);
+
+		const subscription = AppState.addEventListener("change", (nextAppState) => {
+			if (nextAppState === "active") {
+				const today = getTodayUTC();
+				if (today.getTime() !== now.getTime()) {
+					setNow(today);
+				}
+			}
+		});
+
+		return () => {
+			clearInterval(interval);
+			subscription.remove();
+		};
+	}, [now]);
+
 	return useMemo(() => {
 		if (!goals || !userId) return { today: [], upcoming: [] };
 
@@ -72,7 +98,6 @@ export function useGroupedGoals(
 			daysUntil: number;
 		})[] = [];
 
-		const now = getTodayUTC();
 		const completedSet = new Set(todaysCompletions || []);
 
 		for (const goal of goals) {
@@ -102,5 +127,5 @@ export function useGroupedGoals(
 		upcoming.sort((a, b) => a.nextDueDate.getTime() - b.nextDueDate.getTime());
 
 		return { today, upcoming };
-	}, [goals, userId, todaysCompletions]);
+	}, [goals, userId, todaysCompletions, now]);
 }
