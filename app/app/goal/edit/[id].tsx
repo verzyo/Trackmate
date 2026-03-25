@@ -1,3 +1,12 @@
+import { Screen } from "@/components/layout/Screen";
+import { useCreateInvite } from "@/hooks/goal/useCreateInvite";
+import { useDeleteGoal } from "@/hooks/goal/useDeleteGoal";
+import { useGoal } from "@/hooks/goal/useGoal";
+import { useLeaveGoal } from "@/hooks/goal/useLeaveGoal";
+import { useUpdateGoalMetadata } from "@/hooks/goal/useUpdateGoalMetadata";
+import { useUpdateParticipantSettings } from "@/hooks/goal/useUpdateParticipantSettings";
+import { fetchProfileByUsername } from "@/lib/api/profile.api";
+import { useAuthStore } from "@/lib/store/auth.store";
 import DateTimePicker, {
 	type DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
@@ -15,16 +24,6 @@ import {
 	TextInput,
 	View,
 } from "react-native";
-import { Screen } from "@/components/layout/Screen";
-import { useCreateInvite } from "@/hooks/goal/useCreateInvite";
-import { useDeleteGoal } from "@/hooks/goal/useDeleteGoal";
-import { useGoal } from "@/hooks/goal/useGoal";
-import { useLeaveGoal } from "@/hooks/goal/useLeaveGoal";
-import { useUpdateGoal } from "@/hooks/goal/useUpdateGoal";
-import { useUpdateGoalParticipant } from "@/hooks/goal/useUpdateGoalParticipant";
-import type { UpdateGoalParams } from "@/lib/api/goal.api";
-import { fetchProfileByUsername } from "@/lib/api/profile.api";
-import { useAuthStore } from "@/lib/store/auth.store";
 
 type GoalForm = {
 	title: string;
@@ -34,8 +33,8 @@ type GoalForm = {
 export default function EditGoalModal() {
 	const { id } = useLocalSearchParams<{ id: string }>();
 	const { data: goal, isLoading: isGoalLoading } = useGoal(id as string);
-	const updateGoalMutation = useUpdateGoal();
-	const updateParticipantMutation = useUpdateGoalParticipant();
+	const updateMetadataMutation = useUpdateGoalMetadata();
+	const updateParticipantMutation = useUpdateParticipantSettings();
 	const deleteGoalMutation = useDeleteGoal();
 	const createInviteMutation = useCreateInvite();
 	const leaveGoalMutation = useLeaveGoal();
@@ -51,11 +50,15 @@ export default function EditGoalModal() {
 	const [weeklyDaysInput, setWeeklyDaysInput] = useState("1");
 	const [showDatePicker, setShowDatePicker] = useState(false);
 
+	const [initialAnchorDate, setInitialAnchorDate] = useState<Date | null>(null);
+	const [initialWeeklyDays, setInitialWeeklyDays] = useState<string | null>(
+		null,
+	);
+
 	const {
 		control,
 		handleSubmit,
 		reset,
-		formState: { isSubmitting },
 	} = useForm<GoalForm>({
 		defaultValues: {
 			title: "",
@@ -65,13 +68,19 @@ export default function EditGoalModal() {
 
 	useEffect(() => {
 		if (goal) {
-			const participant = goal.goal_participants?.[0];
-			if (participant) {
-				if (participant.anchor_date) {
-					setAnchorDate(new Date(participant.anchor_date));
+			const myParticipant = goal.goal_participants?.find(
+				(p) => p.user_id === userId,
+			);
+			if (myParticipant) {
+				if (myParticipant.anchor_date) {
+					const date = new Date(myParticipant.anchor_date);
+					setAnchorDate(date);
+					setInitialAnchorDate(date);
 				}
-				if (participant.weekly_days) {
-					setWeeklyDaysInput(participant.weekly_days.join(", "));
+				if (myParticipant.weekly_days) {
+					const days = myParticipant.weekly_days.join(", ");
+					setWeeklyDaysInput(days);
+					setInitialWeeklyDays(days);
 				}
 			}
 			reset({
@@ -79,7 +88,7 @@ export default function EditGoalModal() {
 				description: goal.description || "",
 			});
 		}
-	}, [goal, reset]);
+	}, [goal, reset, userId]);
 
 	const onChangeDate = (_event: DateTimePickerEvent, selectedDate?: Date) => {
 		if (Platform.OS === "android") {
@@ -88,24 +97,73 @@ export default function EditGoalModal() {
 		if (selectedDate) setAnchorDate(selectedDate);
 	};
 
-	const onSubmit = async (data: GoalForm) => {
+	const onSave = async (data: GoalForm) => {
 		try {
-			const params: UpdateGoalParams = {
-				goal_id: id as string,
-				title: data.title,
-				description: data.description,
-			};
+			const metadataPromises = [];
+			const participantPromises = [];
 
-			await updateGoalMutation.mutateAsync(params);
-			router.back();
-		} catch (error) {
-			let errorMessage =
-				error instanceof Error ? error.message : "Failed to update goal";
-
-			if (errorMessage.includes("title_not_empty")) {
-				errorMessage = "Goal title cannot be empty.";
+			if (isOwner) {
+				const metadataParams: Record<string, unknown> = { goal_id: id as string };
+				let hasMetadataChanges = false;
+				if (data.title !== goal?.title) {
+					metadataParams.title = data.title;
+					hasMetadataChanges = true;
+				}
+				if (data.description !== (goal?.description || "")) {
+					metadataParams.description = data.description;
+					hasMetadataChanges = true;
+				}
+				if (hasMetadataChanges) {
+					metadataPromises.push(
+						updateMetadataMutation.mutateAsync(
+							metadataParams as { goal_id: string; title?: string; description?: string }
+						)
+					);
+				}
 			}
 
+			const participantParams: Record<string, unknown> = { goal_id: id as string };
+			let hasParticipantChanges = false;
+
+			if (goal?.frequency_type === "interval") {
+				if (
+					initialAnchorDate === null ||
+					anchorDate.getTime() !== initialAnchorDate.getTime()
+				) {
+					participantParams.anchor_date = anchorDate.toISOString();
+					hasParticipantChanges = true;
+				}
+			} else if (goal?.frequency_type === "weekly") {
+				if (weeklyDaysInput !== (initialWeeklyDays ?? "")) {
+					const days = weeklyDaysInput
+						.split(",")
+						.map((n) => Number(n.trim()))
+						.filter((n) => !Number.isNaN(n) && n >= 1 && n <= 7);
+					if (days.length > 0) {
+						participantParams.weekly_days = days;
+						hasParticipantChanges = true;
+					}
+				}
+			}
+
+			if (hasParticipantChanges) {
+				participantPromises.push(
+					updateParticipantMutation.mutateAsync(
+						participantParams as { goal_id: string; anchor_date?: string; weekly_days?: number[] }
+					)
+				);
+			}
+
+			if (metadataPromises.length === 0 && participantPromises.length === 0) {
+				router.back();
+				return;
+			}
+
+			await Promise.all([...metadataPromises, ...participantPromises]);
+			router.back();
+		} catch (error) {
+			const errorMessage =
+				error instanceof Error ? error.message : "Failed to update goal";
 			if (Platform.OS === "web") {
 				alert(errorMessage);
 			} else {
@@ -114,10 +172,7 @@ export default function EditGoalModal() {
 		}
 	};
 
-	const isLoading =
-		isSubmitting ||
-		updateGoalMutation.isPending ||
-		updateParticipantMutation.isPending;
+	const isSaving = updateMetadataMutation.isPending || updateParticipantMutation.isPending;
 
 	if (isGoalLoading || !goal) {
 		return (
@@ -194,60 +249,53 @@ export default function EditGoalModal() {
 	return (
 		<Screen className="px-6 py-4">
 			<ScrollView contentContainerClassName="flex-grow items-center justify-center gap-4">
-				<Text>Title*</Text>
-				<Controller
-					control={control}
-					name="title"
-					render={({ field: { onChange, value } }) => (
-						<TextInput
-							value={value}
-							onChangeText={onChange}
-							placeholder="e.g. Morning Run"
-							className="text-center"
-							editable={isOwner}
-						/>
-					)}
-				/>
-
-				<Text>Description</Text>
-				<Controller
-					control={control}
-					name="description"
-					render={({ field: { onChange, value } }) => (
-						<TextInput
-							value={value}
-							onChangeText={onChange}
-							placeholder="Optional details"
-							className="text-center"
-							editable={isOwner}
-						/>
-					)}
-				/>
-
 				{isOwner && (
-					<View className="mt-2 mb-6">
-						<Button
-							title={
-								updateGoalMutation.isPending ? "Updating..." : "Update Goal"
-							}
-							onPress={handleSubmit(onSubmit)}
-							disabled={isLoading}
+					<>
+						<Text>Title*</Text>
+						<Controller
+							control={control}
+							name="title"
+							render={({ field: { onChange, value } }) => (
+								<TextInput
+									value={value}
+									onChangeText={onChange}
+									placeholder="e.g. Morning Run"
+									className="text-center"
+								/>
+							)}
 						/>
-					</View>
+
+						<Text>Description</Text>
+						<Controller
+							control={control}
+							name="description"
+							render={({ field: { onChange, value } }) => (
+								<TextInput
+									value={value}
+									onChangeText={onChange}
+									placeholder="Optional details"
+									className="text-center"
+								/>
+							)}
+						/>
+					</>
 				)}
 
 				<View className="h-[1px] bg-gray-300 w-full my-4" />
 
 				<Text className="font-bold text-lg">Frequency</Text>
-				<Text>
-					Type: <Text className="capitalize">{goal.frequency_type}</Text>
-				</Text>
-				<Text>
-					Value:{" "}
-					{goal.frequency_type === "interval"
-						? `${goal.frequency_value} days`
-						: `${goal.frequency_value} days per week`}
-				</Text>
+
+				<>
+					<Text>
+						Type: <Text className="capitalize">{goal.frequency_type}</Text>
+					</Text>
+					<Text>
+						Value:{" "}
+						{goal.frequency_type === "interval"
+							? `${goal.frequency_value} days`
+							: `${goal.frequency_value} days per week`}
+					</Text>
+				</>
 
 				<View className="h-[1px] bg-gray-300 w-full my-4" />
 
@@ -293,36 +341,6 @@ export default function EditGoalModal() {
 								onChange={onChangeDate}
 							/>
 						)}
-						<View className="mt-2 mb-4">
-							<Button
-								title={
-									updateParticipantMutation.isPending
-										? "Updating..."
-										: "Update Anchor"
-								}
-								onPress={async () => {
-									try {
-										await updateParticipantMutation.mutateAsync({
-											goalId: id as string,
-											newAnchorDate: anchorDate.toISOString(),
-											newWeeklyDays: null,
-										});
-										if (Platform.OS === "web") {
-											alert("Updated successfully!");
-										} else {
-											Alert.alert("Success", "Updated successfully!");
-										}
-									} catch (_e) {
-										if (Platform.OS === "web") {
-											alert("Failed to update settings");
-										} else {
-											Alert.alert("Error", "Failed to update settings");
-										}
-									}
-								}}
-								disabled={isLoading}
-							/>
-						</View>
 					</>
 				)}
 
@@ -335,43 +353,18 @@ export default function EditGoalModal() {
 							placeholder="e.g. 1, 3, 5"
 							className="text-center mb-4"
 						/>
-						<View className="mt-2 mb-4">
-							<Button
-								title={
-									updateParticipantMutation.isPending
-										? "Updating..."
-										: "Update Days"
-								}
-								onPress={async () => {
-									try {
-										const days = weeklyDaysInput
-											.split(",")
-											.map((n) => Number(n.trim()))
-											.filter((n) => !Number.isNaN(n) && n >= 1 && n <= 7);
-
-										await updateParticipantMutation.mutateAsync({
-											goalId: id as string,
-											newAnchorDate: null,
-											newWeeklyDays: days.length > 0 ? days : null,
-										});
-										if (Platform.OS === "web") {
-											alert("Updated successfully!");
-										} else {
-											Alert.alert("Success", "Updated successfully!");
-										}
-									} catch (_e) {
-										if (Platform.OS === "web") {
-											alert("Failed to update settings");
-										} else {
-											Alert.alert("Error", "Failed to update settings");
-										}
-									}
-								}}
-								disabled={isLoading}
-							/>
-						</View>
 					</>
 				)}
+
+				<View className="mt-4 mb-6 w-full max-w-xs">
+					<Button
+						title={isSaving ? "Saving..." : "Save Changes"}
+						onPress={handleSubmit(onSave)}
+						disabled={isSaving}
+					/>
+				</View>
+
+				<View className="h-[1px] bg-gray-300 w-full my-4" />
 
 				{isOwner && (
 					<View className="mt-8 pt-4 w-full items-center">
@@ -401,14 +394,14 @@ export default function EditGoalModal() {
 							}
 							color="red"
 							onPress={handleDelete}
-							disabled={isLoading || deleteGoalMutation.isPending}
+							disabled={isSaving || deleteGoalMutation.isPending}
 						/>
 					) : (
 						<Button
 							title={leaveGoalMutation.isPending ? "Leaving..." : "Leave goal"}
 							color="red"
 							onPress={handleLeave}
-							disabled={isLoading || leaveGoalMutation.isPending}
+							disabled={isSaving || leaveGoalMutation.isPending}
 						/>
 					)}
 				</View>

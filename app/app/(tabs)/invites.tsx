@@ -1,4 +1,5 @@
 import { Alert, Button, Platform, ScrollView, Text, View } from "react-native";
+import { router } from "expo-router";
 import { Screen } from "@/components/layout/Screen";
 import { useAcceptInvite } from "@/hooks/goal/useAcceptInvite";
 import { useDeclineInvite } from "@/hooks/goal/useDeclineInvite";
@@ -58,6 +59,11 @@ export default function InvitesScreen() {
 						<Text className="text-sm text-neutral-500 mb-2">
 							Invited by: {invite.inviter.username}
 						</Text>
+						<Text className="text-sm mb-2">
+							{invite.goal.frequency_type === "interval"
+								? `Every ${invite.goal.frequency_value} days`
+								: `${invite.goal.frequency_value} days per week`}
+						</Text>
 						<View className="flex-row gap-4 mt-2">
 							<Button
 								title="Decline"
@@ -74,6 +80,14 @@ export default function InvitesScreen() {
 								disabled={
 									declineInviteMutation.isPending ||
 									acceptInviteMutation.isPending
+								}
+							/>
+							<Button
+								title="Preview"
+								onPress={() =>
+									router.push(
+										`/app/goal/${invite.goal_id}?inviteId=${invite.id}`,
+									)
 								}
 							/>
 						</View>

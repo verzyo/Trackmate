@@ -60,10 +60,19 @@ export default function NewGoalModal() {
 		try {
 			let activeWeekly: number[] | null = null;
 			if (frequencyType === "weekly") {
-				activeWeekly = data.weekly_days
+				const activeDays = data.weekly_days
 					.split(",")
 					.map((d) => parseInt(d.trim(), 10))
 					.filter((d) => !Number.isNaN(d));
+				
+				const uniqueDays = Array.from(new Set(activeDays));
+				if (uniqueDays.some((d) => d < 1 || d > 7)) {
+					throw new Error("Weekly days must be between 1 and 7 (1=Monday, 7=Sunday).");
+				}
+				if (uniqueDays.length === 0) {
+					throw new Error("Please specify at least one day for weekly goals.");
+				}
+				activeWeekly = uniqueDays;
 			}
 
 			let frequencyValue = 1;

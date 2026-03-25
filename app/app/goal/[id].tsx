@@ -1,11 +1,21 @@
 import { type Href, router, useLocalSearchParams } from "expo-router";
-import { Button, ScrollView, Text, View } from "react-native";
+import { Alert, Button, Platform, ScrollView, Text, View } from "react-native";
 import { Screen } from "@/components/layout/Screen";
 import { useGoal } from "@/hooks/goal/useGoal";
+import { useAcceptInvite } from "@/hooks/goal/useAcceptInvite";
+import { useDeclineInvite } from "@/hooks/goal/useDeclineInvite";
+import { useAuthStore } from "@/lib/store/auth.store";
 
 export default function GoalDetailsModal() {
-	const { id } = useLocalSearchParams<{ id: string }>();
+	const { id, inviteId } = useLocalSearchParams<{
+		id: string;
+		inviteId?: string;
+	}>();
+	const userId = useAuthStore((state) => state.user?.id);
 	const { data: goal, isLoading, error } = useGoal(id as string);
+
+	const acceptInviteMutation = useAcceptInvite(userId);
+	const declineInviteMutation = useDeclineInvite(userId);
 
 	if (isLoading) {
 		return (
@@ -24,6 +34,39 @@ export default function GoalDetailsModal() {
 	}
 
 	const participant = goal.goal_participants?.[0];
+	const isParticipant = goal.goal_participants.some(
+		(p) => p.user_id === userId,
+	);
+
+	const handleAcceptInvite = async () => {
+		if (!inviteId) return;
+		try {
+			await acceptInviteMutation.mutateAsync(inviteId);
+			router.back();
+		} catch (_e) {
+			const errorMessage = "Failed to accept invite";
+			if (Platform.OS === "web") {
+				window.alert(errorMessage);
+			} else {
+				Alert.alert("Error", errorMessage);
+			}
+		}
+	};
+
+	const handleDeclineInvite = async () => {
+		if (!inviteId) return;
+		try {
+			await declineInviteMutation.mutateAsync(inviteId);
+			router.back();
+		} catch (_e) {
+			const errorMessage = "Failed to decline invite";
+			if (Platform.OS === "web") {
+				window.alert(errorMessage);
+			} else {
+				Alert.alert("Error", errorMessage);
+			}
+		}
+	};
 
 	return (
 		<Screen className="px-6 py-4">
@@ -31,15 +74,16 @@ export default function GoalDetailsModal() {
 				<Text>Title: {goal.title}</Text>
 				<Text>Description: {goal.description || "No description"}</Text>
 
+				<Text>Frequency: {goal.frequency_type}</Text>
+				{goal.frequency_type === "interval" && (
+					<Text>Every: {goal.frequency_value} days</Text>
+				)}
+				{goal.frequency_type === "weekly" && (
+					<Text>Days per week: {goal.frequency_value}</Text>
+				)}
+
 				{participant && (
 					<>
-						<Text>Frequency: {goal.frequency_type}</Text>
-						{goal.frequency_type === "interval" && (
-							<Text>Every: {goal.frequency_value} days</Text>
-						)}
-						{goal.frequency_type === "weekly" && (
-							<Text>Days per week: {goal.frequency_value}</Text>
-						)}
 						{goal.frequency_type === "interval" && participant.anchor_date && (
 							<Text>
 								Anchor Date:{" "}
@@ -53,10 +97,40 @@ export default function GoalDetailsModal() {
 				)}
 
 				<View className="mt-8 w-full max-w-xs">
-					<Button
-						title="EDIT GOAL"
-						onPress={() => router.push(`/app/goal/edit/${id}` as Href)}
-					/>
+					{inviteId && !isParticipant ? (
+						<View className="gap-4">
+							<Button
+								title={
+									acceptInviteMutation.isPending
+										? "Accepting..."
+										: "Accept Invite"
+								}
+								onPress={handleAcceptInvite}
+								disabled={
+									acceptInviteMutation.isPending ||
+									declineInviteMutation.isPending
+								}
+							/>
+							<Button
+								title={
+									declineInviteMutation.isPending
+										? "Declining..."
+										: "Decline Invite"
+								}
+								color="red"
+								onPress={handleDeclineInvite}
+								disabled={
+									acceptInviteMutation.isPending ||
+									declineInviteMutation.isPending
+								}
+							/>
+						</View>
+					) : isParticipant ? (
+						<Button
+							title="EDIT GOAL"
+							onPress={() => router.push(`/app/goal/edit/${id}` as Href)}
+						/>
+					) : null}
 				</View>
 			</ScrollView>
 		</Screen>
