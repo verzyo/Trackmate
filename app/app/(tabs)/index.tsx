@@ -1,5 +1,5 @@
 import { type Href, router } from "expo-router";
-import { useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import {
 	ActivityIndicator,
 	Alert,

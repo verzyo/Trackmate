@@ -15,6 +15,7 @@ import {
 	TextInput,
 	View,
 } from "react-native";
+import { ZodError } from "zod";
 import { Screen } from "@/components/layout/Screen";
 import {
 	useCreateInvite,
@@ -24,6 +25,7 @@ import {
 	useUpdateParticipantSettings,
 } from "@/hooks/goal/useGoalMutations";
 import { useGoal } from "@/hooks/goal/useGoalQueries";
+import { createWeeklyDaysSchema } from "@/schemas/goal.schema";
 import { fetchProfileByUsername } from "@/services/profile.service";
 import { useAuthStore } from "@/store/auth.store";
 import { formatToISODate, getTodayUTC, toUTCDate } from "@/utils/date.utils";
@@ -153,14 +155,12 @@ export default function EditGoalModal() {
 				}
 			} else if (goal?.frequency_type === "weekly") {
 				if (weeklyDaysInput !== (initialWeeklyDays ?? "")) {
-					const days = weeklyDaysInput
-						.split(",")
-						.map((n) => Number(n.trim()))
-						.filter((n) => !Number.isNaN(n) && n >= 1 && n <= 7);
-					if (days.length > 0) {
-						participantParams.weekly_days = days;
-						hasParticipantChanges = true;
-					}
+					const uniqueDays = createWeeklyDaysSchema(goal.frequency_value).parse(
+						weeklyDaysInput,
+					);
+
+					participantParams.weekly_days = uniqueDays;
+					hasParticipantChanges = true;
 				}
 			}
 
@@ -204,8 +204,12 @@ export default function EditGoalModal() {
 			]);
 			router.back();
 		} catch (error) {
-			const errorMessage =
+			let errorMessage =
 				error instanceof Error ? error.message : "Failed to update goal";
+			if (error instanceof ZodError) {
+				errorMessage = error.issues[0].message;
+			}
+
 			if (Platform.OS === "web") {
 				alert(errorMessage);
 			} else {

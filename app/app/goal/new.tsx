@@ -16,10 +16,15 @@ import {
 	TextInput,
 	View,
 } from "react-native";
+import { ZodError } from "zod";
 import { Screen } from "@/components/layout/Screen";
 import { useCreateGoal, useCreateInvite } from "@/hooks/goal/useGoalMutations";
 import type { CreateGoalParams } from "@/schemas/goal.schema";
-import { type GoalForm, GoalFormSchema } from "@/schemas/goal.schema";
+import {
+	createWeeklyDaysSchema,
+	type GoalForm,
+	GoalFormSchema,
+} from "@/schemas/goal.schema";
 import { fetchProfileByUsername } from "@/services/profile.service";
 import { useAuthStore } from "@/store/auth.store";
 import { formatToISODate, getTodayUTC, toUTCDate } from "@/utils/date.utils";
@@ -39,17 +44,14 @@ export default function NewGoalModal() {
 		{ id: string; username: string }[]
 	>([]);
 
-	const [attachmentType, setAttachmentType] = useState<
-		"none" | "photo" | "url" | "text"
-	>("none");
-	const [requireAttachment, setRequireAttachment] = useState(false);
-
 	const createGoalMutation = useCreateGoal();
 	const createInviteMutation = useCreateInvite();
 
 	const {
 		control,
 		handleSubmit,
+		watch,
+		setValue,
 		formState: { errors, isSubmitting },
 	} = useForm<GoalForm>({
 		resolver: zodResolver(GoalFormSchema),
@@ -58,8 +60,12 @@ export default function NewGoalModal() {
 			description: "",
 			interval_days: "1",
 			weekly_days: "1",
+			attachment_type: "none",
+			require_attachment: false,
 		},
 	});
+
+	const watchedAttachmentType = watch("attachment_type");
 
 	const onChangeDate = (_event: DateTimePickerEvent, selectedDate?: Date) => {
 		if (Platform.OS === "android") {
@@ -120,21 +126,7 @@ export default function NewGoalModal() {
 		try {
 			let activeWeekly: number[] | null = null;
 			if (frequencyType === "weekly") {
-				const activeDays = data.weekly_days
-					.split(",")
-					.map((d) => parseInt(d.trim(), 10))
-					.filter((d) => !Number.isNaN(d));
-
-				const uniqueDays = Array.from(new Set(activeDays));
-				if (uniqueDays.some((d) => d < 1 || d > 7)) {
-					throw new Error(
-						"Weekly days must be between 1 and 7 (1=Monday, 7=Sunday).",
-					);
-				}
-				if (uniqueDays.length === 0) {
-					throw new Error("Please specify at least one day for weekly goals.");
-				}
-				activeWeekly = uniqueDays;
+				activeWeekly = createWeeklyDaysSchema().parse(data.weekly_days);
 			}
 
 			let frequencyValue = 1;
@@ -152,8 +144,8 @@ export default function NewGoalModal() {
 				weekly_days: frequencyType === "weekly" ? activeWeekly : null,
 				anchor_date:
 					frequencyType === "interval" ? anchorDate.toISOString() : null,
-				attachment_type: attachmentType,
-				require_attachment: requireAttachment,
+				attachment_type: data.attachment_type,
+				require_attachment: data.require_attachment,
 			};
 
 			const goalId = await createGoalMutation.mutateAsync(params);
@@ -174,6 +166,10 @@ export default function NewGoalModal() {
 		} catch (error) {
 			let errorMessage =
 				error instanceof Error ? error.message : "Failed to create goal";
+
+			if (error instanceof ZodError) {
+				errorMessage = error.issues[0].message;
+			}
 
 			if (errorMessage.includes("title_not_empty")) {
 				errorMessage = "Goal title cannot be empty.";
@@ -329,25 +325,39 @@ export default function NewGoalModal() {
 				)}
 
 				<Text className="mt-4">Attachment Type</Text>
-				<View className="flex-row gap-4 mb-2">
-					{(["none", "photo", "url", "text"] as const).map((type) => (
-						<Button
-							key={type}
-							title={type}
-							color={attachmentType === type ? "#007AFF" : "gray"}
-							onPress={() => setAttachmentType(type)}
-						/>
-					))}
-				</View>
+				<Controller
+					control={control}
+					name="attachment_type"
+					render={({ field: { onChange, value } }) => (
+						<View className="flex-row gap-4 mb-2">
+							{(["none", "photo", "url", "text"] as const).map((type) => (
+								<Button
+									key={type}
+									title={type}
+									color={value === type ? "#007AFF" : "gray"}
+									onPress={() => {
+										onChange(type);
+										if (type === "none") {
+											setValue("require_attachment", false);
+										}
+									}}
+								/>
+							))}
+						</View>
+					)}
+				/>
 
-				{attachmentType !== "none" && (
-					<View className="flex-row items-center gap-2 mb-4">
-						<Text>Require attachment</Text>
-						<Switch
-							value={requireAttachment}
-							onValueChange={setRequireAttachment}
-						/>
-					</View>
+				{watchedAttachmentType !== "none" && (
+					<Controller
+						control={control}
+						name="require_attachment"
+						render={({ field: { onChange, value } }) => (
+							<View className="flex-row items-center gap-2 mb-4">
+								<Text>Require attachment</Text>
+								<Switch value={value} onValueChange={onChange} />
+							</View>
+						)}
+					/>
 				)}
 
 				<View className="h-[1px] bg-gray-300 w-full my-4" />

@@ -49,8 +49,8 @@ export const createGoal = async (params: CreateGoalParams) => {
 export const updateGoalMetadata = async (params: UpdateGoalMetadataParams) => {
 	const { error } = await supabase.rpc("update_goal", {
 		p_goal_id: params.goal_id,
-		p_title: params.title ?? null,
-		p_description: params.description ?? null,
+		p_new_title: params.title ?? null,
+		p_new_description: params.description ?? null,
 	});
 	if (error) throw error;
 };

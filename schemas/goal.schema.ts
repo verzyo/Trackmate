@@ -1,17 +1,28 @@
 import { z } from "zod";
 
 export const GoalFormSchema = z.object({
-	title: z.string().min(1, "Goal title cannot be empty."),
-	description: z.string().optional(),
+	title: z
+		.string()
+		.min(1, "Goal title cannot be empty")
+		.max(32, "Title cannot exceed 32 characters"),
+	description: z
+		.string()
+		.max(128, "Description cannot exceed 128 characters")
+		.optional(),
 	interval_days: z.string().min(1, "Required"),
 	weekly_days: z.string().min(1, "Required"),
+	attachment_type: z.enum(["none", "photo", "url", "text"]),
+	require_attachment: z.boolean(),
 });
 export type GoalForm = z.infer<typeof GoalFormSchema>;
 
 export const UpdateGoalMetadataSchema = z.object({
 	goal_id: z.string(),
-	title: z.string().optional(),
-	description: z.string().optional(),
+	title: z.string().max(32, "Title cannot exceed 32 characters").optional(),
+	description: z
+		.string()
+		.max(128, "Description cannot exceed 128 characters")
+		.optional(),
 });
 export type UpdateGoalMetadataParams = z.infer<typeof UpdateGoalMetadataSchema>;
 
@@ -25,8 +36,8 @@ export type UpdateParticipantSettingsParams = z.infer<
 >;
 
 export const CreateGoalBackendSchema = z.object({
-	title: z.string().min(1),
-	description: z.string().nullable().optional(),
+	title: z.string().min(1).max(32),
+	description: z.string().max(128).nullable().optional(),
 	frequency_type: z.enum(["interval", "weekly"]),
 	frequency_value: z.number().int().positive(),
 	weekly_days: z.array(z.number()).nullable(),
@@ -88,3 +99,22 @@ export const GoalInviteWithDetailsSchema = z.object({
 	}),
 });
 export type GoalInviteWithDetails = z.infer<typeof GoalInviteWithDetailsSchema>;
+
+export const createWeeklyDaysSchema = (expectedLength?: number) =>
+	z
+		.string()
+		.transform((val) =>
+			val
+				.split(",")
+				.map((n) => Number(n.trim()))
+				.filter((n) => !Number.isNaN(n)),
+		)
+		.transform((arr) => Array.from(new Set(arr)))
+		.refine(
+			(arr) => !arr.some((d) => d < 1 || d > 7),
+			"Weekly days must be between 1 and 7",
+		)
+		.refine((arr) => arr.length > 0, "Please specify at least one day")
+		.refine((arr) => (expectedLength ? arr.length === expectedLength : true), {
+			message: `Please select exactly ${expectedLength} days`,
+		});
