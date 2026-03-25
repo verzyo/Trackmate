@@ -10,6 +10,7 @@ import {
 	Platform,
 	Pressable,
 	ScrollView,
+	Switch,
 	Text,
 	TextInput,
 	View,
@@ -43,6 +44,11 @@ export default function NewGoalModal() {
 	const [pendingInvitees, setPendingInvitees] = useState<
 		{ id: string; username: string }[]
 	>([]);
+
+	const [attachmentType, setAttachmentType] = useState<
+		"none" | "photo" | "url" | "text"
+	>("none");
+	const [requireAttachment, setRequireAttachment] = useState(false);
 
 	const createGoalMutation = useCreateGoal();
 	const createInviteMutation = useCreateInvite();
@@ -151,6 +157,8 @@ export default function NewGoalModal() {
 				weekly_days: frequencyType === "weekly" ? activeWeekly : null,
 				anchor_date:
 					frequencyType === "interval" ? anchorDate.toISOString() : null,
+				attachment_type: attachmentType,
+				require_attachment: requireAttachment,
 			};
 
 			const goalId = await createGoalMutation.mutateAsync(params);
@@ -312,6 +320,28 @@ export default function NewGoalModal() {
 							/>
 						)}
 					</>
+				)}
+
+				<Text className="mt-4">Attachment Type</Text>
+				<View className="flex-row gap-4 mb-2">
+					{(["none", "photo", "url", "text"] as const).map((type) => (
+						<Button
+							key={type}
+							title={type}
+							color={attachmentType === type ? "#007AFF" : "gray"}
+							onPress={() => setAttachmentType(type)}
+						/>
+					))}
+				</View>
+
+				{attachmentType !== "none" && (
+					<View className="flex-row items-center gap-2 mb-4">
+						<Text>Require attachment</Text>
+						<Switch
+							value={requireAttachment}
+							onValueChange={setRequireAttachment}
+						/>
+					</View>
 				)}
 
 				<View className="h-[1px] bg-gray-300 w-full my-4" />

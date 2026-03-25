@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { type Href, router } from "expo-router";
-import { useMemo } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
 	ActivityIndicator,
 	Alert,
@@ -11,6 +11,9 @@ import {
 	Text,
 	View,
 } from "react-native";
+import AttachmentBottomSheet, {
+	type AttachmentBottomSheetRef,
+} from "@/components/AttachmentBottomSheet";
 import { Screen } from "@/components/layout/Screen";
 import { useCompleteGoal } from "@/hooks/goal/useCompleteGoal";
 import { useTodaysCompletions } from "@/hooks/goal/useTodaysCompletions";
@@ -76,6 +79,11 @@ export default function HomeScreen() {
 	const { user } = useAuthStore();
 	const userId = user?.id;
 
+	const [selectedGoal, setSelectedGoal] = useState<GoalWithParticipant | null>(
+		null,
+	);
+	const attachmentSheetRef = useRef<AttachmentBottomSheetRef>(null);
+
 	const {
 		data: goals,
 		isLoading: isGoalsLoading,
@@ -87,6 +95,8 @@ export default function HomeScreen() {
 
 	const { data: todaysCompletions, isLoading: isCompletionsLoading } =
 		useTodaysCompletions(userId);
+
+	const completeMutation = useCompleteGoal();
 
 	const groupedGoals = useMemo(() => {
 		if (!goals || !userId) return { today: [], upcoming: [] };
@@ -122,7 +132,6 @@ export default function HomeScreen() {
 			}
 		}
 
-		// Sort today: incomplete first, then completed
 		today.sort((a, b) => {
 			if (a.isCompleted === b.isCompleted) return 0;
 			return a.isCompleted ? 1 : -1;
@@ -134,6 +143,11 @@ export default function HomeScreen() {
 	}, [goals, userId, todaysCompletions]);
 
 	const isLoading = isGoalsLoading || isCompletionsLoading;
+
+	const handleOpenAttachment = (goal: GoalWithParticipant) => {
+		setSelectedGoal(goal);
+		attachmentSheetRef.current?.present();
+	};
 
 	return (
 		<Screen className="px-6 py-4">
@@ -164,6 +178,7 @@ export default function HomeScreen() {
 								canComplete
 								userId={userId}
 								isCompleted={goal.isCompleted}
+								onRequireAttachment={handleOpenAttachment}
 							/>
 						))}
 					</View>
@@ -182,6 +197,21 @@ export default function HomeScreen() {
 					</View>
 				)}
 			</ScrollView>
+
+			{selectedGoal && (
+				<AttachmentBottomSheet
+					ref={attachmentSheetRef}
+					goal={selectedGoal}
+					onComplete={async (attachmentData) => {
+						if (!userId) return;
+						await completeMutation.mutateAsync({
+							goalId: selectedGoal.id,
+							userId,
+							attachmentData,
+						});
+					}}
+				/>
+			)}
 		</Screen>
 	);
 }
@@ -192,18 +222,29 @@ function GoalItem({
 	canComplete,
 	userId,
 	isCompleted,
+	onRequireAttachment,
 }: {
 	goal: GoalWithParticipant;
 	subtitle?: string;
 	canComplete?: boolean;
 	userId?: string;
 	isCompleted?: boolean;
+	onRequireAttachment?: (goal: GoalWithParticipant) => void;
 }) {
 	const completeMutation = useCompleteGoal();
 	const uncompleteMutation = useUncompleteGoal();
 
 	const handleToggle = async () => {
 		if (!userId) return;
+		if (
+			!isCompleted &&
+			goal.attachment_type !== "none" &&
+			goal.require_attachment
+		) {
+			onRequireAttachment?.(goal);
+			return;
+		}
+
 		try {
 			if (isCompleted) {
 				await uncompleteMutation.mutateAsync({ goalId: goal.id, userId });
@@ -246,14 +287,23 @@ function GoalItem({
 					{isPending ? (
 						<ActivityIndicator size="small" color="#000" />
 					) : (
-						<View
-							className={`w-7 h-7 rounded-full border-2 border-black items-center justify-center ${
-								isCompleted ? "bg-black" : "bg-transparent"
-							}`}
-						>
-							{isCompleted && (
-								<Text className="text-white text-xs font-bold">✓</Text>
-							)}
+						<View className="flex-row items-center gap-2">
+							{!isCompleted &&
+								goal.attachment_type !== "none" &&
+								goal.require_attachment && (
+									<Text className="text-[10px] text-blue-500 uppercase font-bold">
+										Proof
+									</Text>
+								)}
+							<View
+								className={`w-7 h-7 rounded-full border-2 border-black items-center justify-center ${
+									isCompleted ? "bg-black" : "bg-transparent"
+								}`}
+							>
+								{isCompleted && (
+									<Text className="text-white text-xs font-bold">✓</Text>
+								)}
+							</View>
 						</View>
 					)}
 				</Pressable>

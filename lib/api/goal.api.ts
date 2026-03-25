@@ -9,6 +9,8 @@ export type Goal = {
 	created_at: string;
 	frequency_type: "interval" | "weekly";
 	frequency_value: number;
+	attachment_type: "none" | "photo" | "url" | "text";
+	require_attachment: boolean;
 };
 
 export type GoalParticipant = {
@@ -23,6 +25,11 @@ export type GoalWithParticipant = Goal & {
 	goal_participants: GoalParticipant[];
 };
 
+export type AttachmentData =
+	| { type: "photo"; path: string }
+	| { type: "url"; url: string }
+	| { type: "text"; content: string };
+
 export type CreateGoalParams = {
 	title: string;
 	description: string;
@@ -30,6 +37,8 @@ export type CreateGoalParams = {
 	frequency_value: number;
 	weekly_days: number[] | null;
 	anchor_date: string | null;
+	attachment_type: "none" | "photo" | "url" | "text";
+	require_attachment: boolean;
 };
 
 export const fetchGoals = async () => {
@@ -61,6 +70,8 @@ export const createGoal = async (params: CreateGoalParams) => {
 		p_frequency_value: params.frequency_value,
 		p_weekly_days: params.weekly_days,
 		p_anchor_date: params.anchor_date,
+		p_attachment_type: params.attachment_type,
+		p_require_attachment: params.require_attachment,
 	});
 
 	if (error) throw error;
@@ -172,13 +183,44 @@ export const declineInvite = async (inviteId: string) => {
 	if (error) throw error;
 };
 
-export const completeGoal = async (goalId: string, userId: string) => {
+export const completeGoal = async (
+	goalId: string,
+	userId: string,
+	attachmentData?: AttachmentData,
+) => {
 	const { error } = await supabase.from("goal_completions").insert({
 		goal_id: goalId,
 		user_id: userId,
 		completed_at: new Date().toISOString(),
+		attachment_data: attachmentData,
 	});
 	if (error) throw error;
+};
+
+export const updateCompletionWithAttachment = async (
+	goalId: string,
+	userId: string,
+	attachmentData: AttachmentData,
+) => {
+	const { error } = await supabase.rpc("update_completion_attachment", {
+		p_goal_id: goalId,
+		p_user_id: userId,
+		p_attachment_data: attachmentData,
+	});
+	if (error) throw error;
+};
+
+export const fetchTodayCompletion = async (goalId: string, userId: string) => {
+	const today = formatToISODate(getTodayUTC());
+	const { data, error } = await supabase
+		.from("goal_completions")
+		.select("id, attachment_data")
+		.eq("goal_id", goalId)
+		.eq("user_id", userId)
+		.eq("completed_date", today)
+		.maybeSingle();
+	if (error) throw error;
+	return data;
 };
 
 export const fetchTodaysCompletions = async (userId: string) => {
@@ -223,4 +265,39 @@ export const fetchGoalMonthlyPoints = async (
 	});
 	if (error) throw error;
 	return data as number;
+};
+
+export const fetchTodayCompletionForGoal = async (
+	goalId: string,
+	userId: string,
+) => {
+	const today = formatToISODate(getTodayUTC());
+	const { data, error } = await supabase
+		.from("goal_completions")
+		.select("id")
+		.eq("goal_id", goalId)
+		.eq("user_id", userId)
+		.eq("completed_date", today)
+		.maybeSingle();
+	if (error) throw error;
+	return data !== null;
+};
+
+export const fetchGoalCompletions = async (goalId: string, userId: string) => {
+	const { data, error } = await supabase
+		.from("goal_completions")
+		.select("*")
+		.eq("goal_id", goalId)
+		.eq("user_id", userId)
+		.order("completed_at", { ascending: false });
+	if (error) throw error;
+	return data;
+};
+
+export const getSignedUrl = async (path: string) => {
+	const { data, error } = await supabase.storage
+		.from("attachments")
+		.createSignedUrl(path, 3600);
+	if (error) throw error;
+	return data?.signedUrl;
 };
