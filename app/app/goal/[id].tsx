@@ -33,8 +33,10 @@ export default function GoalDetailsModal() {
 		);
 	}
 
-	const participant = goal.goal_participants?.[0];
 	const isParticipant = goal.goal_participants.some(
+		(p) => p.user_id === userId,
+	);
+	const participant = goal.goal_participants?.find(
 		(p) => p.user_id === userId,
 	);
 
@@ -42,7 +44,7 @@ export default function GoalDetailsModal() {
 		if (!inviteId) return;
 		try {
 			await acceptInviteMutation.mutateAsync(inviteId);
-			// Stay on the same page but remove the inviteId parameter
+
 			router.setParams({ inviteId: undefined });
 		} catch (_e) {
 			const errorMessage = "Failed to accept invite";
