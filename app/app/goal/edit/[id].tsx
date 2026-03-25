@@ -1,3 +1,13 @@
+import { Screen } from "@/components/layout/Screen";
+import { useCreateInvite } from "@/hooks/goal/useCreateInvite";
+import { useDeleteGoal } from "@/hooks/goal/useDeleteGoal";
+import { useGoal } from "@/hooks/goal/useGoal";
+import { useLeaveGoal } from "@/hooks/goal/useLeaveGoal";
+import { useUpdateGoalMetadata } from "@/hooks/goal/useUpdateGoalMetadata";
+import { useUpdateParticipantSettings } from "@/hooks/goal/useUpdateParticipantSettings";
+import { fetchProfileByUsername } from "@/lib/api/profile.api";
+import { formatToISODate, getTodayUTC, toUTCDate } from "@/lib/date.utils";
+import { useAuthStore } from "@/lib/store/auth.store";
 import DateTimePicker, {
 	type DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
@@ -15,15 +25,6 @@ import {
 	TextInput,
 	View,
 } from "react-native";
-import { Screen } from "@/components/layout/Screen";
-import { useCreateInvite } from "@/hooks/goal/useCreateInvite";
-import { useDeleteGoal } from "@/hooks/goal/useDeleteGoal";
-import { useGoal } from "@/hooks/goal/useGoal";
-import { useLeaveGoal } from "@/hooks/goal/useLeaveGoal";
-import { useUpdateGoalMetadata } from "@/hooks/goal/useUpdateGoalMetadata";
-import { useUpdateParticipantSettings } from "@/hooks/goal/useUpdateParticipantSettings";
-import { fetchProfileByUsername } from "@/lib/api/profile.api";
-import { useAuthStore } from "@/lib/store/auth.store";
 
 type GoalForm = {
 	title: string;
@@ -49,7 +50,7 @@ export default function EditGoalModal() {
 		{ id: string; username: string }[]
 	>([]);
 
-	const [anchorDate, setAnchorDate] = useState(new Date());
+	const [anchorDate, setAnchorDate] = useState(getTodayUTC());
 	const [weeklyDaysInput, setWeeklyDaysInput] = useState("1");
 	const [showDatePicker, setShowDatePicker] = useState(false);
 
@@ -73,8 +74,15 @@ export default function EditGoalModal() {
 			if (myParticipant) {
 				if (myParticipant.anchor_date) {
 					const date = new Date(myParticipant.anchor_date);
-					setAnchorDate(date);
-					setInitialAnchorDate(date);
+					const utcDate = new Date(
+						Date.UTC(
+							date.getUTCFullYear(),
+							date.getUTCMonth(),
+							date.getUTCDate(),
+						),
+					);
+					setAnchorDate(utcDate);
+					setInitialAnchorDate(utcDate);
 				}
 				if (myParticipant.weekly_days) {
 					const days = myParticipant.weekly_days.join(", ");
@@ -93,7 +101,7 @@ export default function EditGoalModal() {
 		if (Platform.OS === "android") {
 			setShowDatePicker(false);
 		}
-		if (selectedDate) setAnchorDate(selectedDate);
+		if (selectedDate) setAnchorDate(toUTCDate(selectedDate));
 	};
 
 	const onSave = async (data: GoalForm) => {
@@ -361,14 +369,14 @@ export default function EditGoalModal() {
 							<View className="mb-4">
 								<input
 									type="date"
-									value={anchorDate.toISOString().split("T")[0]}
-									max={new Date().toISOString().split("T")[0]}
+									value={formatToISODate(anchorDate)}
+									max={formatToISODate(getTodayUTC())}
 									onChange={(e) => {
 										if (e.target.value) {
 											const [year, month, day] = e.target.value
 												.split("-")
 												.map(Number);
-											setAnchorDate(new Date(year, month - 1, day));
+											setAnchorDate(new Date(Date.UTC(year, month - 1, day)));
 										}
 									}}
 									className="border-0 outline-none bg-transparent text-center"
@@ -390,7 +398,7 @@ export default function EditGoalModal() {
 								value={anchorDate}
 								mode="date"
 								display={"default"}
-								maximumDate={new Date()}
+								maximumDate={getTodayUTC()}
 								onChange={onChangeDate}
 							/>
 						)}

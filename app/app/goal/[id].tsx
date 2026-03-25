@@ -4,6 +4,7 @@ import { Screen } from "@/components/layout/Screen";
 import { useAcceptInvite } from "@/hooks/goal/useAcceptInvite";
 import { useDeclineInvite } from "@/hooks/goal/useDeclineInvite";
 import { useGoal } from "@/hooks/goal/useGoal";
+import { formatToISODate } from "@/lib/date.utils";
 import { useAuthStore } from "@/lib/store/auth.store";
 
 export default function GoalDetailsModal() {
@@ -88,7 +89,7 @@ export default function GoalDetailsModal() {
 						{goal.frequency_type === "interval" && participant.anchor_date && (
 							<Text>
 								Anchor Date:{" "}
-								{new Date(participant.anchor_date).toLocaleDateString()}
+								{formatToISODate(new Date(participant.anchor_date))}
 							</Text>
 						)}
 						{goal.frequency_type === "weekly" && participant.weekly_days && (

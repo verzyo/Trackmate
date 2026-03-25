@@ -1,16 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
-import {
-	addDays,
-	differenceInDays,
-	getDay,
-	isToday,
-	startOfDay,
-} from "date-fns";
 import { type Href, router } from "expo-router";
 import { useMemo } from "react";
 import { Button, Pressable, ScrollView, Text, View } from "react-native";
 import { Screen } from "@/components/layout/Screen";
 import { fetchGoals, type GoalWithParticipant } from "@/lib/api/goal.api";
+import {
+	addDaysUTC,
+	differenceInDaysUTC,
+	getDayOfWeekUTC,
+	getTodayUTC,
+	isTodayUTC,
+} from "@/lib/date.utils";
 import { useAuthStore } from "@/lib/store/auth.store";
 
 function getNextDueDate(
@@ -20,35 +20,41 @@ function getNextDueDate(
 	const participant = goal.goal_participants.find((p) => p.user_id === userId);
 	if (!participant) return null;
 
-	const today = startOfDay(new Date());
+	const today = getTodayUTC();
 
 	if (goal.frequency_type === "interval") {
 		if (!participant.anchor_date) return null;
-		const anchor = startOfDay(new Date(participant.anchor_date));
-		const diff = differenceInDays(today, anchor);
+		const anchor = new Date(participant.anchor_date);
+		const anchorUTC = new Date(
+			Date.UTC(
+				anchor.getUTCFullYear(),
+				anchor.getUTCMonth(),
+				anchor.getUTCDate(),
+			),
+		);
+		const diff = differenceInDaysUTC(today, anchorUTC);
 
-		if (diff < 0) return anchor;
+		if (diff < 0) return anchorUTC;
 
 		const periods = Math.ceil(diff / goal.frequency_value);
-		return addDays(anchor, periods * goal.frequency_value);
+		return addDaysUTC(anchorUTC, periods * goal.frequency_value);
 	}
 
 	if (goal.frequency_type === "weekly") {
 		if (!participant.weekly_days || participant.weekly_days.length === 0)
 			return null;
 
-		const currentJsDay = getDay(today);
-		const currentTargetDay = currentJsDay === 0 ? 7 : currentJsDay;
+		const currentTargetDay = getDayOfWeekUTC(today);
 
 		const sortedDays = [...participant.weekly_days].sort((a, b) => a - b);
 		const nextDay = sortedDays.find((d) => d >= currentTargetDay);
 
 		if (nextDay !== undefined) {
-			return addDays(today, nextDay - currentTargetDay);
+			return addDaysUTC(today, nextDay - currentTargetDay);
 		}
 
 		const firstDayNextWeek = sortedDays[0];
-		return addDays(today, 7 - currentTargetDay + firstDayNextWeek);
+		return addDaysUTC(today, 7 - currentTargetDay + firstDayNextWeek);
 	}
 
 	return null;
@@ -76,18 +82,18 @@ export default function HomeScreen() {
 			daysUntil: number;
 		})[] = [];
 
-		const now = startOfDay(new Date());
+		const now = getTodayUTC();
 
 		for (const goal of goals) {
 			const nextDate = getNextDueDate(goal, userId);
 			if (nextDate) {
-				if (isToday(nextDate)) {
+				if (isTodayUTC(nextDate)) {
 					today.push({ ...goal, nextDueDate: nextDate });
-				} else if (nextDate > now) {
+				} else if (nextDate.getTime() > now.getTime()) {
 					upcoming.push({
 						...goal,
 						nextDueDate: nextDate,
-						daysUntil: differenceInDays(nextDate, now),
+						daysUntil: differenceInDaysUTC(nextDate, now),
 					});
 				}
 			}

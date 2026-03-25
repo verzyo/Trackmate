@@ -19,6 +19,7 @@ import { useCreateGoal } from "@/hooks/goal/useCreateGoal";
 import { useCreateInvite } from "@/hooks/goal/useCreateInvite";
 import type { CreateGoalParams } from "@/lib/api/goal.api";
 import { fetchProfileByUsername } from "@/lib/api/profile.api";
+import { formatToISODate, getTodayUTC, toUTCDate } from "@/lib/date.utils";
 import { useAuthStore } from "@/lib/store/auth.store";
 
 type GoalForm = {
@@ -35,7 +36,7 @@ export default function NewGoalModal() {
 	const [frequencyType, setFrequencyType] = useState<"interval" | "weekly">(
 		"interval",
 	);
-	const [anchorDate, setAnchorDate] = useState(new Date());
+	const [anchorDate, setAnchorDate] = useState(getTodayUTC());
 	const [showDatePicker, setShowDatePicker] = useState(false);
 
 	const [inviteUsername, setInviteUsername] = useState("");
@@ -65,7 +66,7 @@ export default function NewGoalModal() {
 		}
 
 		const currentDate = selectedDate || anchorDate;
-		setAnchorDate(currentDate);
+		setAnchorDate(toUTCDate(currentDate));
 	};
 
 	const handleAddInvite = async () => {
@@ -277,14 +278,14 @@ export default function NewGoalModal() {
 							<View className="mb-4">
 								<input
 									type="date"
-									value={anchorDate.toISOString().split("T")[0]}
-									max={new Date().toISOString().split("T")[0]}
+									value={formatToISODate(anchorDate)}
+									max={formatToISODate(getTodayUTC())}
 									onChange={(e) => {
 										if (e.target.value) {
 											const [year, month, day] = e.target.value
 												.split("-")
 												.map(Number);
-											setAnchorDate(new Date(year, month - 1, day));
+											setAnchorDate(new Date(Date.UTC(year, month - 1, day)));
 										}
 									}}
 									className="border-0 outline-none bg-transparent text-center"
@@ -306,7 +307,7 @@ export default function NewGoalModal() {
 								value={anchorDate}
 								mode="date"
 								display={"default"}
-								maximumDate={new Date()}
+								maximumDate={getTodayUTC()}
 								onChange={onChangeDate}
 							/>
 						)}
