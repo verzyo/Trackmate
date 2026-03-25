@@ -45,6 +45,9 @@ export default function EditGoalModal() {
 	const isOwner = goal?.owner_id === userId;
 
 	const [inviteUsername, setInviteUsername] = useState("");
+	const [pendingInvitees, setPendingInvitees] = useState<
+		{ id: string; username: string }[]
+	>([]);
 
 	const [anchorDate, setAnchorDate] = useState(new Date());
 	const [weeklyDaysInput, setWeeklyDaysInput] = useState("1");
@@ -101,6 +104,7 @@ export default function EditGoalModal() {
 		try {
 			const metadataPromises = [];
 			const participantPromises = [];
+			const invitePromises = [];
 
 			if (isOwner) {
 				const metadataParams: Record<string, unknown> = { goal_id: id as string };
@@ -149,17 +153,41 @@ export default function EditGoalModal() {
 			if (hasParticipantChanges) {
 				participantPromises.push(
 					updateParticipantMutation.mutateAsync(
-						participantParams as { goal_id: string; anchor_date?: string; weekly_days?: number[] }
-					)
+						participantParams as {
+							goal_id: string;
+							anchor_date?: string;
+							weekly_days?: number[];
+						},
+					),
 				);
 			}
 
-			if (metadataPromises.length === 0 && participantPromises.length === 0) {
+			if (pendingInvitees.length > 0) {
+				invitePromises.push(
+					...pendingInvitees.map((invitee) =>
+						createInviteMutation.mutateAsync({
+							goalId: id as string,
+							inviterId: userId!,
+							inviteeId: invitee.id,
+						}),
+					),
+				);
+			}
+
+			if (
+				metadataPromises.length === 0 &&
+				participantPromises.length === 0 &&
+				invitePromises.length === 0
+			) {
 				router.back();
 				return;
 			}
 
-			await Promise.all([...metadataPromises, ...participantPromises]);
+			await Promise.all([
+				...metadataPromises,
+				...participantPromises,
+				...invitePromises,
+			]);
 			router.back();
 		} catch (error) {
 			const errorMessage =
@@ -172,7 +200,10 @@ export default function EditGoalModal() {
 		}
 	};
 
-	const isSaving = updateMetadataMutation.isPending || updateParticipantMutation.isPending;
+	const isSaving =
+		updateMetadataMutation.isPending ||
+		updateParticipantMutation.isPending ||
+		createInviteMutation.isPending;
 
 	if (isGoalLoading || !goal) {
 		return (
@@ -211,7 +242,7 @@ export default function EditGoalModal() {
 		}
 	};
 
-	const handleInvite = async () => {
+	const handleAddInvite = async () => {
 		if (!inviteUsername.trim() || !userId) return;
 		try {
 			const profile = await fetchProfileByUsername(inviteUsername.trim());
@@ -224,20 +255,40 @@ export default function EditGoalModal() {
 				}
 				return;
 			}
-			await createInviteMutation.mutateAsync({
-				goalId: id as string,
-				inviterId: userId,
-				inviteeId: profile.id,
-			});
-			setInviteUsername("");
-			const successMessage = "Invite sent!";
-			if (Platform.OS === "web") {
-				window.alert(successMessage);
-			} else {
-				Alert.alert("Success", successMessage);
+			if (profile.id === userId) {
+				const errorMessage = "You cannot invite yourself";
+				if (Platform.OS === "web") {
+					window.alert(errorMessage);
+				} else {
+					Alert.alert("Error", errorMessage);
+				}
+				return;
 			}
+			if (goal?.goal_participants.some((p) => p.user_id === profile.id)) {
+				const errorMessage = "User is already a participant";
+				if (Platform.OS === "web") {
+					window.alert(errorMessage);
+				} else {
+					Alert.alert("Error", errorMessage);
+				}
+				return;
+			}
+			if (pendingInvitees.some((p) => p.id === profile.id)) {
+				const errorMessage = "User already added to invites";
+				if (Platform.OS === "web") {
+					window.alert(errorMessage);
+				} else {
+					Alert.alert("Error", errorMessage);
+				}
+				return;
+			}
+			setPendingInvitees((prev) => [
+				...prev,
+				{ id: profile.id, username: profile.username },
+			]);
+			setInviteUsername("");
 		} catch (_e) {
-			const errorMessage = "Failed to send invite";
+			const errorMessage = "Failed to find user";
 			if (Platform.OS === "web") {
 				window.alert(errorMessage);
 			} else {
@@ -368,7 +419,7 @@ export default function EditGoalModal() {
 
 				{isOwner && (
 					<View className="mt-8 pt-4 w-full items-center">
-						<Text>Invite User</Text>
+						<Text className="font-bold text-lg">Invite Users</Text>
 						<TextInput
 							value={inviteUsername}
 							onChangeText={setInviteUsername}
@@ -377,12 +428,35 @@ export default function EditGoalModal() {
 							className="text-center mt-2 mb-4"
 						/>
 						<Button
-							title={createInviteMutation.isPending ? "Inviting..." : "Invite"}
-							onPress={handleInvite}
-							disabled={
-								createInviteMutation.isPending || !inviteUsername.trim()
-							}
+							title="Add to Invites"
+							onPress={handleAddInvite}
+							disabled={!inviteUsername.trim()}
 						/>
+
+						{pendingInvitees.length > 0 && (
+							<View className="mt-4 w-full px-4">
+								<Text className="text-sm font-semibold mb-2 text-center">
+									To be invited:
+								</Text>
+								{pendingInvitees.map((invitee) => (
+									<View
+										key={invitee.id}
+										className="flex-row justify-between items-center py-2 border-b border-neutral-200"
+									>
+										<Text>{invitee.username}</Text>
+										<Pressable
+											onPress={() =>
+												setPendingInvitees((prev) =>
+													prev.filter((p) => p.id !== invitee.id),
+												)
+											}
+										>
+											<Text className="text-red-500 font-bold">REMOVE</Text>
+										</Pressable>
+									</View>
+								))}
+							</View>
+						)}
 					</View>
 				)}
 

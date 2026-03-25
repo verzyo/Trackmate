@@ -16,6 +16,9 @@ import {
 } from "react-native";
 import { Screen } from "@/components/layout/Screen";
 import { useCreateGoal } from "@/hooks/goal/useCreateGoal";
+import { useCreateInvite } from "@/hooks/goal/useCreateInvite";
+import { fetchProfileByUsername } from "@/lib/api/profile.api";
+import { useAuthStore } from "@/lib/store/auth.store";
 import type { CreateGoalParams } from "@/lib/api/goal.api";
 
 type GoalForm = {
@@ -26,13 +29,22 @@ type GoalForm = {
 };
 
 export default function NewGoalModal() {
+	const { user } = useAuthStore();
+	const userId = user?.id;
+
 	const [frequencyType, setFrequencyType] = useState<"interval" | "weekly">(
 		"interval",
 	);
 	const [anchorDate, setAnchorDate] = useState(new Date());
 	const [showDatePicker, setShowDatePicker] = useState(false);
 
+	const [inviteUsername, setInviteUsername] = useState("");
+	const [pendingInvitees, setPendingInvitees] = useState<
+		{ id: string; username: string }[]
+	>([]);
+
 	const createGoalMutation = useCreateGoal();
+	const createInviteMutation = useCreateInvite();
 
 	const {
 		control,
@@ -54,6 +66,52 @@ export default function NewGoalModal() {
 
 		const currentDate = selectedDate || anchorDate;
 		setAnchorDate(currentDate);
+	};
+
+	const handleAddInvite = async () => {
+		if (!inviteUsername.trim() || !userId) return;
+		try {
+			const profile = await fetchProfileByUsername(inviteUsername.trim());
+			if (!profile) {
+				const errorMessage = "User not found";
+				if (Platform.OS === "web") {
+					window.alert(errorMessage);
+				} else {
+					Alert.alert("Error", errorMessage);
+				}
+				return;
+			}
+			if (profile.id === userId) {
+				const errorMessage = "You cannot invite yourself";
+				if (Platform.OS === "web") {
+					window.alert(errorMessage);
+				} else {
+					Alert.alert("Error", errorMessage);
+				}
+				return;
+			}
+			if (pendingInvitees.some((p) => p.id === profile.id)) {
+				const errorMessage = "User already added to invites";
+				if (Platform.OS === "web") {
+					window.alert(errorMessage);
+				} else {
+					Alert.alert("Error", errorMessage);
+				}
+				return;
+			}
+			setPendingInvitees((prev) => [
+				...prev,
+				{ id: profile.id, username: profile.username },
+			]);
+			setInviteUsername("");
+		} catch (_e) {
+			const errorMessage = "Failed to find user";
+			if (Platform.OS === "web") {
+				window.alert(errorMessage);
+			} else {
+				Alert.alert("Error", errorMessage);
+			}
+		}
 	};
 
 	const onSubmit = async (data: GoalForm) => {
@@ -92,7 +150,20 @@ export default function NewGoalModal() {
 					frequencyType === "interval" ? anchorDate.toISOString() : null,
 			};
 
-			await createGoalMutation.mutateAsync(params);
+			const goalId = await createGoalMutation.mutateAsync(params);
+
+			if (pendingInvitees.length > 0) {
+				await Promise.all(
+					pendingInvitees.map((invitee) =>
+						createInviteMutation.mutateAsync({
+							goalId: goalId as string,
+							inviterId: userId!,
+							inviteeId: invitee.id,
+						}),
+					),
+				);
+			}
+
 			router.back();
 		} catch (error) {
 			let errorMessage =
@@ -110,7 +181,10 @@ export default function NewGoalModal() {
 		}
 	};
 
-	const isLoading = isSubmitting || createGoalMutation.isPending;
+	const isLoading =
+		isSubmitting ||
+		createGoalMutation.isPending ||
+		createInviteMutation.isPending;
 
 	return (
 		<Screen className="px-6 py-4">
@@ -237,7 +311,50 @@ export default function NewGoalModal() {
 					</>
 				)}
 
-				<View className="mt-4">
+				<View className="h-[1px] bg-gray-300 w-full my-4" />
+
+				<View className="w-full items-center">
+					<Text className="font-bold text-lg">Invite Users</Text>
+					<TextInput
+						value={inviteUsername}
+						onChangeText={setInviteUsername}
+						placeholder="username"
+						autoCapitalize="none"
+						className="text-center mt-2 mb-4"
+					/>
+					<Button
+						title="Add to Invites"
+						onPress={handleAddInvite}
+						disabled={!inviteUsername.trim()}
+					/>
+
+					{pendingInvitees.length > 0 && (
+						<View className="mt-4 w-full px-4">
+							<Text className="text-sm font-semibold mb-2 text-center">
+								To be invited:
+							</Text>
+							{pendingInvitees.map((invitee) => (
+								<View
+									key={invitee.id}
+									className="flex-row justify-between items-center py-2 border-b border-neutral-200"
+								>
+									<Text>{invitee.username}</Text>
+									<Pressable
+										onPress={() =>
+											setPendingInvitees((prev) =>
+												prev.filter((p) => p.id !== invitee.id),
+											)
+										}
+									>
+										<Text className="text-red-500 font-bold">REMOVE</Text>
+									</Pressable>
+								</View>
+							))}
+						</View>
+					)}
+				</View>
+
+				<View className="mt-8 mb-6">
 					<Button
 						title={isLoading ? "Creating..." : "Create Goal"}
 						onPress={handleSubmit(onSubmit)}
