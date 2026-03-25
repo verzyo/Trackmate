@@ -212,3 +212,15 @@ export const fetchGoalStreak = async (goalId: string, userId: string) => {
 	if (error) throw error;
 	return data as number;
 };
+
+export const fetchGoalMonthlyPoints = async (
+	goalId: string,
+	userId: string,
+) => {
+	const { data, error } = await supabase.rpc("get_goal_user_monthly_points", {
+		p_goal_id: goalId,
+		p_user_id: userId,
+	});
+	if (error) throw error;
+	return data as number;
+};

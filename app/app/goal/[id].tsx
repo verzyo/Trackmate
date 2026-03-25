@@ -4,6 +4,7 @@ import { Screen } from "@/components/layout/Screen";
 import { useAcceptInvite } from "@/hooks/goal/useAcceptInvite";
 import { useDeclineInvite } from "@/hooks/goal/useDeclineInvite";
 import { useGoal } from "@/hooks/goal/useGoal";
+import { useGoalMonthlyPoints } from "@/hooks/goal/useGoalMonthlyPoints";
 import { useGoalStreak } from "@/hooks/goal/useGoalStreak";
 import { formatToISODate } from "@/lib/date.utils";
 import { useAuthStore } from "@/lib/store/auth.store";
@@ -19,6 +20,8 @@ export default function GoalDetailsModal() {
 		id as string,
 		userId,
 	);
+	const { data: monthlyPoints, isLoading: pointsLoading } =
+		useGoalMonthlyPoints(id as string, userId);
 
 	const acceptInviteMutation = useAcceptInvite(userId);
 	const declineInviteMutation = useDeclineInvite(userId);
@@ -103,6 +106,10 @@ export default function GoalDetailsModal() {
 
 						{!streakLoading && streak !== undefined && (
 							<Text>Streak: {streak}</Text>
+						)}
+
+						{!pointsLoading && (
+							<Text>Points this month: {monthlyPoints ?? "unknown"}</Text>
 						)}
 					</>
 				)}
