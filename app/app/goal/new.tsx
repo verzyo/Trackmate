@@ -17,9 +17,9 @@ import {
 import { Screen } from "@/components/layout/Screen";
 import { useCreateGoal } from "@/hooks/goal/useCreateGoal";
 import { useCreateInvite } from "@/hooks/goal/useCreateInvite";
+import type { CreateGoalParams } from "@/lib/api/goal.api";
 import { fetchProfileByUsername } from "@/lib/api/profile.api";
 import { useAuthStore } from "@/lib/store/auth.store";
-import type { CreateGoalParams } from "@/lib/api/goal.api";
 
 type GoalForm = {
 	title: string;
@@ -122,10 +122,12 @@ export default function NewGoalModal() {
 					.split(",")
 					.map((d) => parseInt(d.trim(), 10))
 					.filter((d) => !Number.isNaN(d));
-				
+
 				const uniqueDays = Array.from(new Set(activeDays));
 				if (uniqueDays.some((d) => d < 1 || d > 7)) {
-					throw new Error("Weekly days must be between 1 and 7 (1=Monday, 7=Sunday).");
+					throw new Error(
+						"Weekly days must be between 1 and 7 (1=Monday, 7=Sunday).",
+					);
 				}
 				if (uniqueDays.length === 0) {
 					throw new Error("Please specify at least one day for weekly goals.");
@@ -152,12 +154,12 @@ export default function NewGoalModal() {
 
 			const goalId = await createGoalMutation.mutateAsync(params);
 
-			if (pendingInvitees.length > 0) {
+			if (pendingInvitees.length > 0 && userId) {
 				await Promise.all(
 					pendingInvitees.map((invitee) =>
 						createInviteMutation.mutateAsync({
 							goalId: goalId as string,
-							inviterId: userId!,
+							inviterId: userId,
 							inviteeId: invitee.id,
 						}),
 					),

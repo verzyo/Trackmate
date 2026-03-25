@@ -1,12 +1,3 @@
-import { Screen } from "@/components/layout/Screen";
-import { useCreateInvite } from "@/hooks/goal/useCreateInvite";
-import { useDeleteGoal } from "@/hooks/goal/useDeleteGoal";
-import { useGoal } from "@/hooks/goal/useGoal";
-import { useLeaveGoal } from "@/hooks/goal/useLeaveGoal";
-import { useUpdateGoalMetadata } from "@/hooks/goal/useUpdateGoalMetadata";
-import { useUpdateParticipantSettings } from "@/hooks/goal/useUpdateParticipantSettings";
-import { fetchProfileByUsername } from "@/lib/api/profile.api";
-import { useAuthStore } from "@/lib/store/auth.store";
 import DateTimePicker, {
 	type DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
@@ -24,6 +15,15 @@ import {
 	TextInput,
 	View,
 } from "react-native";
+import { Screen } from "@/components/layout/Screen";
+import { useCreateInvite } from "@/hooks/goal/useCreateInvite";
+import { useDeleteGoal } from "@/hooks/goal/useDeleteGoal";
+import { useGoal } from "@/hooks/goal/useGoal";
+import { useLeaveGoal } from "@/hooks/goal/useLeaveGoal";
+import { useUpdateGoalMetadata } from "@/hooks/goal/useUpdateGoalMetadata";
+import { useUpdateParticipantSettings } from "@/hooks/goal/useUpdateParticipantSettings";
+import { fetchProfileByUsername } from "@/lib/api/profile.api";
+import { useAuthStore } from "@/lib/store/auth.store";
 
 type GoalForm = {
 	title: string;
@@ -58,11 +58,7 @@ export default function EditGoalModal() {
 		null,
 	);
 
-	const {
-		control,
-		handleSubmit,
-		reset,
-	} = useForm<GoalForm>({
+	const { control, handleSubmit, reset } = useForm<GoalForm>({
 		defaultValues: {
 			title: "",
 			description: "",
@@ -107,7 +103,9 @@ export default function EditGoalModal() {
 			const invitePromises = [];
 
 			if (isOwner) {
-				const metadataParams: Record<string, unknown> = { goal_id: id as string };
+				const metadataParams: Record<string, unknown> = {
+					goal_id: id as string,
+				};
 				let hasMetadataChanges = false;
 				if (data.title !== goal?.title) {
 					metadataParams.title = data.title;
@@ -120,13 +118,19 @@ export default function EditGoalModal() {
 				if (hasMetadataChanges) {
 					metadataPromises.push(
 						updateMetadataMutation.mutateAsync(
-							metadataParams as { goal_id: string; title?: string; description?: string }
-						)
+							metadataParams as {
+								goal_id: string;
+								title?: string;
+								description?: string;
+							},
+						),
 					);
 				}
 			}
 
-			const participantParams: Record<string, unknown> = { goal_id: id as string };
+			const participantParams: Record<string, unknown> = {
+				goal_id: id as string,
+			};
 			let hasParticipantChanges = false;
 
 			if (goal?.frequency_type === "interval") {
@@ -162,12 +166,12 @@ export default function EditGoalModal() {
 				);
 			}
 
-			if (pendingInvitees.length > 0) {
+			if (pendingInvitees.length > 0 && userId) {
 				invitePromises.push(
 					...pendingInvitees.map((invitee) =>
 						createInviteMutation.mutateAsync({
 							goalId: id as string,
-							inviterId: userId!,
+							inviterId: userId,
 							inviteeId: invitee.id,
 						}),
 					),
@@ -336,17 +340,15 @@ export default function EditGoalModal() {
 
 				<Text className="font-bold text-lg">Frequency</Text>
 
-				<>
-					<Text>
-						Type: <Text className="capitalize">{goal.frequency_type}</Text>
-					</Text>
-					<Text>
-						Value:{" "}
-						{goal.frequency_type === "interval"
-							? `${goal.frequency_value} days`
-							: `${goal.frequency_value} days per week`}
-					</Text>
-				</>
+				<Text>
+					Type: <Text className="capitalize">{goal.frequency_type}</Text>
+				</Text>
+				<Text>
+					Value:{" "}
+					{goal.frequency_type === "interval"
+						? `${goal.frequency_value} days`
+						: `${goal.frequency_value} days per week`}
+				</Text>
 
 				<View className="h-[1px] bg-gray-300 w-full my-4" />
 

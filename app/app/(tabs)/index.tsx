@@ -1,6 +1,3 @@
-import { Screen } from "@/components/layout/Screen";
-import { type GoalWithParticipant, fetchGoals } from "@/lib/api/goal.api";
-import { useAuthStore } from "@/lib/store/auth.store";
 import { useQuery } from "@tanstack/react-query";
 import {
 	addDays,
@@ -12,6 +9,9 @@ import {
 import { type Href, router } from "expo-router";
 import { useMemo } from "react";
 import { Button, Pressable, ScrollView, Text, View } from "react-native";
+import { Screen } from "@/components/layout/Screen";
+import { fetchGoals, type GoalWithParticipant } from "@/lib/api/goal.api";
+import { useAuthStore } from "@/lib/store/auth.store";
 
 function getNextDueDate(
 	goal: GoalWithParticipant,
@@ -107,9 +107,7 @@ export default function HomeScreen() {
 				/>
 
 				{isLoading && <Text>Loading goals...</Text>}
-				{error && (
-					<Text className="text-red-500">Failed to load goals</Text>
-				)}
+				{error && <Text className="text-red-500">Failed to load goals</Text>}
 
 				{!isLoading && goals?.length === 0 && (
 					<Text className="text-neutral-500 mt-10">
@@ -146,7 +144,10 @@ export default function HomeScreen() {
 function GoalItem({
 	goal,
 	subtitle,
-}: { goal: GoalWithParticipant; subtitle?: string }) {
+}: {
+	goal: GoalWithParticipant;
+	subtitle?: string;
+}) {
 	return (
 		<Pressable
 			className="py-3 border-b border-neutral-200 w-full items-center"

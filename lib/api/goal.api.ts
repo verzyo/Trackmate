@@ -66,7 +66,6 @@ export const createGoal = async (params: CreateGoalParams) => {
 	return data;
 };
 
-
 export type UpdateGoalMetadataParams = {
 	goal_id: string;
 	title?: string;

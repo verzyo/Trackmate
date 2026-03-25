@@ -1,5 +1,5 @@
-import { Alert, Button, Platform, ScrollView, Text, View } from "react-native";
 import { router } from "expo-router";
+import { Alert, Button, Platform, ScrollView, Text, View } from "react-native";
 import { Screen } from "@/components/layout/Screen";
 import { useAcceptInvite } from "@/hooks/goal/useAcceptInvite";
 import { useDeclineInvite } from "@/hooks/goal/useDeclineInvite";

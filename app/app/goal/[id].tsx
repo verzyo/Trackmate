@@ -1,9 +1,9 @@
 import { type Href, router, useLocalSearchParams } from "expo-router";
 import { Alert, Button, Platform, ScrollView, Text, View } from "react-native";
 import { Screen } from "@/components/layout/Screen";
-import { useGoal } from "@/hooks/goal/useGoal";
 import { useAcceptInvite } from "@/hooks/goal/useAcceptInvite";
 import { useDeclineInvite } from "@/hooks/goal/useDeclineInvite";
+import { useGoal } from "@/hooks/goal/useGoal";
 import { useAuthStore } from "@/lib/store/auth.store";
 
 export default function GoalDetailsModal() {
@@ -36,9 +36,7 @@ export default function GoalDetailsModal() {
 	const isParticipant = goal.goal_participants.some(
 		(p) => p.user_id === userId,
 	);
-	const participant = goal.goal_participants?.find(
-		(p) => p.user_id === userId,
-	);
+	const participant = goal.goal_participants?.find((p) => p.user_id === userId);
 
 	const handleAcceptInvite = async () => {
 		if (!inviteId) return;
