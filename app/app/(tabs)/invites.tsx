@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { Alert, Button, Platform, ScrollView, Text, View } from "react-native";
+import { Button, ScrollView, Text, View } from "react-native";
 import { Screen } from "@/components/layout/Screen";
 import {
 	useAcceptInvite,
@@ -7,6 +7,7 @@ import {
 } from "@/hooks/goal/useGoalMutations";
 import { useInvites } from "@/hooks/goal/useGoalQueries";
 import { useAuthStore } from "@/store/auth.store";
+import { getErrorMessage, showAlert } from "@/utils/error.utils";
 
 export default function InvitesScreen() {
 	const { user } = useAuthStore();
@@ -23,13 +24,8 @@ export default function InvitesScreen() {
 				userId: userId as string,
 			});
 			router.push(`/app/goal/${goalId}`);
-		} catch (_e) {
-			const errorMessage = "Failed to accept invite";
-			if (Platform.OS === "web") {
-				window.alert(errorMessage);
-			} else {
-				Alert.alert("Error", errorMessage);
-			}
+		} catch (e) {
+			showAlert(getErrorMessage(e, "Failed to accept invite"));
 		}
 	};
 
@@ -39,13 +35,8 @@ export default function InvitesScreen() {
 				inviteId,
 				userId: userId as string,
 			});
-		} catch (_e) {
-			const errorMessage = "Failed to decline invite";
-			if (Platform.OS === "web") {
-				window.alert(errorMessage);
-			} else {
-				Alert.alert("Error", errorMessage);
-			}
+		} catch (e) {
+			showAlert(getErrorMessage(e, "Failed to decline invite"));
 		}
 	};
 

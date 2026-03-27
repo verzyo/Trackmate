@@ -23,17 +23,10 @@ export const UpdateGoalMetadataSchema = z.object({
 		.string()
 		.max(128, "Description cannot exceed 128 characters")
 		.optional(),
-});
-export type UpdateGoalMetadataParams = z.infer<typeof UpdateGoalMetadataSchema>;
-
-export const UpdateParticipantSettingsSchema = z.object({
-	goal_id: z.string(),
-	anchor_date: z.string().nullable().optional(),
+	start_date: z.string().nullable().optional(),
 	weekly_days: z.array(z.number()).nullable().optional(),
 });
-export type UpdateParticipantSettingsParams = z.infer<
-	typeof UpdateParticipantSettingsSchema
->;
+export type UpdateGoalMetadataParams = z.infer<typeof UpdateGoalMetadataSchema>;
 
 export const CreateGoalBackendSchema = z.object({
 	title: z.string().min(1).max(32),
@@ -41,7 +34,7 @@ export const CreateGoalBackendSchema = z.object({
 	frequency_type: z.enum(["interval", "weekly"]),
 	frequency_value: z.number().int().positive(),
 	weekly_days: z.array(z.number()).nullable(),
-	anchor_date: z.string().nullable(),
+	start_date: z.string().nullable(),
 	attachment_type: z.enum(["none", "photo", "url", "text"]),
 	require_attachment: z.boolean(),
 });
@@ -55,6 +48,8 @@ export const GoalSchema = z.object({
 	created_at: z.string(),
 	frequency_type: z.enum(["interval", "weekly"]),
 	frequency_value: z.number().int().positive(),
+	start_date: z.string().nullable(),
+	weekly_days: z.array(z.number()).nullable(),
 	attachment_type: z.enum(["none", "photo", "url", "text"]),
 	require_attachment: z.boolean(),
 });
@@ -64,8 +59,6 @@ export const GoalParticipantSchema = z.object({
 	goal_id: z.string(),
 	user_id: z.string(),
 	joined_at: z.string(),
-	weekly_days: z.array(z.number()).nullable(),
-	anchor_date: z.string().nullable(),
 });
 export type GoalParticipant = z.infer<typeof GoalParticipantSchema>;
 

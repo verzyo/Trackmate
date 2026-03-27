@@ -1,52 +1,48 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import DateTimePicker, {
-	type DateTimePickerEvent,
-} from "@react-native-community/datetimepicker";
 import { router } from "expo-router";
 import { useState } from "react";
-import { Controller, useForm } from "react-hook-form";
-import {
-	Alert,
-	Button,
-	Platform,
-	Pressable,
-	ScrollView,
-	Switch,
-	Text,
-	TextInput,
-	View,
-} from "react-native";
+import { useForm } from "react-hook-form";
+import { Button, ScrollView, Text, View } from "react-native";
 import { ZodError } from "zod";
+import { AttachmentTypeSelector } from "@/components/forms/AttachmentTypeSelector";
+import { DatePicker } from "@/components/forms/DatePicker";
+import { FormField } from "@/components/forms/FormField";
+import { FrequencyTypeSelector } from "@/components/forms/FrequencyTypeSelector";
+import { InviteManager } from "@/components/forms/InviteManager";
 import { Screen } from "@/components/layout/Screen";
+import {
+	ATTACHMENT_TYPES,
+	type AttachmentType,
+} from "@/constants/attachmentTypes";
+import {
+	FREQUENCY_TYPES,
+	type FrequencyType,
+} from "@/constants/frequencyTypes";
+import { useToday } from "@/hooks/common/useToday";
 import { useCreateGoal, useCreateInvite } from "@/hooks/goal/useGoalMutations";
+import { useInviteManagement } from "@/hooks/goal/useInviteManagement";
 import type { CreateGoalParams } from "@/schemas/goal.schema";
 import {
 	createWeeklyDaysSchema,
 	type GoalForm,
 	GoalFormSchema,
 } from "@/schemas/goal.schema";
-import { fetchProfileByUsername } from "@/services/profile.service";
 import { useAuthStore } from "@/store/auth.store";
-import {
-	formatToISODate,
-	getTodayUTC,
-	toUTCMidnight,
-} from "@/utils/date.utils";
+import { formatToISODate } from "@/utils/date.utils";
+import { showAlert } from "@/utils/error.utils";
 
 export default function NewGoalModal() {
 	const { user } = useAuthStore();
 	const userId = user?.id;
 
-	const [frequencyType, setFrequencyType] = useState<"interval" | "weekly">(
-		"interval",
-	);
-	const [anchorDate, setAnchorDate] = useState(getTodayUTC());
-	const [showDatePicker, setShowDatePicker] = useState(false);
+	const today = useToday();
 
-	const [inviteUsername, setInviteUsername] = useState("");
-	const [pendingInvitees, setPendingInvitees] = useState<
-		{ id: string; username: string }[]
-	>([]);
+	const [frequencyType, setFrequencyType] = useState<FrequencyType>(
+		FREQUENCY_TYPES.INTERVAL,
+	);
+	const [startDate, setStartDate] = useState(today);
+
+	const { invitees, addInvite, removeInvite } = useInviteManagement(userId);
 
 	const createGoalMutation = useCreateGoal();
 	const createInviteMutation = useCreateInvite();
@@ -64,79 +60,24 @@ export default function NewGoalModal() {
 			description: "",
 			interval_days: "1",
 			weekly_days: "1",
-			attachment_type: "none",
+			attachment_type: ATTACHMENT_TYPES.NONE,
 			require_attachment: false,
 		},
 	});
 
-	const watchedAttachmentType = watch("attachment_type");
-
-	const onChangeDate = (_event: DateTimePickerEvent, selectedDate?: Date) => {
-		if (Platform.OS === "android") {
-			setShowDatePicker(false);
-		}
-
-		const currentDate = selectedDate || anchorDate;
-		setAnchorDate(toUTCMidnight(currentDate));
-	};
-
-	const handleAddInvite = async () => {
-		if (!inviteUsername.trim() || !userId) return;
-		try {
-			const profile = await fetchProfileByUsername(inviteUsername.trim());
-			if (!profile) {
-				const errorMessage = "User not found";
-				if (Platform.OS === "web") {
-					window.alert(errorMessage);
-				} else {
-					Alert.alert("Error", errorMessage);
-				}
-				return;
-			}
-			if (profile.id === userId) {
-				const errorMessage = "You cannot invite yourself";
-				if (Platform.OS === "web") {
-					window.alert(errorMessage);
-				} else {
-					Alert.alert("Error", errorMessage);
-				}
-				return;
-			}
-			if (pendingInvitees.some((p) => p.id === profile.id)) {
-				const errorMessage = "User already added to invites";
-				if (Platform.OS === "web") {
-					window.alert(errorMessage);
-				} else {
-					Alert.alert("Error", errorMessage);
-				}
-				return;
-			}
-			setPendingInvitees((prev) => [
-				...prev,
-				{ id: profile.id, username: profile.username },
-			]);
-			setInviteUsername("");
-		} catch (_e) {
-			const errorMessage = "Failed to find user";
-			if (Platform.OS === "web") {
-				window.alert(errorMessage);
-			} else {
-				Alert.alert("Error", errorMessage);
-			}
-		}
-	};
+	const watchedAttachmentType = watch("attachment_type") as AttachmentType;
 
 	const onSubmit = async (data: GoalForm) => {
 		try {
 			let activeWeekly: number[] | null = null;
-			if (frequencyType === "weekly") {
+			if (frequencyType === FREQUENCY_TYPES.WEEKLY) {
 				activeWeekly = createWeeklyDaysSchema().parse(data.weekly_days);
 			}
 
 			let frequencyValue = 1;
-			if (frequencyType === "interval") {
+			if (frequencyType === FREQUENCY_TYPES.INTERVAL) {
 				frequencyValue = parseInt(data.interval_days, 10);
-			} else if (frequencyType === "weekly" && activeWeekly) {
+			} else if (frequencyType === FREQUENCY_TYPES.WEEKLY && activeWeekly) {
 				frequencyValue = activeWeekly.length;
 			}
 
@@ -145,18 +86,18 @@ export default function NewGoalModal() {
 				description: data.description,
 				frequency_type: frequencyType,
 				frequency_value: frequencyValue,
-				weekly_days: frequencyType === "weekly" ? activeWeekly : null,
-				anchor_date:
-					frequencyType === "interval" ? anchorDate.toISOString() : null,
+				weekly_days:
+					frequencyType === FREQUENCY_TYPES.WEEKLY ? activeWeekly : null,
+				start_date: formatToISODate(startDate),
 				attachment_type: data.attachment_type,
 				require_attachment: data.require_attachment,
 			};
 
 			const goalId = await createGoalMutation.mutateAsync(params);
 
-			if (pendingInvitees.length > 0 && userId) {
+			if (invitees.length > 0 && userId) {
 				await Promise.all(
-					pendingInvitees.map((invitee) =>
+					invitees.map((invitee) =>
 						createInviteMutation.mutateAsync({
 							goalId: goalId as string,
 							inviterId: userId,
@@ -179,11 +120,7 @@ export default function NewGoalModal() {
 				errorMessage = "Goal title cannot be empty.";
 			}
 
-			if (Platform.OS === "web") {
-				alert(errorMessage);
-			} else {
-				Alert.alert("Error", errorMessage);
-			}
+			showAlert(errorMessage);
 		}
 	};
 
@@ -195,217 +132,75 @@ export default function NewGoalModal() {
 	return (
 		<Screen className="px-6 py-4">
 			<ScrollView contentContainerClassName="flex-grow items-center justify-center gap-4">
-				<Text>Title*</Text>
-				<Controller
+				<FormField
 					control={control}
 					name="title"
-					render={({ field: { onChange, value } }) => (
-						<TextInput
-							value={value}
-							onChangeText={onChange}
-							placeholder="e.g. Morning Run"
-							className="text-center"
-						/>
-					)}
+					label="Title*"
+					placeholder="e.g. Morning Run"
+					error={errors.title?.message}
+					className="text-center border-b border-gray-300 pb-2"
 				/>
-				{errors.title && (
-					<Text className="text-red-500">{errors.title.message}</Text>
-				)}
 
-				<Text>Description</Text>
-				<Controller
+				<FormField
 					control={control}
 					name="description"
-					render={({ field: { onChange, value } }) => (
-						<TextInput
-							value={value}
-							onChangeText={onChange}
-							placeholder="Optional details"
-							className="text-center"
-						/>
-					)}
+					label="Description"
+					placeholder="Optional details"
+					error={errors.description?.message}
+					className="text-center border-b border-gray-300 pb-2"
 				/>
 
-				<Text className="mt-4">Frequency Type*</Text>
-				<View className="flex-row gap-4 mb-2">
-					<Button
-						title="Interval"
-						color={frequencyType === "interval" ? "#007AFF" : "gray"}
-						onPress={() => setFrequencyType("interval")}
-					/>
-					<Button
-						title="Weekly"
-						color={frequencyType === "weekly" ? "#007AFF" : "gray"}
-						onPress={() => setFrequencyType("weekly")}
-					/>
-				</View>
-
-				{frequencyType === "interval" && (
-					<>
-						<Text>Every X Days*</Text>
-						<Controller
-							control={control}
-							name="interval_days"
-							render={({ field: { onChange, value } }) => (
-								<TextInput
-									value={value}
-									onChangeText={onChange}
-									keyboardType="number-pad"
-									placeholder="e.g. 1 for everyday"
-									className="text-center"
-								/>
-							)}
-						/>
-						{errors.interval_days && (
-							<Text className="text-red-500">
-								{errors.interval_days.message}
-							</Text>
-						)}
-					</>
-				)}
-
-				{frequencyType === "weekly" && (
-					<>
-						<Text>Days of the Week (1=Mon, 7=Sun)*</Text>
-						<Controller
-							control={control}
-							name="weekly_days"
-							render={({ field: { onChange, value } }) => (
-								<TextInput
-									value={value}
-									onChangeText={onChange}
-									placeholder="e.g. 1, 3, 5"
-									className="text-center"
-								/>
-							)}
-						/>
-						{errors.weekly_days && (
-							<Text className="text-red-500">{errors.weekly_days.message}</Text>
-						)}
-					</>
-				)}
-
-				{frequencyType === "interval" && (
-					<>
-						<Text className="mt-4">Anchor Date*</Text>
-						{Platform.OS === "web" ? (
-							<View className="mb-4">
-								<input
-									type="date"
-									value={formatToISODate(anchorDate)}
-									max={formatToISODate(getTodayUTC())}
-									onChange={(e) => {
-										if (e.target.value) {
-											const [year, month, day] = e.target.value
-												.split("-")
-												.map(Number);
-											setAnchorDate(new Date(Date.UTC(year, month - 1, day)));
-										}
-									}}
-									className="border-0 outline-none bg-transparent text-center"
-								/>
-							</View>
-						) : (
-							<Pressable
-								onPress={() => setShowDatePicker(true)}
-								className="p-3 mb-4"
-							>
-								<Text className="text-center text-blue-500">
-									{anchorDate.toLocaleDateString()}
-								</Text>
-							</Pressable>
-						)}
-
-						{Platform.OS !== "web" && showDatePicker && (
-							<DateTimePicker
-								value={anchorDate}
-								mode="date"
-								display={"default"}
-								maximumDate={getTodayUTC()}
-								onChange={onChangeDate}
-							/>
-						)}
-					</>
-				)}
-
-				<Text className="mt-4">Attachment Type</Text>
-				<Controller
-					control={control}
-					name="attachment_type"
-					render={({ field: { onChange, value } }) => (
-						<View className="flex-row gap-4 mb-2">
-							{(["none", "photo", "url", "text"] as const).map((type) => (
-								<Button
-									key={type}
-									title={type}
-									color={value === type ? "#007AFF" : "gray"}
-									onPress={() => {
-										onChange(type);
-										if (type === "none") {
-											setValue("require_attachment", false);
-										}
-									}}
-								/>
-							))}
-						</View>
-					)}
+				<Text className="mt-4 font-bold">Frequency Type*</Text>
+				<FrequencyTypeSelector
+					value={frequencyType}
+					onChange={setFrequencyType}
 				/>
 
-				{watchedAttachmentType !== "none" && (
-					<Controller
+				{frequencyType === FREQUENCY_TYPES.INTERVAL && (
+					<FormField
 						control={control}
-						name="require_attachment"
-						render={({ field: { onChange, value } }) => (
-							<View className="flex-row items-center gap-2 mb-4">
-								<Text>Require attachment</Text>
-								<Switch value={value} onValueChange={onChange} />
-							</View>
-						)}
+						name="interval_days"
+						label="Every X Days*"
+						placeholder="e.g. 1 for everyday"
+						keyboardType="number-pad"
+						error={errors.interval_days?.message}
+						className="text-center border-b border-gray-300 pb-2"
 					/>
 				)}
+
+				{frequencyType === FREQUENCY_TYPES.WEEKLY && (
+					<FormField
+						control={control}
+						name="weekly_days"
+						label="Days of the Week (1=Mon, 7=Sun)*"
+						placeholder="e.g. 1, 3, 5"
+						error={errors.weekly_days?.message}
+						className="text-center border-b border-gray-300 pb-2"
+					/>
+				)}
+
+				<DatePicker
+					label="Start Date*"
+					value={startDate}
+					onChange={setStartDate}
+				/>
+
+				<Text className="mt-4 font-bold">Attachment Type</Text>
+				<AttachmentTypeSelector
+					control={control}
+					nameType="attachment_type"
+					nameRequire="require_attachment"
+					setValue={setValue}
+					watchedType={watchedAttachmentType}
+				/>
 
 				<View className="h-[1px] bg-gray-300 w-full my-4" />
 
-				<View className="w-full items-center">
-					<Text className="font-bold text-lg">Invite Users</Text>
-					<TextInput
-						value={inviteUsername}
-						onChangeText={setInviteUsername}
-						placeholder="username"
-						autoCapitalize="none"
-						className="text-center mt-2 mb-4"
-					/>
-					<Button
-						title="Add to Invites"
-						onPress={handleAddInvite}
-						disabled={!inviteUsername.trim()}
-					/>
-
-					{pendingInvitees.length > 0 && (
-						<View className="mt-4 w-full px-4">
-							<Text className="text-sm font-semibold mb-2 text-center">
-								To be invited:
-							</Text>
-							{pendingInvitees.map((invitee) => (
-								<View
-									key={invitee.id}
-									className="flex-row justify-between items-center py-2 border-b border-neutral-200"
-								>
-									<Text>{invitee.username}</Text>
-									<Pressable
-										onPress={() =>
-											setPendingInvitees((prev) =>
-												prev.filter((p) => p.id !== invitee.id),
-											)
-										}
-									>
-										<Text className="text-red-500 font-bold">REMOVE</Text>
-									</Pressable>
-								</View>
-							))}
-						</View>
-					)}
-				</View>
+				<InviteManager
+					invitees={invitees}
+					onAdd={addInvite}
+					onRemove={removeInvite}
+				/>
 
 				<View className="mt-8 mb-6">
 					<Button

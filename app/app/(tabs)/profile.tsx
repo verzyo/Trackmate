@@ -4,8 +4,9 @@ import { cssInterop } from "nativewind";
 cssInterop(Image, { className: "style" });
 
 import { useEffect, useState } from "react";
-import { Controller, useForm } from "react-hook-form";
-import { Alert, Button, Platform, Text, TextInput, View } from "react-native";
+import { useForm } from "react-hook-form";
+import { Alert, Button, Platform, View } from "react-native";
+import { FormField } from "@/components/forms/FormField";
 import { Screen } from "@/components/layout/Screen";
 import {
 	pickAvatar,
@@ -161,60 +162,40 @@ export default function ProfileScreen() {
 				<Button title="Remove avatar" onPress={handleRemoveAvatar} />
 			)}
 
-			<Text>Username*</Text>
-			<Controller
+			<FormField
 				control={control}
 				name="username"
-				render={({ field: { onChange, value } }) => (
-					<TextInput
-						value={value}
-						onChangeText={onChange}
-						autoCapitalize="none"
-						placeholder="username"
-					/>
-				)}
+				label="Username*"
+				placeholder="username"
+				autoCapitalize="none"
+				className="w-full"
 			/>
 
-			<Text>Nickname</Text>
-			<Controller
+			<FormField
 				control={control}
 				name="nickname"
-				render={({ field: { onChange, value } }) => (
-					<TextInput
-						value={value}
-						onChangeText={onChange}
-						placeholder="nickname"
-					/>
-				)}
+				label="Nickname"
+				placeholder="nickname"
+				className="w-full"
 			/>
 
-			<Text>Email*</Text>
-			<Controller
+			<FormField
 				control={control}
 				name="email"
-				render={({ field: { onChange, value } }) => (
-					<TextInput
-						value={value}
-						onChangeText={onChange}
-						keyboardType="email-address"
-						autoCapitalize="none"
-						placeholder="email"
-					/>
-				)}
+				label="Email*"
+				placeholder="email"
+				keyboardType="email-address"
+				autoCapitalize="none"
+				className="w-full"
 			/>
 
-			<Text>New password</Text>
-			<Controller
+			<FormField
 				control={control}
 				name="password"
-				render={({ field: { onChange, value } }) => (
-					<TextInput
-						value={value}
-						onChangeText={onChange}
-						secureTextEntry
-						placeholder="leave blank to keep current"
-					/>
-				)}
+				label="New password"
+				placeholder="leave blank to keep current"
+				secureTextEntry
+				className="w-full"
 			/>
 
 			<Button

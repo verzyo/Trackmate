@@ -1,27 +1,18 @@
 import { type Href, router } from "expo-router";
 import { useRef, useState } from "react";
-import {
-	ActivityIndicator,
-	Alert,
-	Button,
-	Platform,
-	Pressable,
-	ScrollView,
-	Text,
-	View,
-} from "react-native";
+import { Button, ScrollView, Text, View } from "react-native";
 import AttachmentBottomSheet, {
 	type AttachmentBottomSheetRef,
 } from "@/components/AttachmentBottomSheet";
+import { GoalItem } from "@/components/goal/GoalItem";
 import { Screen } from "@/components/layout/Screen";
-import {
-	useCompleteGoal,
-	useUncompleteGoal,
-} from "@/hooks/goal/useGoalMutations";
+import { ATTACHMENT_TYPES } from "@/constants/attachmentTypes";
 import { useGoals, useTodaysCompletions } from "@/hooks/goal/useGoalQueries";
+import { useGoalToggle } from "@/hooks/goal/useGoalToggle";
 import { useGroupedGoals } from "@/hooks/goal/useGroupedGoals";
 import type { GoalWithParticipant } from "@/schemas/goal.schema";
 import { useAuthStore } from "@/store/auth.store";
+import { getErrorMessage, showAlert } from "@/utils/error.utils";
 
 export default function HomeScreen() {
 	const { user } = useAuthStore();
@@ -41,15 +32,31 @@ export default function HomeScreen() {
 	const { data: todaysCompletions, isLoading: isCompletionsLoading } =
 		useTodaysCompletions(userId);
 
-	const completeMutation = useCompleteGoal();
+	const { toggleCompletion, pendingGoalId } = useGoalToggle(userId);
 
 	const groupedGoals = useGroupedGoals(goals, userId, todaysCompletions);
 
 	const isLoading = isGoalsLoading || isCompletionsLoading;
 
-	const handleOpenAttachment = (goal: GoalWithParticipant) => {
-		setSelectedGoal(goal);
-		attachmentSheetRef.current?.present();
+	const handleToggle = async (
+		goal: GoalWithParticipant,
+		isCompleted: boolean,
+	) => {
+		if (
+			!isCompleted &&
+			goal.attachment_type !== ATTACHMENT_TYPES.NONE &&
+			goal.require_attachment
+		) {
+			setSelectedGoal(goal);
+			attachmentSheetRef.current?.present();
+			return;
+		}
+
+		try {
+			await toggleCompletion(goal.id, isCompleted);
+		} catch (error) {
+			showAlert(getErrorMessage(error, "Failed to update completion"));
+		}
 	};
 
 	return (
@@ -78,10 +85,11 @@ export default function HomeScreen() {
 							<GoalItem
 								key={goal.id}
 								goal={goal}
-								canComplete
-								userId={userId}
+								canComplete={!!userId}
 								isCompleted={goal.isCompleted}
-								onRequireAttachment={handleOpenAttachment}
+								isPending={pendingGoalId === goal.id}
+								onToggle={() => handleToggle(goal, goal.isCompleted)}
+								onPress={() => router.push(`/app/goal/${goal.id}` as Href)}
 							/>
 						))}
 					</View>
@@ -95,6 +103,7 @@ export default function HomeScreen() {
 								key={goal.id}
 								goal={goal}
 								subtitle={`in ${goal.daysUntil} ${goal.daysUntil === 1 ? "day" : "days"}`}
+								onPress={() => router.push(`/app/goal/${goal.id}` as Href)}
 							/>
 						))}
 					</View>
@@ -106,111 +115,13 @@ export default function HomeScreen() {
 					ref={attachmentSheetRef}
 					goal={selectedGoal}
 					onComplete={async (attachmentData) => {
-						if (!userId) return;
-						await completeMutation.mutateAsync({
-							goalId: selectedGoal.id,
-							userId,
-							attachmentData,
-						});
+						if (!userId || !selectedGoal) return;
+						try {
+							await toggleCompletion(selectedGoal.id, false, attachmentData);
+						} catch {}
 					}}
 				/>
 			)}
 		</Screen>
-	);
-}
-
-function GoalItem({
-	goal,
-	subtitle,
-	canComplete,
-	userId,
-	isCompleted,
-	onRequireAttachment,
-}: {
-	goal: GoalWithParticipant;
-	subtitle?: string;
-	canComplete?: boolean;
-	userId?: string;
-	isCompleted?: boolean;
-	onRequireAttachment?: (goal: GoalWithParticipant) => void;
-}) {
-	const completeMutation = useCompleteGoal();
-	const uncompleteMutation = useUncompleteGoal();
-
-	const handleToggle = async () => {
-		if (!userId) return;
-		if (
-			!isCompleted &&
-			goal.attachment_type !== "none" &&
-			goal.require_attachment
-		) {
-			onRequireAttachment?.(goal);
-			return;
-		}
-
-		try {
-			if (isCompleted) {
-				await uncompleteMutation.mutateAsync({ goalId: goal.id, userId });
-			} else {
-				await completeMutation.mutateAsync({ goalId: goal.id, userId });
-			}
-		} catch (error) {
-			const errorMessage =
-				error instanceof Error ? error.message : "Failed to update completion";
-			if (Platform.OS === "web") {
-				window.alert(errorMessage);
-			} else {
-				Alert.alert("Error", errorMessage);
-			}
-		}
-	};
-
-	const isPending = completeMutation.isPending || uncompleteMutation.isPending;
-
-	return (
-		<View className="flex-row items-center border-b border-neutral-200">
-			<Pressable
-				className="flex-1 py-3 items-center"
-				onPress={() => router.push(`/app/goal/${goal.id}` as Href)}
-			>
-				<Text
-					className={`text-lg ${
-						isCompleted ? "text-neutral-400 line-through" : "text-neutral-800"
-					}`}
-				>
-					{goal.title}
-				</Text>
-				{subtitle && (
-					<Text className="text-sm text-neutral-500">{subtitle}</Text>
-				)}
-			</Pressable>
-
-			{canComplete && userId && (
-				<Pressable onPress={handleToggle} disabled={isPending} className="p-3">
-					{isPending ? (
-						<ActivityIndicator size="small" color="#000" />
-					) : (
-						<View className="flex-row items-center gap-2">
-							{!isCompleted &&
-								goal.attachment_type !== "none" &&
-								goal.require_attachment && (
-									<Text className="text-[10px] text-blue-500 uppercase font-bold">
-										Proof
-									</Text>
-								)}
-							<View
-								className={`w-7 h-7 rounded-full border-2 border-black items-center justify-center ${
-									isCompleted ? "bg-black" : "bg-transparent"
-								}`}
-							>
-								{isCompleted && (
-									<Text className="text-white text-xs font-bold">✓</Text>
-								)}
-							</View>
-						</View>
-					)}
-				</Pressable>
-			)}
-		</View>
 	);
 }

@@ -8,6 +8,7 @@ import type {
 } from "@/schemas/goal.schema";
 import { uploadAttachment } from "@/services/attachment.service";
 import { useAuthStore } from "@/store/auth.store";
+import { showAlert } from "@/utils/error.utils";
 
 type Props = {
 	goal: GoalWithParticipant;
@@ -80,7 +81,7 @@ const AttachmentBottomSheet = forwardRef<AttachmentBottomSheetRef, Props>(
 				setImageUri(null);
 			} catch (error) {
 				const message = error instanceof Error ? error.message : String(error);
-				alert(message);
+				showAlert(message);
 			} finally {
 				setIsSubmitting(false);
 			}

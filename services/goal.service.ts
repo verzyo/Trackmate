@@ -5,7 +5,6 @@ import type {
 	GoalInviteWithDetails,
 	GoalWithParticipant,
 	UpdateGoalMetadataParams,
-	UpdateParticipantSettingsParams,
 } from "@/schemas/goal.schema";
 import { formatToISODate, getTodayUTC } from "@/utils/date.utils";
 
@@ -37,7 +36,7 @@ export const createGoal = async (params: CreateGoalParams) => {
 		p_frequency_type: params.frequency_type,
 		p_frequency_value: params.frequency_value,
 		p_weekly_days: params.weekly_days,
-		p_anchor_date: params.anchor_date,
+		p_start_date: params.start_date,
 		p_attachment_type: params.attachment_type,
 		p_require_attachment: params.require_attachment,
 	});
@@ -51,16 +50,7 @@ export const updateGoalMetadata = async (params: UpdateGoalMetadataParams) => {
 		p_goal_id: params.goal_id,
 		p_new_title: params.title ?? null,
 		p_new_description: params.description ?? null,
-	});
-	if (error) throw error;
-};
-
-export const updateParticipantSettings = async (
-	params: UpdateParticipantSettingsParams,
-) => {
-	const { error } = await supabase.rpc("update_goal_participant", {
-		p_goal_id: params.goal_id,
-		p_new_anchor_date: params.anchor_date ?? null,
+		p_new_start_date: params.start_date ?? null,
 		p_new_weekly_days: params.weekly_days ?? null,
 	});
 	if (error) throw error;

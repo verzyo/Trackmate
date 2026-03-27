@@ -1,90 +1,18 @@
-import { useEffect, useMemo, useState } from "react";
-import { AppState } from "react-native";
+import { useMemo } from "react";
+import { useToday } from "@/hooks/common/useToday";
 import type { GoalWithParticipant } from "@/schemas/goal.schema";
 import {
-	addDaysUTC,
 	differenceInDaysUTC,
-	getDayOfWeekUTC,
-	getTodayUTC,
+	getNextDueDate,
 	isTodayUTC,
 } from "@/utils/date.utils";
-
-export function getNextDueDate(
-	goal: GoalWithParticipant,
-	userId: string,
-): Date | null {
-	const participant = goal.goal_participants.find((p) => p.user_id === userId);
-	if (!participant) return null;
-
-	const today = getTodayUTC();
-
-	if (goal.frequency_type === "interval") {
-		if (!participant.anchor_date) return null;
-		const anchor = new Date(participant.anchor_date);
-		const anchorUTC = new Date(
-			Date.UTC(
-				anchor.getUTCFullYear(),
-				anchor.getUTCMonth(),
-				anchor.getUTCDate(),
-			),
-		);
-		const diff = differenceInDaysUTC(today, anchorUTC);
-
-		if (diff < 0) return anchorUTC;
-
-		const periods = Math.ceil(diff / goal.frequency_value);
-		return addDaysUTC(anchorUTC, periods * goal.frequency_value);
-	}
-
-	if (goal.frequency_type === "weekly") {
-		if (!participant.weekly_days || participant.weekly_days.length === 0)
-			return null;
-
-		const currentTargetDay = getDayOfWeekUTC(today);
-
-		const sortedDays = [...participant.weekly_days].sort((a, b) => a - b);
-		const nextDay = sortedDays.find((d) => d >= currentTargetDay);
-
-		if (nextDay !== undefined) {
-			return addDaysUTC(today, nextDay - currentTargetDay);
-		}
-
-		const firstDayNextWeek = sortedDays[0];
-		return addDaysUTC(today, 7 - currentTargetDay + firstDayNextWeek);
-	}
-
-	return null;
-}
 
 export function useGroupedGoals(
 	goals: GoalWithParticipant[] | undefined,
 	userId: string | undefined,
 	todaysCompletions: string[] | undefined,
 ) {
-	const [now, setNow] = useState(getTodayUTC());
-
-	useEffect(() => {
-		const interval = setInterval(() => {
-			const today = getTodayUTC();
-			if (today.getTime() !== now.getTime()) {
-				setNow(today);
-			}
-		}, 60000);
-
-		const subscription = AppState.addEventListener("change", (nextAppState) => {
-			if (nextAppState === "active") {
-				const today = getTodayUTC();
-				if (today.getTime() !== now.getTime()) {
-					setNow(today);
-				}
-			}
-		});
-
-		return () => {
-			clearInterval(interval);
-			subscription.remove();
-		};
-	}, [now]);
+	const todayDate = useToday();
 
 	return useMemo(() => {
 		if (!goals || !userId) return { today: [], upcoming: [] };
@@ -109,11 +37,11 @@ export function useGroupedGoals(
 						nextDueDate: nextDate,
 						isCompleted: completedSet.has(goal.id),
 					});
-				} else if (nextDate.getTime() > now.getTime()) {
+				} else if (nextDate.getTime() > todayDate.getTime()) {
 					upcoming.push({
 						...goal,
 						nextDueDate: nextDate,
-						daysUntil: differenceInDaysUTC(nextDate, now),
+						daysUntil: differenceInDaysUTC(nextDate, todayDate),
 					});
 				}
 			}
@@ -127,5 +55,5 @@ export function useGroupedGoals(
 		upcoming.sort((a, b) => a.nextDueDate.getTime() - b.nextDueDate.getTime());
 
 		return { today, upcoming };
-	}, [goals, userId, todaysCompletions, now]);
+	}, [goals, userId, todaysCompletions, todayDate]);
 }

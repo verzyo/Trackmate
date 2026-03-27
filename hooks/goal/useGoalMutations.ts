@@ -3,7 +3,6 @@ import type {
 	AttachmentData,
 	CreateGoalParams,
 	UpdateGoalMetadataParams,
-	UpdateParticipantSettingsParams,
 } from "@/schemas/goal.schema";
 import {
 	acceptInvite,
@@ -16,7 +15,6 @@ import {
 	uncompleteGoal,
 	updateCompletionWithAttachment,
 	updateGoalMetadata,
-	updateParticipantSettings,
 } from "@/services/goal.service";
 import { goalKeys } from "./useGoalQueries";
 
@@ -35,20 +33,6 @@ export const useUpdateGoalMetadata = () => {
 	return useMutation({
 		mutationFn: (params: UpdateGoalMetadataParams) =>
 			updateGoalMetadata(params),
-		onSuccess: (_, variables) => {
-			queryClient.invalidateQueries({
-				queryKey: goalKeys.detail(variables.goal_id),
-			});
-			queryClient.invalidateQueries({ queryKey: goalKeys.lists() });
-		},
-	});
-};
-
-export const useUpdateParticipantSettings = () => {
-	const queryClient = useQueryClient();
-	return useMutation({
-		mutationFn: (params: UpdateParticipantSettingsParams) =>
-			updateParticipantSettings(params),
 		onSuccess: (_, variables) => {
 			queryClient.invalidateQueries({
 				queryKey: goalKeys.detail(variables.goal_id),
