@@ -5,7 +5,7 @@ cssInterop(Image, { className: "style" });
 
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Alert, Button, Platform, View } from "react-native";
+import { Button, View } from "react-native";
 import { FormField } from "@/components/forms/FormField";
 import { Screen } from "@/components/layout/Screen";
 import {
@@ -17,6 +17,7 @@ import { queryClient } from "@/lib/queryClient";
 import { supabase } from "@/lib/supabase";
 import { removeAvatar, uploadAvatar } from "@/services/profile.service";
 import { useAuthStore } from "@/store/auth.store";
+import { showAlert } from "@/utils/error.utils";
 
 type ProfileForm = {
 	username: string;
@@ -92,8 +93,7 @@ export default function ProfileScreen() {
 				: null);
 
 	const handleAlert = (message: string) => {
-		if (Platform.OS === "web") window.alert(message);
-		else Alert.alert(message);
+		showAlert(message, "Profile Update");
 	};
 
 	const onSubmit = async (data: ProfileForm) => {

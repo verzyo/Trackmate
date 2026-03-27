@@ -1,13 +1,14 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { router } from "expo-router";
 import { Controller, useForm } from "react-hook-form";
-import { Alert, Button, Platform, Text, TextInput } from "react-native";
+import { Button, Text, TextInput } from "react-native";
 import { Screen } from "@/components/layout/Screen";
 import { supabase } from "@/lib/supabase";
 import {
 	type RegisterForm,
 	RegisterFormSchema,
 } from "@/schemas/profile.schema";
+import { showAlert } from "@/utils/error.utils";
 
 export default function RegisterScreen() {
 	const {
@@ -25,11 +26,7 @@ export default function RegisterScreen() {
 			options: { data: { username: data.username, nickname: data.nickname } },
 		});
 		if (error) {
-			if (Platform.OS === "web") {
-				alert(error.message);
-			} else {
-				Alert.alert("Registration Failed", error.message);
-			}
+			showAlert(error.message, "Registration Failed");
 		}
 	};
 

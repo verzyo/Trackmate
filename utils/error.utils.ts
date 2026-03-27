@@ -1,15 +1,15 @@
-import { Alert, Platform } from "react-native";
+import Toast from "react-native-toast-message";
 
 /**
  * Cross-platform alert helper.
- * On web, uses window.alert. On native, uses React Native Alert.alert.
+ * Uses Toast notifications for a consistent UI across platforms.
  */
 export const showAlert = (message: string, title = "Error"): void => {
-	if (Platform.OS === "web") {
-		window.alert(message);
-	} else {
-		Alert.alert(title, message);
-	}
+	Toast.show({
+		type: title === "Error" ? "error" : "success",
+		text1: title,
+		text2: message,
+	});
 };
 
 /**

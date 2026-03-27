@@ -40,7 +40,7 @@ const getGreeting = () => {
 };
 
 const getCurrentDayString = () => {
-	const d = new Date();
+	const _d = new Date();
 	const days = [
 		"Sunday",
 		"Monday",
@@ -50,7 +50,22 @@ const getCurrentDayString = () => {
 		"Friday",
 		"Saturday",
 	];
-	return `${days[d.getDay()]} ${d.getDate()}. ${d.getMonth() + 1}.`;
+	const months = [
+		"Jan",
+		"Feb",
+		"Mar",
+		"Apr",
+		"May",
+		"Jun",
+		"Jul",
+		"Aug",
+		"Sep",
+		"Oct",
+		"Nov",
+		"Dec",
+	];
+	const date = new Date();
+	return `${days[date.getDay()]}, ${months[date.getMonth()]} ${date.getDate()}`;
 };
 
 export default function HomeScreen() {
@@ -70,12 +85,7 @@ export default function HomeScreen() {
 		}, [queryClient]),
 	);
 
-	const {
-		data: goals,
-		isLoading: isGoalsLoading,
-		error: goalsError,
-		refetch: refetchGoals,
-	} = useGoals();
+	const { data: goals, isLoading: isGoalsLoading, error, refetch } = useGoals();
 
 	useEffect(() => {
 		if (goals && goals.length > 0 && userId) {
@@ -111,7 +121,7 @@ export default function HomeScreen() {
 	const { data: invites } = useInvites(userId);
 	const inviteCount = invites?.length ?? 0;
 
-	const { toggleCompletion, pendingGoalId } = useGoalToggle(userId);
+	const { toggleCompletion } = useGoalToggle(userId);
 
 	const groupedGoals = useGroupedGoals(goals, userId, todaysCompletions);
 
@@ -200,6 +210,7 @@ export default function HomeScreen() {
 		goal: GoalWithParticipant,
 		isCompleted: boolean,
 	) => {
+		if (!userId) return;
 		if (
 			!isCompleted &&
 			goal.attachment_type !== ATTACHMENT_TYPES.NONE &&
@@ -224,7 +235,7 @@ export default function HomeScreen() {
 					showsVerticalScrollIndicator={false}
 					contentContainerClassName="flex-grow px-5 py-6"
 					refreshControl={
-						<RefreshControl refreshing={isLoading} onRefresh={refetchGoals} />
+						<RefreshControl refreshing={isGoalsLoading} onRefresh={refetch} />
 					}
 				>
 					<View className="flex-col gap-8 pb-32">
@@ -247,7 +258,7 @@ export default function HomeScreen() {
 										Loading goals...
 									</Text>
 								)}
-								{goalsError && (
+								{error && (
 									<Text className="text-base text-state-danger">
 										Failed to load goals
 									</Text>
@@ -268,7 +279,6 @@ export default function HomeScreen() {
 												variant="today"
 												userId={userId}
 												isCompleted={goal.isCompleted}
-												isPending={pendingGoalId === goal.id}
 												icon={getIconComponent(participant?.icon || "Target")}
 												color={participant?.color || "#4f46e5"}
 												onToggle={() => handleToggle(goal, goal.isCompleted)}

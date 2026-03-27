@@ -1,5 +1,7 @@
 import { Stack } from "expo-router";
 import { useEffect } from "react";
+import Toast from "react-native-toast-message";
+import { toastConfig } from "@/components/ui/ToastConfig";
 import { useProfile } from "@/hooks/profile/useProfileHooks";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/auth.store";
@@ -17,11 +19,17 @@ export default function AppLayout() {
 	if (isLoading) return null;
 
 	return (
-		<Stack screenOptions={{ headerShown: false }}>
-			<Stack.Screen name="(tabs)" />
-			<Stack.Screen name="goal/new" options={{ presentation: "modal" }} />
-			<Stack.Screen name="goal/[id]" options={{ presentation: "modal" }} />
-			<Stack.Screen name="goal/edit/[id]" options={{ presentation: "modal" }} />
-		</Stack>
+		<>
+			<Stack screenOptions={{ headerShown: false }}>
+				<Stack.Screen name="(tabs)" />
+				<Stack.Screen name="goal/new" options={{ presentation: "modal" }} />
+				<Stack.Screen name="goal/[id]" options={{ presentation: "modal" }} />
+				<Stack.Screen
+					name="goal/edit/[id]"
+					options={{ presentation: "modal" }}
+				/>
+			</Stack>
+			<Toast config={toastConfig} />
+		</>
 	);
 }
