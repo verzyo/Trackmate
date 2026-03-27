@@ -28,6 +28,7 @@ import { useGoal, useGoalCompletions } from "@/hooks/goal/useGoalQueries";
 import { useInviteManagement } from "@/hooks/goal/useInviteManagement";
 import { createWeeklyDaysSchema } from "@/schemas/goal.schema";
 import { useAuthStore } from "@/store/auth.store";
+import { cn } from "@/utils/cn";
 import { formatToISODate } from "@/utils/date.utils";
 import { showAlert } from "@/utils/error.utils";
 
@@ -328,7 +329,10 @@ export default function EditGoalModal() {
 								key={color}
 								onPress={() => setSelectedColor(color)}
 								style={{ backgroundColor: color }}
-								className={`w-8 h-8 rounded-full ${selectedColor === color ? "border-2 border-black" : ""}`}
+								className={cn(
+									"w-8 h-8 rounded-full",
+									selectedColor === color && "border-2 border-black",
+								)}
 							/>
 						))}
 					</View>

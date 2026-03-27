@@ -3,6 +3,7 @@ import NativeDateTimePicker, {
 } from "@react-native-community/datetimepicker";
 import { useState } from "react";
 import { Platform, Pressable, Text, View } from "react-native";
+import { cn } from "@/utils/cn";
 import { formatToISODate, toUTCMidnight } from "@/utils/date.utils";
 
 type DatePickerProps = {
@@ -51,7 +52,10 @@ export function DatePicker({
 					disabled={disabled}
 				>
 					<Text
-						className={`text-center ${disabled ? "text-neutral-400" : "text-blue-500"}`}
+						className={cn(
+							"text-center",
+							disabled ? "text-neutral-400" : "text-blue-500",
+						)}
 					>
 						{value.toLocaleDateString()}
 					</Text>

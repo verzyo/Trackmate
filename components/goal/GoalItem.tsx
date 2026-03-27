@@ -3,6 +3,7 @@ import { memo } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { ATTACHMENT_TYPES } from "@/constants/attachmentTypes";
 import type { GoalWithParticipant } from "@/schemas/goal.schema";
+import { cn } from "@/utils/cn";
 
 type GoalItemProps = {
 	goal: GoalWithParticipant;
@@ -47,9 +48,12 @@ export const GoalItem = memo(function GoalItem({
 				{getIcon(icon || "Flag", color || "#3b82f6", 24)}
 				<View className="flex-1 justify-center">
 					<Text
-						className={`text-lg ${
-							isCompleted ? "text-neutral-400 line-through" : "text-neutral-800"
-						}`}
+						className={cn(
+							"text-lg",
+							isCompleted
+								? "text-neutral-400 line-through"
+								: "text-neutral-800",
+						)}
 					>
 						{goal.title}
 					</Text>
@@ -73,9 +77,10 @@ export const GoalItem = memo(function GoalItem({
 									</Text>
 								)}
 							<View
-								className={`w-7 h-7 rounded-full border-2 border-black items-center justify-center ${
-									isCompleted ? "bg-black" : "bg-transparent"
-								}`}
+								className={cn(
+									"w-7 h-7 rounded-full border-2 border-black items-center justify-center",
+									isCompleted ? "bg-black" : "bg-transparent",
+								)}
 							>
 								{isCompleted && (
 									<Text className="text-white text-xs font-bold">✓</Text>
