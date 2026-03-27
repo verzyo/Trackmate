@@ -8,6 +8,7 @@ import {
 	fetchInvites,
 	fetchTodayCompletion,
 	fetchTodaysCompletions,
+	fetchTodaysCompletionsForGoals,
 } from "@/services/goal.service";
 
 export const goalKeys = {
@@ -70,6 +71,14 @@ export const useTodaysCompletions = (userId: string | undefined) => {
 		queryKey: goalKeys.todaysCompletions(userId ?? ""),
 		queryFn: () => fetchTodaysCompletions(userId as string),
 		enabled: !!userId,
+	});
+};
+
+export const useTodaysCompletionsForGoals = (goalIds: string[]) => {
+	return useQuery({
+		queryKey: [...goalKeys.all, "todaysCompletionsForGoals", ...goalIds],
+		queryFn: () => fetchTodaysCompletionsForGoals(goalIds),
+		enabled: goalIds.length > 0,
 	});
 };
 

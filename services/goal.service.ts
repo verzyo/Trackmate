@@ -166,6 +166,18 @@ export const fetchTodaysCompletions = async (userId: string) => {
 	return data.map((c) => c.goal_id);
 };
 
+export const fetchTodaysCompletionsForGoals = async (goalIds: string[]) => {
+	if (!goalIds.length) return [];
+	const today = formatToISODate(getTodayUTC());
+	const { data, error } = await supabase
+		.from("goal_completions")
+		.select("goal_id, user_id")
+		.eq("completed_date", today)
+		.in("goal_id", goalIds);
+	if (error) throw error;
+	return data;
+};
+
 export const uncompleteGoal = async (goalId: string, userId: string) => {
 	const today = formatToISODate(getTodayUTC());
 	const { error } = await supabase.from("goal_completions").delete().match({

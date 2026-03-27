@@ -1,7 +1,11 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import * as ImagePicker from "expo-image-picker";
 import { queryClient } from "@/lib/queryClient";
-import { fetchProfile, updateProfile } from "@/services/profile.service";
+import {
+	fetchProfile,
+	fetchProfilesByIds,
+	updateProfile,
+} from "@/services/profile.service";
 
 const MAX_SIZE = 5 * 1024 * 1024;
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -41,6 +45,14 @@ export const useProfile = (userId?: string | null) => {
 			return profile;
 		},
 		enabled: !!userId,
+	});
+};
+
+export const useProfilesByIds = (userIds: string[]) => {
+	return useQuery({
+		queryKey: ["profiles", "byIds", ...userIds],
+		queryFn: () => fetchProfilesByIds(userIds),
+		enabled: userIds.length > 0,
 	});
 };
 

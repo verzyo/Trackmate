@@ -13,6 +13,16 @@ export const fetchProfile = async (userId: string) => {
 	return data;
 };
 
+export const fetchProfilesByIds = async (userIds: string[]) => {
+	if (!userIds.length) return [];
+	const { data, error } = await supabase
+		.from("profiles")
+		.select("id, username, nickname, avatar_url")
+		.in("id", userIds);
+	if (error) throw error;
+	return data;
+};
+
 export const fetchProfileByUsername = async (username: string) => {
 	const { data, error } = await supabase
 		.from("profiles")

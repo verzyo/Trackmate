@@ -172,13 +172,7 @@ export const GoalItem = memo(function GoalItem({
 						{participantAvatars.map((pa, i) => (
 							<View
 								key={pa.user_id}
-								className="flex-1 self-stretch rounded-full"
-								style={{
-									backgroundColor:
-										i < completedCount
-											? "var(--color-action-primary)"
-											: "var(--color-border)",
-								}}
+								className={`flex-1 self-stretch rounded-full ${i < completedCount ? "bg-action-primary" : "bg-border"}`}
 							/>
 						))}
 					</View>
