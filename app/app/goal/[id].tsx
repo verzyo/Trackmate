@@ -162,9 +162,6 @@ export default function GoalDetailsModal() {
 									onPress={
 										isCompletedToday ? handleUncomplete : () => handleComplete()
 									}
-									disabled={
-										completeMutation.isPending || uncompleteMutation.isPending
-									}
 								/>
 							)}
 
@@ -173,16 +170,10 @@ export default function GoalDetailsModal() {
 									<Button
 										title={isCompletedToday ? "Completed \u2713" : "Complete"}
 										onPress={() => handleComplete()}
-										disabled={isCompletedToday || completeMutation.isPending}
+										disabled={isCompletedToday}
 									/>
 								) : !isCompletedToday ? (
-									<Button
-										title={
-											completeMutation.isPending ? "Completing..." : "Complete"
-										}
-										onPress={() => handleComplete()}
-										disabled={completeMutation.isPending}
-									/>
+									<Button title="Complete" onPress={() => handleComplete()} />
 								) : (
 									<View className="gap-2">
 										<Button

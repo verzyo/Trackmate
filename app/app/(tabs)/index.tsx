@@ -1,5 +1,6 @@
-import { type Href, router } from "expo-router";
-import { useMemo, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { type Href, router, useFocusEffect } from "expo-router";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { RefreshControl, ScrollView, Text, View } from "react-native";
 import AttachmentBottomSheet, {
 	type AttachmentBottomSheetRef,
@@ -10,6 +11,7 @@ import { Screen } from "@/components/layout/Screen";
 import FloatingActionButton from "@/components/ui/FloatingActionButton";
 import { ATTACHMENT_TYPES } from "@/constants/attachmentTypes";
 import {
+	goalKeys,
 	useGoals,
 	useInvites,
 	useTodaysCompletions,
@@ -19,6 +21,13 @@ import { useGoalToggle } from "@/hooks/goal/useGoalToggle";
 import { useGroupedGoals } from "@/hooks/goal/useGroupedGoals";
 import { useProfile, useProfilesByIds } from "@/hooks/profile/useProfileHooks";
 import type { GoalWithParticipant } from "@/schemas/goal.schema";
+import {
+	fetchGoal,
+	fetchGoalCompletions,
+	fetchGoalMonthlyPoints,
+	fetchGoalStreak,
+	fetchTodayCompletion,
+} from "@/services/goal.service";
 import { useAuthStore } from "@/store/auth.store";
 import { getErrorMessage, showAlert } from "@/utils/error.utils";
 import { getIconComponent } from "@/utils/icons";
@@ -53,12 +62,47 @@ export default function HomeScreen() {
 	);
 	const attachmentSheetRef = useRef<AttachmentBottomSheetRef>(null);
 
+	const queryClient = useQueryClient();
+
+	useFocusEffect(
+		useCallback(() => {
+			queryClient.invalidateQueries({ queryKey: goalKeys.all });
+		}, [queryClient]),
+	);
+
 	const {
 		data: goals,
 		isLoading: isGoalsLoading,
 		error: goalsError,
 		refetch: refetchGoals,
 	} = useGoals();
+
+	useEffect(() => {
+		if (goals && goals.length > 0 && userId) {
+			for (const goal of goals) {
+				queryClient.prefetchQuery({
+					queryKey: goalKeys.detail(goal.id),
+					queryFn: () => fetchGoal(goal.id),
+				});
+				queryClient.prefetchQuery({
+					queryKey: goalKeys.todayCompletion(goal.id, userId),
+					queryFn: () => fetchTodayCompletion(goal.id, userId),
+				});
+				queryClient.prefetchQuery({
+					queryKey: goalKeys.streak(goal.id, userId),
+					queryFn: () => fetchGoalStreak(goal.id, userId),
+				});
+				queryClient.prefetchQuery({
+					queryKey: goalKeys.monthlyPoints(goal.id, userId),
+					queryFn: () => fetchGoalMonthlyPoints(goal.id, userId),
+				});
+				queryClient.prefetchQuery({
+					queryKey: goalKeys.completions(goal.id, userId),
+					queryFn: () => fetchGoalCompletions(goal.id, userId),
+				});
+			}
+		}
+	}, [goals, queryClient, userId]);
 
 	const { data: todaysCompletions, isLoading: isCompletionsLoading } =
 		useTodaysCompletions(userId);

@@ -5,8 +5,9 @@ import {
 	memo,
 	type ReactElement,
 	type ReactNode,
+	useMemo,
 } from "react";
-import { ActivityIndicator, Pressable, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import AvatarStack from "@/components/ui/AvatarStack";
 import PersonalTag from "@/components/ui/PersonalTag";
 import type { GoalWithParticipant } from "@/schemas/goal.schema";
@@ -33,7 +34,6 @@ type GoalItemProps = {
 	variant?: "today" | "upcoming";
 	userId?: string;
 	isCompleted?: boolean;
-	isPending?: boolean;
 	streak?: number;
 	subtitle?: string;
 	onToggle?: () => void;
@@ -53,7 +53,6 @@ export const GoalItem = memo(function GoalItem({
 	variant = "today",
 	userId,
 	isCompleted = false,
-	isPending = false,
 	streak = 0,
 	subtitle,
 	onToggle,
@@ -82,6 +81,13 @@ export const GoalItem = memo(function GoalItem({
 	const daysUntilDue = subtitle
 		? parseInt(subtitle.replace(/\D/g, ""), 10) || undefined
 		: undefined;
+
+	const sortedParticipants = useMemo(() => {
+		return [...participantAvatars].sort((a, b) => {
+			if (a.completed === b.completed) return 0;
+			return a.completed ? -1 : 1;
+		});
+	}, [participantAvatars]);
 
 	return (
 		<Pressable
@@ -140,19 +146,14 @@ export const GoalItem = memo(function GoalItem({
 					<Pressable
 						onPress={onToggle}
 						hitSlop={12}
-						disabled={isPending}
 						className={`h-10 w-10 shrink-0 items-center justify-center rounded-xl border-[3px] ${
 							isCompletedToday
 								? "border-action-primary bg-action-primary"
 								: "border-border bg-transparent"
 						}`}
 					>
-						{isPending ? (
-							<ActivityIndicator size="small" color="#fff" />
-						) : (
-							isCompletedToday && (
-								<CheckIcon size={20} color="white" weight="bold" />
-							)
+						{isCompletedToday && (
+							<CheckIcon size={20} color="white" weight="bold" />
 						)}
 					</Pressable>
 				)}
@@ -169,7 +170,7 @@ export const GoalItem = memo(function GoalItem({
 						</Text>
 					</View>
 					<View className="h-1.5 w-full flex-row items-center gap-1">
-						{participantAvatars.map((pa) => (
+						{sortedParticipants.map((pa) => (
 							<View
 								key={pa.user_id}
 								className={`flex-1 self-stretch rounded-full ${pa.completed ? "bg-action-primary" : "bg-border"}`}
