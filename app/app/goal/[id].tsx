@@ -141,6 +141,8 @@ export default function GoalDetailsModal() {
 		attachmentSheetRef.current?.present();
 	};
 
+	const participant = goal.goal_participants.find((p) => p.user_id === userId);
+
 	return (
 		<Screen className="px-6 py-4">
 			<ScrollView contentContainerClassName="flex-grow items-center justify-center gap-4 pb-10">
@@ -151,6 +153,8 @@ export default function GoalDetailsModal() {
 					streakLoading={streakLoading}
 					monthlyPoints={monthlyPoints}
 					pointsLoading={pointsLoading}
+					iconName={participant?.icon || "Target"}
+					color={participant?.color || "#4f46e5"}
 				/>
 
 				<View className="mt-4 w-full max-w-xs gap-4">
