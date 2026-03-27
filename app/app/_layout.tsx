@@ -1,6 +1,21 @@
 import { Stack } from "expo-router";
+import { useEffect } from "react";
+import { useProfile } from "@/hooks/profile/useProfileHooks";
+import { supabase } from "@/lib/supabase";
+import { useAuthStore } from "@/store/auth.store";
 
 export default function AppLayout() {
+	const { user } = useAuthStore();
+	const { data: profile, isLoading } = useProfile(user?.id);
+
+	useEffect(() => {
+		if (!isLoading && profile === null && user) {
+			supabase.auth.signOut();
+		}
+	}, [isLoading, profile, user]);
+
+	if (isLoading) return null;
+
 	return (
 		<Stack screenOptions={{ headerShown: false }}>
 			<Stack.Screen name="(tabs)" />
