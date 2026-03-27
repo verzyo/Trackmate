@@ -169,10 +169,10 @@ export const GoalItem = memo(function GoalItem({
 						</Text>
 					</View>
 					<View className="h-1.5 w-full flex-row items-center gap-1">
-						{participantAvatars.map((pa, i) => (
+						{participantAvatars.map((pa) => (
 							<View
 								key={pa.user_id}
-								className={`flex-1 self-stretch rounded-full ${i < completedCount ? "bg-action-primary" : "bg-border"}`}
+								className={`flex-1 self-stretch rounded-full ${pa.completed ? "bg-action-primary" : "bg-border"}`}
 							/>
 						))}
 					</View>

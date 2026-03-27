@@ -95,6 +95,9 @@ export const useCompleteGoal = () => {
 			queryClient.invalidateQueries({
 				queryKey: goalKeys.monthlyPoints(variables.goalId, variables.userId),
 			});
+			queryClient.invalidateQueries({
+				queryKey: goalKeys.todaysCompletionsForGoals(),
+			});
 		},
 	});
 };
@@ -122,6 +125,9 @@ export const useUncompleteGoal = () => {
 			});
 			queryClient.invalidateQueries({
 				queryKey: goalKeys.monthlyPoints(variables.goalId, variables.userId),
+			});
+			queryClient.invalidateQueries({
+				queryKey: goalKeys.todaysCompletionsForGoals(),
 			});
 		},
 	});

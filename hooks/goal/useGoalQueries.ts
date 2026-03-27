@@ -27,6 +27,8 @@ export const goalKeys = {
 	monthlyPoints: (goalId: string, userId: string) =>
 		[...goalKeys.detail(goalId), "monthlyPoints", userId] as const,
 	invites: (userId: string) => [...goalKeys.all, "invites", userId] as const,
+	todaysCompletionsForGoals: () =>
+		[...goalKeys.all, "todaysCompletionsForGoals"] as const,
 };
 
 export const useGoals = () => {
@@ -76,7 +78,7 @@ export const useTodaysCompletions = (userId: string | undefined) => {
 
 export const useTodaysCompletionsForGoals = (goalIds: string[]) => {
 	return useQuery({
-		queryKey: [...goalKeys.all, "todaysCompletionsForGoals", ...goalIds],
+		queryKey: [...goalKeys.todaysCompletionsForGoals(), ...goalIds],
 		queryFn: () => fetchTodaysCompletionsForGoals(goalIds),
 		enabled: goalIds.length > 0,
 	});
