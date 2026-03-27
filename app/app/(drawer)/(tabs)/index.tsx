@@ -1,4 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
+import { useNavigation } from "@react-navigation/native";
 import { type Href, router, useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { RefreshControl, ScrollView, Text, View } from "react-native";
@@ -69,6 +70,7 @@ const getCurrentDayString = () => {
 };
 
 export default function HomeScreen() {
+	const navigation = useNavigation();
 	const { user } = useAuthStore();
 	const userId = user?.id;
 
@@ -245,7 +247,7 @@ export default function HomeScreen() {
 							profileName={profileName}
 							avatarUrl={avatarUrl}
 							inviteCount={inviteCount}
-							onAvatarPress={() => router.push("/app/profile" as Href)}
+							onAvatarPress={() => (navigation as any).openDrawer()}
 						/>
 
 						<View className="flex-col items-start justify-start gap-4">

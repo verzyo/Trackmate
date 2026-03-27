@@ -12,8 +12,6 @@ export default function AppLayout() {
 	return (
 		<Tabs screenOptions={{ headerShown: false }}>
 			<Tabs.Screen name="index" options={{ title: "Home" }} />
-			<Tabs.Screen name="invites" options={{ title: "Invites" }} />
-			<Tabs.Screen name="profile" options={{ title: "Profile" }} />
 		</Tabs>
 	);
 }
