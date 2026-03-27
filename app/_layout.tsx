@@ -3,7 +3,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Analytics } from "@vercel/analytics/react";
 import { Stack } from "expo-router";
 import { useEffect } from "react";
-import { Platform } from "react-native";
+import { Platform, useColorScheme, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { queryClient } from "@/lib/queryClient";
 import { useAuthStore } from "@/store/auth.store";
@@ -12,6 +12,7 @@ import "@/global.css";
 
 export default function RootLayout() {
 	const { initialize, initialized, session } = useAuthStore();
+	const colorScheme = useColorScheme();
 
 	useEffect(() => {
 		const unsubscribe = initialize();
@@ -24,21 +25,26 @@ export default function RootLayout() {
 		<GestureHandlerRootView style={{ flex: 1 }}>
 			<BottomSheetModalProvider>
 				<QueryClientProvider client={queryClient}>
-					{Platform.OS === "web" && <Analytics />}
-					<Stack screenOptions={{ headerShown: false }}>
-						<Stack.Protected guard={!session}>
-							<Stack.Screen name="login" />
-							<Stack.Screen name="register" />
-						</Stack.Protected>
+					<View
+						className={colorScheme === "dark" ? "dark" : ""}
+						style={{ flex: 1 }}
+					>
+						{Platform.OS === "web" && <Analytics />}
+						<Stack screenOptions={{ headerShown: false }}>
+							<Stack.Protected guard={!session}>
+								<Stack.Screen name="login" />
+								<Stack.Screen name="register" />
+							</Stack.Protected>
 
-						<Stack.Protected guard={!!session}>
-							<Stack.Screen name="app" />
-						</Stack.Protected>
+							<Stack.Protected guard={!!session}>
+								<Stack.Screen name="app" />
+							</Stack.Protected>
 
-						<Stack.Protected guard={Platform.OS === "web"}>
-							<Stack.Screen name="index" />
-						</Stack.Protected>
-					</Stack>
+							<Stack.Protected guard={Platform.OS === "web"}>
+								<Stack.Screen name="index" />
+							</Stack.Protected>
+						</Stack>
+					</View>
 				</QueryClientProvider>
 			</BottomSheetModalProvider>
 		</GestureHandlerRootView>
