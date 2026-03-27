@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
 import type {
 	AttachmentData,
 	CreateGoalParams,
@@ -201,6 +202,36 @@ export const useDeclineInvite = () => {
 		onSuccess: (_, variables) => {
 			queryClient.invalidateQueries({
 				queryKey: goalKeys.invites(variables.userId),
+			});
+		},
+	});
+};
+
+export const useUpdateParticipant = () => {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: async ({
+			goalId,
+			userId,
+			icon,
+			color,
+		}: {
+			goalId: string;
+			userId: string;
+			icon?: string;
+			color?: string;
+		}) => {
+			const { error } = await supabase.rpc("update_participant", {
+				p_goal_id: goalId,
+				p_user_id: userId,
+				p_icon: icon,
+				p_color: color,
+			});
+			if (error) throw error;
+		},
+		onSuccess: (_, variables) => {
+			queryClient.invalidateQueries({
+				queryKey: goalKeys.detail(variables.goalId),
 			});
 		},
 	});

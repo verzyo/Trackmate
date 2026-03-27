@@ -59,6 +59,8 @@ export const GoalParticipantSchema = z.object({
 	goal_id: z.string(),
 	user_id: z.string(),
 	joined_at: z.string(),
+	icon: z.string().nullable().optional(),
+	color: z.string().nullable().optional(),
 });
 export type GoalParticipant = z.infer<typeof GoalParticipantSchema>;
 

@@ -1,9 +1,11 @@
 import { router, useLocalSearchParams } from "expo-router";
+import { Flag, Target } from "phosphor-react-native";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import {
 	ActivityIndicator,
 	Button,
+	Pressable,
 	ScrollView,
 	Text,
 	View,
@@ -20,6 +22,7 @@ import {
 	useDeleteGoal,
 	useLeaveGoal,
 	useUpdateGoalMetadata,
+	useUpdateParticipant,
 } from "@/hooks/goal/useGoalMutations";
 import { useGoal, useGoalCompletions } from "@/hooks/goal/useGoalQueries";
 import { useInviteManagement } from "@/hooks/goal/useInviteManagement";
@@ -40,6 +43,7 @@ export default function EditGoalModal() {
 	const deleteGoalMutation = useDeleteGoal();
 	const createInviteMutation = useCreateInvite();
 	const leaveGoalMutation = useLeaveGoal();
+	const updateParticipantMutation = useUpdateParticipant();
 
 	const { user } = useAuthStore();
 	const userId = user?.id;
@@ -63,6 +67,11 @@ export default function EditGoalModal() {
 	const [initialWeeklyDays, setInitialWeeklyDays] = useState<string | null>(
 		null,
 	);
+
+	const [selectedIcon, setSelectedIcon] = useState<string>("Flag");
+	const [selectedColor, setSelectedColor] = useState<string>("#3b82f6");
+	const [initialIcon, setInitialIcon] = useState<string>("Flag");
+	const [initialColor, setInitialColor] = useState<string>("#3b82f6");
 
 	const { control, handleSubmit, reset } = useForm<GoalForm>({
 		defaultValues: {
@@ -90,12 +99,25 @@ export default function EditGoalModal() {
 				setWeeklyDaysInput(days);
 				setInitialWeeklyDays(days);
 			}
+
+			if (userId) {
+				const participant = goal.goal_participants.find(
+					(p) => p.user_id === userId,
+				);
+				if (participant) {
+					setSelectedIcon(participant.icon || "Flag");
+					setSelectedColor(participant.color || "#3b82f6");
+					setInitialIcon(participant.icon || "Flag");
+					setInitialColor(participant.color || "#3b82f6");
+				}
+			}
+
 			reset({
 				title: goal.title,
 				description: goal.description || "",
 			});
 		}
-	}, [goal, reset]);
+	}, [goal, reset, userId]);
 
 	const onSave = async (data: GoalForm) => {
 		try {
@@ -148,12 +170,27 @@ export default function EditGoalModal() {
 				);
 			}
 
-			if (!hasChanges && invitePromises.length === 0) {
+			const participantChanges =
+				selectedIcon !== initialIcon || selectedColor !== initialColor;
+
+			if (!hasChanges && invitePromises.length === 0 && !participantChanges) {
 				router.back();
 				return;
 			}
 
 			const promises = [...invitePromises];
+
+			if (participantChanges && userId) {
+				promises.push(
+					updateParticipantMutation.mutateAsync({
+						goalId: id as string,
+						userId,
+						icon: selectedIcon,
+						color: selectedColor,
+					}),
+				);
+			}
+
 			if (hasChanges) {
 				promises.push(
 					updateMetadataMutation.mutateAsync(
@@ -181,7 +218,9 @@ export default function EditGoalModal() {
 	};
 
 	const isSaving =
-		updateMetadataMutation.isPending || createInviteMutation.isPending;
+		updateMetadataMutation.isPending ||
+		createInviteMutation.isPending ||
+		updateParticipantMutation.isPending;
 
 	if (isGoalLoading || !goal) {
 		return (
@@ -256,6 +295,44 @@ export default function EditGoalModal() {
 						onWeeklyDaysChange={setWeeklyDaysInput}
 					/>
 				)}
+
+				<View className="w-full mt-4 items-center">
+					<Text className="font-bold text-lg mb-2">Your Goal Appearance</Text>
+					<View className="flex-row gap-4">
+						<Pressable onPress={() => setSelectedIcon("Flag")}>
+							<Flag
+								size={32}
+								color={selectedIcon === "Flag" ? selectedColor : "gray"}
+								weight={selectedIcon === "Flag" ? "fill" : "regular"}
+							/>
+						</Pressable>
+						<Pressable onPress={() => setSelectedIcon("Target")}>
+							<Target
+								size={32}
+								color={selectedIcon === "Target" ? selectedColor : "gray"}
+								weight={selectedIcon === "Target" ? "fill" : "regular"}
+							/>
+						</Pressable>
+					</View>
+
+					<View className="flex-row gap-2 mt-4">
+						{[
+							"#ef4444",
+							"#3b82f6",
+							"#22c55e",
+							"#eab308",
+							"#a855f7",
+							"#f97316",
+						].map((color) => (
+							<Pressable
+								key={color}
+								onPress={() => setSelectedColor(color)}
+								style={{ backgroundColor: color }}
+								className={`w-8 h-8 rounded-full ${selectedColor === color ? "border-2 border-black" : ""}`}
+							/>
+						))}
+					</View>
+				</View>
 
 				<View className="mt-4 mb-6 w-full max-w-xs">
 					<Button

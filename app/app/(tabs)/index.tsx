@@ -81,31 +81,45 @@ export default function HomeScreen() {
 				{groupedGoals.today.length > 0 && (
 					<View className="w-full items-center gap-2">
 						<Text className="text-xl font-bold text-neutral-800">Today</Text>
-						{groupedGoals.today.map((goal) => (
-							<GoalItem
-								key={goal.id}
-								goal={goal}
-								canComplete={!!userId}
-								isCompleted={goal.isCompleted}
-								isPending={pendingGoalId === goal.id}
-								onToggle={() => handleToggle(goal, goal.isCompleted)}
-								onPress={() => router.push(`/app/goal/${goal.id}` as Href)}
-							/>
-						))}
+						{groupedGoals.today.map((goal) => {
+							const participant = goal.goal_participants?.find(
+								(p) => p.user_id === userId,
+							);
+							return (
+								<GoalItem
+									key={goal.id}
+									goal={goal}
+									canComplete={!!userId}
+									isCompleted={goal.isCompleted}
+									isPending={pendingGoalId === goal.id}
+									onToggle={() => handleToggle(goal, goal.isCompleted)}
+									onPress={() => router.push(`/app/goal/${goal.id}` as Href)}
+									icon={participant?.icon}
+									color={participant?.color}
+								/>
+							);
+						})}
 					</View>
 				)}
 
 				{groupedGoals.upcoming.length > 0 && (
 					<View className="w-full items-center gap-2">
 						<Text className="text-xl font-bold text-neutral-800">Upcoming</Text>
-						{groupedGoals.upcoming.map((goal) => (
-							<GoalItem
-								key={goal.id}
-								goal={goal}
-								subtitle={`in ${goal.daysUntil} ${goal.daysUntil === 1 ? "day" : "days"}`}
-								onPress={() => router.push(`/app/goal/${goal.id}` as Href)}
-							/>
-						))}
+						{groupedGoals.upcoming.map((goal) => {
+							const participant = goal.goal_participants?.find(
+								(p) => p.user_id === userId,
+							);
+							return (
+								<GoalItem
+									key={goal.id}
+									goal={goal}
+									subtitle={`in ${goal.daysUntil} ${goal.daysUntil === 1 ? "day" : "days"}`}
+									onPress={() => router.push(`/app/goal/${goal.id}` as Href)}
+									icon={participant?.icon}
+									color={participant?.color}
+								/>
+							);
+						})}
 					</View>
 				)}
 			</ScrollView>
