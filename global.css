@@ -1,3 +1,51 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+	--color-action-primary: #4f46e5;
+	--color-action-primary-fg: #ffffff;
+	--color-action-secondary: #ffffff;
+	--color-action-secondary-fg: #0f172a;
+
+	--color-text-strong: #0f172a;
+	--color-text-default: #475569;
+	--color-text-light: #94a3b8;
+
+	--color-surface-bg: #f8fafc;
+	--color-surface-fg: #ffffff;
+
+	--color-state-success: #22c55e;
+	--color-state-danger: #ef4444;
+	--color-state-muted-bg: rgba(100, 116, 139, 0.15);
+	--color-state-muted-fg: #64748b;
+
+	--color-label-bg: #e2e8f0;
+	--color-label-fg: #475569;
+
+	--color-border: #e2e8f0;
+}
+
+.dark {
+	--color-action-primary: #6366f1;
+	--color-action-primary-fg: #ffffff;
+	--color-action-secondary: #1e293b;
+	--color-action-secondary-fg: #f1f5f9;
+
+	--color-text-strong: #f1f5f9;
+	--color-text-default: #94a3b8;
+	--color-text-light: #64748b;
+
+	--color-surface-bg: #0f172a;
+	--color-surface-fg: #1e293b;
+
+	--color-state-success: #4ade80;
+	--color-state-danger: #f87171;
+	--color-state-muted-bg: rgba(148, 163, 184, 0.15);
+	--color-state-muted-fg: #94a3b8;
+
+	--color-label-bg: #334155;
+	--color-label-fg: #cbd5e1;
+
+	--color-border: #334155;
+}
