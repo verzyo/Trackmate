@@ -1,55 +1,62 @@
-import { Image } from "expo-image";
-import { cssInterop } from "nativewind";
-
-cssInterop(Image, { className: "style" });
-
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Button, View } from "react-native";
+import { Alert, Platform, ScrollView, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FormField } from "@/components/forms/FormField";
 import { Screen } from "@/components/layout/Screen";
+import { AvatarPicker } from "@/components/profile/AvatarPicker";
+import FilledButton from "@/components/ui/FilledButton";
+import MutedBorderButton from "@/components/ui/MutedBorderButton";
+import PageHeader from "@/components/ui/PageHeader";
+import { useErrorHandler } from "@/hooks/common/useErrorHandler";
 import {
 	pickAvatar,
+	useDeleteMyAccount,
 	useProfile,
 	useUpdateProfile,
 } from "@/hooks/profile/useProfileHooks";
 import { queryClient } from "@/lib/queryClient";
 import { supabase } from "@/lib/supabase";
+import {
+	type ProfileSettingsForm,
+	ProfileSettingsFormSchema,
+} from "@/schemas/profile.schema";
 import { removeAvatar, uploadAvatar } from "@/services/profile.service";
 import { useAuthStore } from "@/store/auth.store";
-import { showAlert } from "@/utils/error.utils";
-
-type ProfileForm = {
-	username: string;
-	nickname?: string;
-	email: string;
-	password?: string;
-};
 
 export default function ProfileScreen() {
+	const insets = useSafeAreaInsets();
 	const { user } = useAuthStore();
 	const userId = user?.id ?? "";
 	const { data: profile, isLoading } = useProfile(userId);
 
 	const { mutateAsync: updateProfile, isPending: isUpdating } =
 		useUpdateProfile(userId);
+	const { mutateAsync: deleteMyAccount, isPending: isDeletingAccount } =
+		useDeleteMyAccount();
+	const { handleError, showSuccess } = useErrorHandler();
 
 	const [pendingAvatarUri, setPendingAvatarUri] = useState<string | null>(null);
-	const [avatarKey, setAvatarKey] = useState(Date.now());
 	const [pendingAvatarMime, setPendingAvatarMime] =
 		useState<string>("image/jpeg");
 	const [removeAvatarFlag, setRemoveAvatarFlag] = useState(false);
+	const [isLoggingOut, setIsLoggingOut] = useState(false);
 
 	const {
 		control,
 		handleSubmit,
+		clearErrors,
 		reset,
-		formState: { isSubmitting },
-	} = useForm<ProfileForm>({
+		setError,
+		formState: { errors, isSubmitting },
+	} = useForm<ProfileSettingsForm>({
+		resolver: zodResolver(ProfileSettingsFormSchema),
 		defaultValues: {
 			username: "",
 			nickname: "",
 			email: "",
+			password: "",
 		},
 	});
 
@@ -60,7 +67,6 @@ export default function ProfileScreen() {
 				nickname: profile.nickname ?? "",
 				email: user?.email ?? "",
 			});
-			if (profile.avatar_url) setAvatarKey(Date.now());
 		}
 	}, [profile, user, reset]);
 
@@ -75,7 +81,7 @@ export default function ProfileScreen() {
 			}
 		} catch (e: unknown) {
 			const message = (e as Error)?.message || "Failed to pick avatar";
-			handleAlert(message);
+			handleError(message, "Failed to pick avatar", "Profile Update");
 		}
 	};
 
@@ -86,129 +92,214 @@ export default function ProfileScreen() {
 
 	const displayedAvatar =
 		pendingAvatarUri ??
-		(removeAvatarFlag
-			? null
-			: profile?.avatar_url
-				? `${profile.avatar_url}?t=${avatarKey}`
-				: null);
+		(removeAvatarFlag ? null : (profile?.avatar_url ?? null));
+	const avatarDisplayName = profile?.nickname || profile?.username || "?";
 
-	const handleAlert = (message: string) => {
-		showAlert(message, "Profile Update");
-	};
-
-	const onSubmit = async (data: ProfileForm) => {
+	const onSubmit = async (data: ProfileSettingsForm) => {
 		try {
-			if (pendingAvatarUri) {
-				await uploadAvatar(userId, pendingAvatarUri, pendingAvatarMime);
-			} else if (removeAvatarFlag) {
+			const normalizedUsername = data.username.trim();
+			const currentUsername = (profile?.username ?? "").trim();
+
+			if (
+				normalizedUsername.toLowerCase() !== currentUsername.toLowerCase() &&
+				normalizedUsername.length > 0
+			) {
+				const { data: isUsernameAvailable, error: usernameCheckError } =
+					await supabase.rpc("is_username_available", {
+						p_username: normalizedUsername,
+					});
+				if (usernameCheckError) throw usernameCheckError;
+				if (isUsernameAvailable === false) {
+					setError("username", {
+						type: "manual",
+						message: "Username is already taken",
+					});
+					return;
+				}
+			}
+			clearErrors("username");
+
+			if (removeAvatarFlag && profile?.avatar_url) {
 				await removeAvatar(userId);
 			}
 
+			if (pendingAvatarUri) {
+				await uploadAvatar(userId, pendingAvatarUri, pendingAvatarMime);
+			}
+
 			await updateProfile({
-				username: data.username,
-				nickname: data.nickname?.trim() ? data.nickname : null,
+				username: normalizedUsername,
+				nickname: data.nickname?.trim() || null,
 			});
 
 			if (data.email !== user?.email) {
-				const { error } = await supabase.auth.updateUser({ email: data.email });
-				if (error) throw error;
+				const { error: emailError } = await supabase.auth.updateUser({
+					email: data.email,
+				});
+				if (emailError) throw emailError;
+				showSuccess(
+					"Profile updated. Please check your email to confirm the change.",
+					"Profile Update",
+				);
+			} else {
+				showSuccess("Profile updated successfully!", "Profile Update");
 			}
 
 			if (data.password) {
-				const { error } = await supabase.auth.updateUser({
+				const { error: passwordError } = await supabase.auth.updateUser({
 					password: data.password,
 				});
-				if (error) throw error;
+				if (passwordError) throw passwordError;
 			}
 
 			setPendingAvatarUri(null);
 			setRemoveAvatarFlag(false);
-
 			queryClient.invalidateQueries({ queryKey: ["profile", userId] });
-			setAvatarKey(Date.now());
+			queryClient.invalidateQueries({ queryKey: ["profiles", "byIds"] });
+		} catch (error) {
+			handleError(error, "Failed to update profile", "Profile Update");
+		}
+	};
 
-			handleAlert("Profile updated successfully");
-		} catch (e: unknown) {
-			const message = (e as Error)?.message || "Something went wrong";
-			handleAlert(message);
-
-			if (profile) {
-				reset({
-					username: profile.username ?? "",
-					nickname: profile.nickname ?? "",
-					email: user?.email ?? "",
-				});
+	const handleDeleteAccount = () => {
+		const executeDeleteAccount = async () => {
+			try {
+				await deleteMyAccount();
+				const { error: signOutError } = await supabase.auth.signOut();
+				if (signOutError) {
+					console.warn(
+						"Delete account succeeded but sign out failed",
+						signOutError,
+					);
+				}
+			} catch (error) {
+				console.error("Failed to delete account", error);
+				handleError(error, "Failed to delete account", "Profile Update");
 			}
-			setPendingAvatarUri(null);
-			setRemoveAvatarFlag(false);
+		};
+
+		if (Platform.OS === "web") {
+			const shouldDelete = globalThis.confirm(
+				"This will permanently delete your account and cannot be undone.",
+			);
+			if (!shouldDelete) return;
+			void executeDeleteAccount();
+			return;
+		}
+
+		Alert.alert(
+			"Delete Account",
+			"This will permanently delete your account and cannot be undone.",
+			[
+				{ text: "Cancel", style: "cancel" },
+				{
+					text: "Delete",
+					style: "destructive",
+					onPress: () => void executeDeleteAccount(),
+				},
+			],
+		);
+	};
+
+	const handleLogout = async () => {
+		if (isLoggingOut) return;
+		setIsLoggingOut(true);
+		try {
+			const { error } = await supabase.auth.signOut();
+			if (error) throw error;
+		} catch (error) {
+			handleError(error, "Failed to log out", "Profile Update");
+		} finally {
+			setIsLoggingOut(false);
 		}
 	};
 
 	if (isLoading) return null;
 
 	return (
-		<Screen className="items-center justify-center gap-4 px-6">
-			{displayedAvatar ? (
-				<Image
-					source={{ uri: displayedAvatar }}
-					className="h-20 w-20 rounded-full bg-neutral-300"
-				/>
-			) : (
-				<View className="h-20 w-20 rounded-full bg-neutral-300" />
-			)}
+		<Screen className="bg-surface-bg">
+			<ScrollView
+				showsVerticalScrollIndicator={false}
+				contentContainerClassName="flex-grow px-6 py-8"
+				contentContainerStyle={{
+					paddingBottom: Math.max(insets.bottom + 16, 24),
+				}}
+			>
+				<View className="flex-1 gap-8">
+					<View className="flex-col gap-8">
+						<PageHeader title="Profile Settings" />
 
-			<Button title="Change avatar" onPress={handlePickAvatar} />
-			{displayedAvatar && (
-				<Button title="Remove avatar" onPress={handleRemoveAvatar} />
-			)}
+						<AvatarPicker
+							displayedAvatar={displayedAvatar}
+							avatarDisplayName={avatarDisplayName}
+							onPick={handlePickAvatar}
+							onRemove={handleRemoveAvatar}
+						/>
 
-			<FormField
-				control={control}
-				name="username"
-				label="Username*"
-				placeholder="username"
-				autoCapitalize="none"
-				className="w-full"
-			/>
+						<View className="gap-2">
+							<FormField
+								control={control}
+								name="username"
+								label="Username*"
+								placeholder="username"
+								autoCapitalize="none"
+								error={errors.username?.message}
+							/>
 
-			<FormField
-				control={control}
-				name="nickname"
-				label="Nickname"
-				placeholder="nickname"
-				className="w-full"
-			/>
+							<FormField
+								control={control}
+								name="nickname"
+								label="Nickname"
+								placeholder="nickname"
+								error={errors.nickname?.message}
+							/>
 
-			<FormField
-				control={control}
-				name="email"
-				label="Email*"
-				placeholder="email"
-				keyboardType="email-address"
-				autoCapitalize="none"
-				className="w-full"
-			/>
+							<FormField
+								control={control}
+								name="email"
+								label="Email Address*"
+								placeholder="email@address.com"
+								keyboardType="email-address"
+								autoCapitalize="none"
+								error={errors.email?.message}
+							/>
 
-			<FormField
-				control={control}
-				name="password"
-				label="New password"
-				placeholder="leave blank to keep current"
-				secureTextEntry
-				className="w-full"
-			/>
+							<FormField
+								control={control}
+								name="password"
+								label="New Password"
+								placeholder="Leave empty to keep current"
+								secureTextEntry
+								autoCapitalize="none"
+								error={errors.password?.message}
+							/>
+						</View>
+					</View>
 
-			<Button
-				title={isSubmitting || isUpdating ? "Saving..." : "Save"}
-				onPress={handleSubmit(onSubmit)}
-				disabled={isSubmitting || isUpdating}
-			/>
+					<View className="mt-auto gap-2 pt-4">
+						<FilledButton
+							onPress={handleSubmit(onSubmit)}
+							disabled={isSubmitting || isUpdating}
+							label={isSubmitting || isUpdating ? "Saving..." : "Save Profile"}
+						/>
 
-			<Button
-				title="Log out"
-				onPress={() => supabase.auth.signOut()}
-				color="red"
-			/>
+						<MutedBorderButton
+							onPress={handleLogout}
+							disabled={isLoggingOut}
+							label={isLoggingOut ? "Logging out..." : "Log out"}
+						/>
+
+						<FilledButton
+							onPress={handleDeleteAccount}
+							disabled={isDeletingAccount}
+							variant="danger"
+							label={
+								isDeletingAccount ? "Deleting account..." : "Delete Account"
+							}
+						/>
+					</View>
+				</View>
+			</ScrollView>
 		</Screen>
 	);
 }

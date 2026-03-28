@@ -1,20 +1,9 @@
-import Toast from "react-native-toast-message";
+import { showToast } from "@/utils/toast";
 
-/**
- * Cross-platform alert helper.
- * Uses Toast notifications for a consistent UI across platforms.
- */
 export const showAlert = (message: string, title = "Error"): void => {
-	Toast.show({
-		type: title === "Error" ? "error" : "success",
-		text1: title,
-		text2: message,
-	});
+	showToast(title === "Error" ? "error" : "success", title, message);
 };
 
-/**
- * Extracts a user-friendly error message from an unknown error.
- */
 export const getErrorMessage = (
 	error: unknown,
 	fallback = "Something went wrong",

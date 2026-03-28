@@ -1,19 +1,32 @@
 import { z } from "zod";
 
-export const GoalFormSchema = z.object({
-	title: z
-		.string()
-		.min(1, "Goal title cannot be empty")
-		.max(32, "Title cannot exceed 32 characters"),
-	description: z
-		.string()
-		.max(128, "Description cannot exceed 128 characters")
-		.optional(),
-	interval_days: z.string().min(1, "Required"),
-	weekly_days: z.string().min(1, "Required"),
-	attachment_type: z.enum(["none", "photo", "url", "text"]),
-	require_attachment: z.boolean(),
-});
+export const GoalFormSchema = z
+	.object({
+		title: z
+			.string()
+			.min(1, "Goal title cannot be empty")
+			.max(32, "Title cannot exceed 32 characters"),
+		description: z
+			.string()
+			.max(128, "Description cannot exceed 128 characters")
+			.optional(),
+		frequency_type: z.enum(["interval", "weekly"]),
+		interval_days: z.string().min(1, "Required"),
+		weekly_days: z.array(z.number()),
+		attachment_type: z.enum(["none", "photo", "url", "text"]),
+		require_attachment: z.boolean(),
+		color: z.string().optional(),
+		icon: z.string().optional(),
+	})
+	.superRefine((data, ctx) => {
+		if (data.frequency_type === "weekly" && data.weekly_days.length === 0) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				message: "Select at least one day of the week",
+				path: ["weekly_days"],
+			});
+		}
+	});
 export type GoalForm = z.infer<typeof GoalFormSchema>;
 
 export const UpdateGoalMetadataSchema = z.object({
@@ -23,8 +36,12 @@ export const UpdateGoalMetadataSchema = z.object({
 		.string()
 		.max(128, "Description cannot exceed 128 characters")
 		.optional(),
+	frequency_type: z.enum(["interval", "weekly"]).optional(),
+	frequency_value: z.number().int().positive().optional(),
 	start_date: z.string().nullable().optional(),
 	weekly_days: z.array(z.number()).nullable().optional(),
+	attachment_type: z.enum(["none", "photo", "url", "text"]).optional(),
+	require_attachment: z.boolean().optional(),
 });
 export type UpdateGoalMetadataParams = z.infer<typeof UpdateGoalMetadataSchema>;
 

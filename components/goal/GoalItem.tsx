@@ -11,6 +11,7 @@ import { Pressable, Text, View } from "react-native";
 import AvatarStack from "@/components/ui/AvatarStack";
 import PersonalTag from "@/components/ui/PersonalTag";
 import type { GoalWithParticipant } from "@/schemas/goal.schema";
+import { hexToRgba } from "@/utils/color.utils";
 
 function filledIcon(icon: ReactNode, color: string, size = 28): ReactNode {
 	if (!isValidElement(icon)) return icon;
@@ -19,14 +20,6 @@ function filledIcon(icon: ReactNode, color: string, size = 28): ReactNode {
 		size,
 		weight: "fill",
 	});
-}
-
-function hexToRgba(hex: string, alpha: number): string {
-	const h = hex.replace("#", "");
-	const r = parseInt(h.slice(0, 2), 16);
-	const g = parseInt(h.slice(2, 4), 16);
-	const b = parseInt(h.slice(4, 6), 16);
-	return `rgba(${r},${g},${b},${alpha})`;
 }
 
 type GoalItemProps = {
@@ -92,7 +85,7 @@ export const GoalItem = memo(function GoalItem({
 	return (
 		<Pressable
 			onPress={onPress}
-			className="w-full flex-col items-start gap-3 overflow-hidden rounded-3xl border border-border bg-surface-fg p-5"
+			className="w-full flex-col items-start gap-4 overflow-hidden rounded-2xl border border-border bg-surface-fg p-5"
 		>
 			{isCompletedToday && (
 				<View

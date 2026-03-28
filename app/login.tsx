@@ -1,20 +1,40 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { router } from "expo-router";
-import { Controller, useForm } from "react-hook-form";
-import { Button, Text, TextInput } from "react-native";
-import { Screen } from "@/components/layout/Screen";
+import { useRef } from "react";
+import { useForm } from "react-hook-form";
+import { type ScrollView, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import AuthFormShell from "@/components/auth/AuthFormShell";
+import AuthSwitchPrompt from "@/components/auth/AuthSwitchPrompt";
+import { FormField } from "@/components/forms/FormField";
+import FilledButton from "@/components/ui/FilledButton";
+import { useKeyboard } from "@/hooks/common/useKeyboard";
 import { supabase } from "@/lib/supabase";
 import { type LoginForm, LoginFormSchema } from "@/schemas/profile.schema";
 import { showAlert } from "@/utils/error.utils";
 
 export default function LoginScreen() {
+	const insets = useSafeAreaInsets();
+	const scrollViewRef = useRef<ScrollView>(null);
+	const { keyboardHeight } = useKeyboard();
+
 	const {
 		control,
 		handleSubmit,
 		formState: { errors, isSubmitting },
 	} = useForm<LoginForm>({
 		resolver: zodResolver(LoginFormSchema),
+		defaultValues: {
+			email: "",
+			password: "",
+		},
 	});
+
+	const handlePasswordFocus = () => {
+		requestAnimationFrame(() => {
+			scrollViewRef.current?.scrollToEnd({ animated: true });
+		});
+	};
 
 	const onSubmit = async (data: LoginForm) => {
 		const { error } = await supabase.auth.signInWithPassword({
@@ -22,60 +42,60 @@ export default function LoginScreen() {
 			password: data.password,
 		});
 		if (error) {
-			showAlert(error.message, "Login Failed");
+			showAlert(error.message);
 		}
 	};
 
 	return (
-		<Screen className="items-center justify-center gap-4 px-6">
-			<Text>Email*</Text>
-			<Controller
-				control={control}
-				name="email"
-				render={({ field: { onChange, value } }) => (
-					<TextInput
-						value={value}
-						onChangeText={onChange}
-						keyboardType="email-address"
-						autoCapitalize="none"
-						placeholder="email"
-					/>
-				)}
-			/>
-			{errors.email && (
-				<Text className="text-red-500">{errors.email.message}</Text>
-			)}
+		<AuthFormShell
+			scrollViewRef={scrollViewRef}
+			insetsBottom={insets.bottom}
+			keyboardHeight={keyboardHeight}
+		>
+			<View className="items-center">
+				<Text className="text-4xl font-bold tracking-tight text-text-strong">
+					Welcome back
+				</Text>
+				<Text className="text-lg font-medium text-text-light mt-2 text-center">
+					Log in to continue your social goal tracking journey
+				</Text>
+			</View>
 
-			<Text>Password*</Text>
-			<Controller
-				control={control}
-				name="password"
-				render={({ field: { onChange, value } }) => (
-					<TextInput
-						value={value}
-						onChangeText={onChange}
-						secureTextEntry
-						autoCapitalize="none"
-						placeholder="password"
-					/>
-				)}
-			/>
-			{errors.password && (
-				<Text className="text-red-500">{errors.password.message}</Text>
-			)}
+			<View className="gap-2">
+				<FormField
+					control={control}
+					name="email"
+					label="Email Address"
+					placeholder="email@address.com"
+					keyboardType="email-address"
+					autoCapitalize="none"
+					error={errors.email?.message}
+				/>
 
-			<Button
-				title={isSubmitting ? "Logging in..." : "Log in"}
-				onPress={handleSubmit(onSubmit)}
-				disabled={isSubmitting}
-			/>
+				<FormField
+					control={control}
+					name="password"
+					label="Password"
+					placeholder="••••••••"
+					secureTextEntry
+					autoCapitalize="none"
+					error={errors.password?.message}
+					onFocus={handlePasswordFocus}
+				/>
 
-			<Text
-				className="text-blue-500"
+				<FilledButton
+					onPress={handleSubmit(onSubmit)}
+					disabled={isSubmitting}
+					className="mt-4"
+					label={isSubmitting ? "Logging in..." : "Log in"}
+				/>
+			</View>
+
+			<AuthSwitchPrompt
+				promptText="Don't have an account?"
+				actionText="Register"
 				onPress={() => router.replace("/register")}
-			>
-				Don't have an account? Register
-			</Text>
-		</Screen>
+			/>
+		</AuthFormShell>
 	);
 }

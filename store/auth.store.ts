@@ -15,16 +15,23 @@ export const useAuthStore = create<AuthState>((set) => ({
 	initialized: false,
 
 	initialize: () => {
+		let isActive = true;
+
 		supabase.auth.getSession().then(({ data: { session } }) => {
+			if (!isActive) return;
 			set({ session, user: session?.user ?? null, initialized: true });
 		});
 
 		const {
 			data: { subscription },
 		} = supabase.auth.onAuthStateChange((_event, session) => {
-			set({ session, user: session?.user ?? null });
+			if (!isActive) return;
+			set({ session, user: session?.user ?? null, initialized: true });
 		});
 
-		return () => subscription.unsubscribe();
+		return () => {
+			isActive = false;
+			subscription.unsubscribe();
+		};
 	},
 }));

@@ -2,8 +2,10 @@ import type { IconProps } from "phosphor-react-native";
 import * as PhosphorIcons from "phosphor-react-native";
 import type { ComponentType, ReactNode } from "react";
 
-// biome-ignore lint/suspicious/noExplicitAny: phosphor module has mixed exports (icons + IconContext)
-const Icons = PhosphorIcons as any as Record<string, ComponentType>;
+const Icons = PhosphorIcons as unknown as Record<
+	string,
+	ComponentType<IconProps>
+>;
 
 export function getIconComponent(iconName: string): ReactNode {
 	const IconComp = Icons[iconName] || PhosphorIcons.Target;

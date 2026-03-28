@@ -1,35 +1,29 @@
 import { Stack } from "expo-router";
-import { useEffect } from "react";
-import Toast from "react-native-toast-message";
-import { toastConfig } from "@/components/ui/ToastConfig";
+import AppLoadingScreen from "@/components/ui/AppLoadingScreen";
+import { useThemeColors } from "@/hooks/common/useThemeColors";
 import { useProfile } from "@/hooks/profile/useProfileHooks";
-import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/auth.store";
 
 export default function AppLayout() {
 	const { user } = useAuthStore();
-	const { data: profile, isLoading } = useProfile(user?.id);
+	const { isLoading } = useProfile(user?.id);
+	const colors = useThemeColors();
 
-	useEffect(() => {
-		if (!isLoading && profile === null && user) {
-			supabase.auth.signOut();
-		}
-	}, [isLoading, profile, user]);
-
-	if (isLoading) return null;
+	if (isLoading) {
+		return <AppLoadingScreen />;
+	}
 
 	return (
-		<>
-			<Stack screenOptions={{ headerShown: false }}>
-				<Stack.Screen name="(drawer)" />
-				<Stack.Screen name="goal/new" options={{ presentation: "modal" }} />
-				<Stack.Screen name="goal/[id]" options={{ presentation: "modal" }} />
-				<Stack.Screen
-					name="goal/edit/[id]"
-					options={{ presentation: "modal" }}
-				/>
-			</Stack>
-			<Toast config={toastConfig} />
-		</>
+		<Stack
+			screenOptions={{
+				headerShown: false,
+				contentStyle: { backgroundColor: colors.surfaceBg },
+			}}
+		>
+			<Stack.Screen name="(drawer)" />
+			<Stack.Screen name="goal/new" options={{ presentation: "modal" }} />
+			<Stack.Screen name="goal/[id]" options={{ presentation: "modal" }} />
+			<Stack.Screen name="goal/edit/[id]" options={{ presentation: "modal" }} />
+		</Stack>
 	);
 }

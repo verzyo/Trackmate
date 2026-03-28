@@ -1,4 +1,5 @@
-import { Image, Text, View } from "react-native";
+import { Image } from "expo-image";
+import { Text, View } from "react-native";
 
 interface AvatarProps {
 	name?: string;
@@ -27,11 +28,11 @@ export default function Avatar({
 				borderRadius: size / 2,
 			}}
 		>
-			{imageUrl ? (
+			{typeof imageUrl === "string" && imageUrl.trim() !== "" ? (
 				<Image
 					source={{ uri: imageUrl }}
 					style={{ width: size, height: size }}
-					resizeMode="cover"
+					contentFit="cover"
 				/>
 			) : (
 				<Text

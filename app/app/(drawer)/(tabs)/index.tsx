@@ -1,7 +1,8 @@
-import { useQueryClient } from "@tanstack/react-query";
+import type { DrawerNavigationProp } from "@react-navigation/drawer";
 import { useNavigation } from "@react-navigation/native";
+import { useQueryClient } from "@tanstack/react-query";
 import { type Href, router, useFocusEffect } from "expo-router";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { RefreshControl, ScrollView, Text, View } from "react-native";
 import AttachmentBottomSheet, {
 	type AttachmentBottomSheetRef,
@@ -20,15 +21,9 @@ import {
 } from "@/hooks/goal/useGoalQueries";
 import { useGoalToggle } from "@/hooks/goal/useGoalToggle";
 import { useGroupedGoals } from "@/hooks/goal/useGroupedGoals";
+import { usePrefetchGoals } from "@/hooks/goal/usePrefetchGoals";
 import { useProfile, useProfilesByIds } from "@/hooks/profile/useProfileHooks";
 import type { GoalWithParticipant } from "@/schemas/goal.schema";
-import {
-	fetchGoal,
-	fetchGoalCompletions,
-	fetchGoalMonthlyPoints,
-	fetchGoalStreak,
-	fetchTodayCompletion,
-} from "@/services/goal.service";
 import { useAuthStore } from "@/store/auth.store";
 import { getErrorMessage, showAlert } from "@/utils/error.utils";
 import { getIconComponent } from "@/utils/icons";
@@ -70,7 +65,8 @@ const getCurrentDayString = () => {
 };
 
 export default function HomeScreen() {
-	const navigation = useNavigation();
+	const navigation =
+		useNavigation<DrawerNavigationProp<Record<string, undefined>>>();
 	const { user } = useAuthStore();
 	const userId = user?.id;
 
@@ -83,38 +79,28 @@ export default function HomeScreen() {
 
 	useFocusEffect(
 		useCallback(() => {
-			queryClient.invalidateQueries({ queryKey: goalKeys.all });
-		}, [queryClient]),
+			queryClient.invalidateQueries({ queryKey: ["profile", userId] });
+			queryClient.refetchQueries({ queryKey: ["profiles", "byIds"] });
+		}, [queryClient, userId]),
 	);
 
-	const { data: goals, isLoading: isGoalsLoading, error, refetch } = useGoals();
+	const [refreshing, setRefreshing] = useState(false);
 
-	useEffect(() => {
-		if (goals && goals.length > 0 && userId) {
-			for (const goal of goals) {
-				queryClient.prefetchQuery({
-					queryKey: goalKeys.detail(goal.id),
-					queryFn: () => fetchGoal(goal.id),
-				});
-				queryClient.prefetchQuery({
-					queryKey: goalKeys.todayCompletion(goal.id, userId),
-					queryFn: () => fetchTodayCompletion(goal.id, userId),
-				});
-				queryClient.prefetchQuery({
-					queryKey: goalKeys.streak(goal.id, userId),
-					queryFn: () => fetchGoalStreak(goal.id, userId),
-				});
-				queryClient.prefetchQuery({
-					queryKey: goalKeys.monthlyPoints(goal.id, userId),
-					queryFn: () => fetchGoalMonthlyPoints(goal.id, userId),
-				});
-				queryClient.prefetchQuery({
-					queryKey: goalKeys.completions(goal.id, userId),
-					queryFn: () => fetchGoalCompletions(goal.id, userId),
-				});
-			}
+	const handleRefresh = useCallback(async () => {
+		setRefreshing(true);
+		try {
+			await Promise.all([
+				queryClient.refetchQueries({ queryKey: goalKeys.all }),
+				queryClient.refetchQueries({ queryKey: ["profile", userId] }),
+				queryClient.refetchQueries({ queryKey: ["profiles", "byIds"] }),
+			]);
+		} finally {
+			setRefreshing(false);
 		}
-	}, [goals, queryClient, userId]);
+	}, [queryClient, userId]);
+
+	const { data: goals, isLoading: isGoalsLoading, error } = useGoals();
+	usePrefetchGoals(goals, userId);
 
 	const { data: todaysCompletions, isLoading: isCompletionsLoading } =
 		useTodaysCompletions(userId);
@@ -129,8 +115,7 @@ export default function HomeScreen() {
 
 	const goalIds = useMemo(() => goals?.map((g) => g.id) || [], [goals]);
 
-	const { data: completionsForGoals, isLoading: isLoadingCompletionsForGoals } =
-		useTodaysCompletionsForGoals(goalIds);
+	const { data: completionsForGoals } = useTodaysCompletionsForGoals(goalIds);
 
 	const participantIds = useMemo(() => {
 		if (!goals) return [];
@@ -138,16 +123,19 @@ export default function HomeScreen() {
 		for (const g of goals) {
 			for (const p of g.goal_participants) ids.add(p.user_id);
 		}
-		return Array.from(ids);
+		return Array.from(ids).sort();
 	}, [goals]);
 
-	const { data: profiles, isLoading: isLoadingProfiles } =
-		useProfilesByIds(participantIds);
+	const { data: profiles } = useProfilesByIds(participantIds);
 
 	const profileMap = useMemo(() => {
 		const map = new Map<
 			string,
-			{ username: string; nickname?: string; avatar_url?: string }
+			{
+				username: string;
+				nickname?: string | null;
+				avatar_url?: string | null;
+			}
 		>();
 		if (profiles) {
 			for (const p of profiles) {
@@ -187,7 +175,7 @@ export default function HomeScreen() {
 			result[goal.id] = goal.goal_participants.map((p) => {
 				const pr = profileMap.get(p.user_id);
 				const name = pr?.nickname || pr?.username || "?";
-				const imageUrl = pr?.avatar_url;
+				const imageUrl = pr?.avatar_url ?? undefined;
 				const completed = completionsMap.get(goal.id)?.has(p.user_id) || false;
 				return { user_id: p.user_id, name, imageUrl, completed };
 			});
@@ -195,11 +183,8 @@ export default function HomeScreen() {
 		return result;
 	}, [goals, profileMap, completionsMap]);
 
-	const isLoading =
-		isGoalsLoading ||
-		isCompletionsLoading ||
-		isLoadingCompletionsForGoals ||
-		isLoadingProfiles;
+	const showNoGoalsDueToday =
+		!isGoalsLoading && !isCompletionsLoading && groupedGoals.today.length === 0;
 
 	const p = profile as
 		| { nickname?: string; username?: string; avatar_url?: string }
@@ -237,7 +222,7 @@ export default function HomeScreen() {
 					showsVerticalScrollIndicator={false}
 					contentContainerClassName="flex-grow px-5 py-6"
 					refreshControl={
-						<RefreshControl refreshing={isGoalsLoading} onRefresh={refetch} />
+						<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
 					}
 				>
 					<View className="flex-col gap-8 pb-32">
@@ -247,7 +232,7 @@ export default function HomeScreen() {
 							profileName={profileName}
 							avatarUrl={avatarUrl}
 							inviteCount={inviteCount}
-							onAvatarPress={() => (navigation as any).openDrawer()}
+							onAvatarPress={() => navigation.openDrawer()}
 						/>
 
 						<View className="flex-col items-start justify-start gap-4">
@@ -255,17 +240,12 @@ export default function HomeScreen() {
 								Today
 							</Text>
 							<View className="w-full flex-col items-start justify-start gap-3.5">
-								{isLoading && (
-									<Text className="text-base text-text-light">
-										Loading goals...
-									</Text>
-								)}
 								{error && (
 									<Text className="text-base text-state-danger">
 										Failed to load goals
 									</Text>
 								)}
-								{!isLoading && groupedGoals.today.length === 0 ? (
+								{showNoGoalsDueToday ? (
 									<Text className="text-base text-text-light">
 										No goals due today
 									</Text>
@@ -297,7 +277,7 @@ export default function HomeScreen() {
 
 						{groupedGoals.upcoming.length > 0 && (
 							<View className="mt-2 flex-col items-start justify-start gap-4">
-								<Text className="font-semibold text-lg italic leading-7 text-text-strong">
+								<Text className="font-semibold text-lg leading-7 text-text-strong">
 									Upcoming
 								</Text>
 								<View className="w-full flex-col items-start justify-start gap-3.5">

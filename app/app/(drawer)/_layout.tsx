@@ -1,19 +1,15 @@
-import { useColorScheme } from "nativewind";
 import { Drawer } from "expo-router/drawer";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { CustomDrawerContent } from "@/components/layout/CustomDrawerContent";
+import { useThemeColors } from "@/hooks/common/useThemeColors";
 
 export default function DrawerLayout() {
-	const { colorScheme } = useColorScheme();
-	const isDark = colorScheme === "dark";
-
-	const colors = {
-		surface: isDark ? "#0f172a" : "#f8fafc",
-		textStrong: isDark ? "#f1f5f9" : "#0f172a",
-	};
+	const colors = useThemeColors();
 
 	return (
-		<GestureHandlerRootView style={{ flex: 1 }}>
+		<GestureHandlerRootView
+			style={{ flex: 1, backgroundColor: colors.surfaceBg }}
+		>
 			<Drawer
 				drawerContent={(props) => <CustomDrawerContent {...props} />}
 				screenOptions={{
@@ -21,15 +17,16 @@ export default function DrawerLayout() {
 					drawerType: "front",
 					drawerPosition: "right", // Pop out from the right side
 					drawerStyle: {
-						width: "70%",
-						backgroundColor: colors.surface,
+						width: "85%",
+						backgroundColor: colors.surfaceBg,
 					},
+					overlayColor: "rgba(0,0,0,0.5)",
 					drawerActiveBackgroundColor: "transparent", // Remove highlighting
 					drawerActiveTintColor: colors.textStrong,
 					drawerInactiveTintColor: colors.textStrong,
 					drawerLabelStyle: {
 						fontSize: 16,
-						fontWeight: "500",
+						fontWeight: "600",
 					},
 				}}
 			>

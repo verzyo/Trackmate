@@ -2,9 +2,11 @@ import { supabase } from "@/lib/supabase";
 import type {
 	AttachmentData,
 	CreateGoalParams,
-	GoalInviteWithDetails,
-	GoalWithParticipant,
 	UpdateGoalMetadataParams,
+} from "@/schemas/goal.schema";
+import {
+	GoalInviteWithDetailsSchema,
+	GoalWithParticipantSchema,
 } from "@/schemas/goal.schema";
 import { formatToISODate, getTodayUTC } from "@/utils/date.utils";
 
@@ -15,7 +17,7 @@ export const fetchGoals = async () => {
 		.order("created_at", { ascending: false });
 
 	if (error) throw error;
-	return data as GoalWithParticipant[];
+	return GoalWithParticipantSchema.array().parse(data ?? []);
 };
 
 export const fetchGoal = async (id: string) => {
@@ -26,7 +28,7 @@ export const fetchGoal = async (id: string) => {
 		.single();
 
 	if (error) throw error;
-	return data as GoalWithParticipant;
+	return GoalWithParticipantSchema.parse(data);
 };
 
 export const createGoal = async (params: CreateGoalParams) => {
@@ -50,8 +52,15 @@ export const updateGoalMetadata = async (params: UpdateGoalMetadataParams) => {
 		p_goal_id: params.goal_id,
 		p_new_title: params.title ?? null,
 		p_new_description: params.description ?? null,
+		p_new_frequency_type: params.frequency_type ?? null,
+		p_new_frequency_value: params.frequency_value ?? null,
 		p_new_start_date: params.start_date ?? null,
 		p_new_weekly_days: params.weekly_days ?? null,
+		p_new_attachment_type: params.attachment_type ?? null,
+		p_new_require_attachment:
+			params.require_attachment === undefined
+				? null
+				: params.require_attachment,
 	});
 	if (error) throw error;
 };
@@ -96,7 +105,7 @@ export const fetchInvites = async (userId: string) => {
 		.eq("invitee_id", userId);
 
 	if (error) throw error;
-	return data as unknown as GoalInviteWithDetails[];
+	return GoalInviteWithDetailsSchema.array().parse(data ?? []);
 };
 
 export const acceptInvite = async (inviteId: string) => {

@@ -1,6 +1,10 @@
-import { Platform } from "react-native";
 import { supabase } from "@/lib/supabase";
-import type { ProfileUpdates } from "@/schemas/profile.schema";
+import {
+	ProfileSchema,
+	type ProfileUpdates,
+	PublicProfileSchema,
+} from "@/schemas/profile.schema";
+import { uploadFile } from "@/utils/upload";
 
 export const fetchProfile = async (userId: string) => {
 	const { data, error } = await supabase
@@ -10,7 +14,7 @@ export const fetchProfile = async (userId: string) => {
 		.maybeSingle();
 
 	if (error) throw error;
-	return data;
+	return data ? ProfileSchema.parse(data) : data;
 };
 
 export const fetchProfilesByIds = async (userIds: string[]) => {
@@ -20,7 +24,7 @@ export const fetchProfilesByIds = async (userIds: string[]) => {
 		.select("id, username, nickname, avatar_url")
 		.in("id", userIds);
 	if (error) throw error;
-	return data;
+	return PublicProfileSchema.array().parse(data ?? []);
 };
 
 export const fetchProfileByUsername = async (username: string) => {
@@ -31,7 +35,7 @@ export const fetchProfileByUsername = async (username: string) => {
 		.maybeSingle();
 
 	if (error) throw error;
-	return data;
+	return data ? ProfileSchema.parse(data) : data;
 };
 
 export const updateProfile = async (
@@ -46,7 +50,7 @@ export const updateProfile = async (
 		.single();
 
 	if (error) throw error;
-	return data;
+	return ProfileSchema.parse(data);
 };
 
 export const uploadAvatar = async (
@@ -55,40 +59,20 @@ export const uploadAvatar = async (
 	mimeType: string,
 ) => {
 	const path = `${userId}/avatar`;
-
-	let fileBody: FormData | Blob;
-	const options: { upsert: boolean; contentType?: string } = { upsert: true };
-
-	if (Platform.OS === "web") {
-		const response = await fetch(uri);
-		fileBody = await response.blob();
-		options.contentType = mimeType;
-	} else {
-		fileBody = new FormData();
-		fileBody.append("file", {
-			uri: uri,
-			name: "avatar.jpg",
-			type: mimeType,
-		} as unknown as Blob);
-	}
-
-	const { error } = await supabase.storage
-		.from("avatars")
-		.upload(path, fileBody, options);
-
-	if (error) throw error;
+	await uploadFile("avatars", path, uri, mimeType, "avatar.jpg");
 
 	const { data } = supabase.storage.from("avatars").getPublicUrl(path);
 	const cleanUrl = data.publicUrl;
+	const versionedUrl = `${cleanUrl}?t=${Date.now()}`;
 
 	try {
-		await updateProfile(userId, { avatar_url: cleanUrl });
+		await updateProfile(userId, { avatar_url: versionedUrl });
 	} catch (error) {
 		await supabase.storage.from("avatars").remove([path]);
 		throw error;
 	}
 
-	return `${cleanUrl}?t=${Date.now()}`;
+	return versionedUrl;
 };
 
 export const removeAvatar = async (userId: string) => {
@@ -98,4 +82,9 @@ export const removeAvatar = async (userId: string) => {
 
 	if (error) throw error;
 	await updateProfile(userId, { avatar_url: null });
+};
+
+export const deleteMyAccount = async () => {
+	const { error } = await supabase.rpc("delete_my_account");
+	if (error) throw error;
 };

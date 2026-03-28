@@ -2,6 +2,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import * as ImagePicker from "expo-image-picker";
 import { queryClient } from "@/lib/queryClient";
 import {
+	deleteMyAccount,
 	fetchProfile,
 	fetchProfilesByIds,
 	updateProfile,
@@ -62,6 +63,31 @@ export const useUpdateProfile = (userId: string) => {
 			updateProfile(userId, updates),
 		onSuccess: (updatedProfile) => {
 			queryClient.setQueryData(["profile", userId], updatedProfile);
+			queryClient.setQueriesData<
+				Array<{
+					id: string;
+					username: string;
+					nickname?: string | null;
+					avatar_url?: string | null;
+				}>
+			>({ queryKey: ["profiles", "byIds"] }, (old) =>
+				old?.map((profile) =>
+					profile.id === userId
+						? {
+								...profile,
+								username: updatedProfile.username,
+								nickname: updatedProfile.nickname,
+								avatar_url: updatedProfile.avatar_url,
+							}
+						: profile,
+				),
+			);
 		},
+	});
+};
+
+export const useDeleteMyAccount = () => {
+	return useMutation({
+		mutationFn: deleteMyAccount,
 	});
 };

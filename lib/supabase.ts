@@ -4,6 +4,7 @@ import * as aesjs from "aes-js";
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
 import "react-native-get-random-values";
+import { z } from "zod";
 
 // As Expo's SecureStore does not support values larger than 2048
 // bytes, an AES-256 key is generated and stored in SecureStore, while
@@ -62,28 +63,40 @@ class LargeSecureStore {
 	}
 }
 
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
-const supabasePublishableKey = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+const envSchema = z.object({
+	EXPO_PUBLIC_SUPABASE_URL: z.url(),
+	EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().min(1),
+});
 
-if (!supabaseUrl) throw new Error("Missing Supabase URL");
-if (!supabasePublishableKey)
-	throw new Error("Missing Supabase publishable key");
+const env = envSchema.parse({
+	EXPO_PUBLIC_SUPABASE_URL: process.env.EXPO_PUBLIC_SUPABASE_URL,
+	EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY:
+		process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+});
 
-const getStorage = () => {
-	if (Platform.OS !== "web") return new LargeSecureStore();
-	if (typeof window === "undefined") return undefined; // SSR fix
-	return AsyncStorage;
+const storage =
+	Platform.OS === "web"
+		? typeof window === "undefined"
+			? undefined
+			: {
+					getItem: (key: string) => window.localStorage.getItem(key),
+					setItem: (key: string, value: string) =>
+						window.localStorage.setItem(key, value),
+					removeItem: (key: string) => window.localStorage.removeItem(key),
+				}
+		: new LargeSecureStore();
+
+const auth = {
+	autoRefreshToken: true,
+	persistSession: true,
+	detectSessionInUrl: false,
+	...(storage ? { storage } : {}),
 };
 
 export const supabase: SupabaseClient = createClient(
-	supabaseUrl,
-	supabasePublishableKey,
+	env.EXPO_PUBLIC_SUPABASE_URL,
+	env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
 	{
-		auth: {
-			storage: getStorage(),
-			autoRefreshToken: true,
-			persistSession: true,
-			detectSessionInUrl: false,
-		},
+		auth,
 	},
 );

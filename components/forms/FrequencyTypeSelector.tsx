@@ -1,4 +1,5 @@
-import { Button, View } from "react-native";
+import { View } from "react-native";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import {
 	FREQUENCY_TYPES,
 	type FrequencyType,
@@ -16,17 +17,14 @@ export function FrequencyTypeSelector({
 	disabled,
 }: FrequencyTypeSelectorProps) {
 	return (
-		<View className="flex-row gap-4 mb-2">
-			<Button
-				title="Interval"
-				color={value === FREQUENCY_TYPES.INTERVAL ? "#007AFF" : "gray"}
-				onPress={() => onChange(FREQUENCY_TYPES.INTERVAL)}
-				disabled={disabled}
-			/>
-			<Button
-				title="Weekly"
-				color={value === FREQUENCY_TYPES.WEEKLY ? "#007AFF" : "gray"}
-				onPress={() => onChange(FREQUENCY_TYPES.WEEKLY)}
+		<View className="w-full">
+			<SegmentedControl
+				options={[
+					{ label: "Interval", value: FREQUENCY_TYPES.INTERVAL },
+					{ label: "Weekly", value: FREQUENCY_TYPES.WEEKLY },
+				]}
+				value={value}
+				onChange={onChange}
 				disabled={disabled}
 			/>
 		</View>

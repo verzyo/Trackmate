@@ -1,19 +1,19 @@
-import { type Href, router, useLocalSearchParams } from "expo-router";
-import { useRef } from "react";
-import {
-	ActivityIndicator,
-	Button,
-	ScrollView,
-	Text,
-	View,
-} from "react-native";
+import { router, useLocalSearchParams } from "expo-router";
+import { useMemo, useRef } from "react";
+import { ScrollView, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AttachmentBottomSheet, {
 	type AttachmentBottomSheetRef,
 } from "@/components/AttachmentBottomSheet";
-import { GoalCompletionsList } from "@/components/goal/GoalCompletionsList";
-import { GoalDetails } from "@/components/goal/GoalDetails";
+import { GoalActionButtons } from "@/components/goal/GoalActionButtons";
+import { GoalAttachmentAction } from "@/components/goal/GoalAttachmentAction";
+import { GoalConsistencyHeatmap } from "@/components/goal/GoalConsistencyHeatmap";
+import { GoalDetailHeader } from "@/components/goal/GoalDetailHeader";
+import { GoalFrequencyCard } from "@/components/goal/GoalFrequencyCard";
+import { GoalParticipantsList } from "@/components/goal/GoalParticipantsList";
 import { Screen } from "@/components/layout/Screen";
-import { ATTACHMENT_TYPES } from "@/constants/attachmentTypes";
+import AppLoadingScreen from "@/components/ui/AppLoadingScreen";
+import { useThemeColors } from "@/hooks/common/useThemeColors";
 import {
 	useAcceptInvite,
 	useCompleteGoal,
@@ -24,10 +24,10 @@ import {
 import {
 	useGoal,
 	useGoalCompletions,
-	useGoalMonthlyPoints,
-	useGoalStreak,
 	useTodayCompletion,
+	useTodaysCompletionsForGoals,
 } from "@/hooks/goal/useGoalQueries";
+import { useProfilesByIds } from "@/hooks/profile/useProfileHooks";
 import type { AttachmentData } from "@/schemas/goal.schema";
 import { useAuthStore } from "@/store/auth.store";
 import { getErrorMessage, showAlert } from "@/utils/error.utils";
@@ -38,19 +38,18 @@ export default function GoalDetailsModal() {
 		inviteId?: string;
 	}>();
 	const userId = useAuthStore((state) => state.user?.id);
+	const colors = useThemeColors();
+	const insets = useSafeAreaInsets();
 	const { data: goal, isLoading, error } = useGoal(id as string);
-	const { data: streak, isLoading: streakLoading } = useGoalStreak(
-		id as string,
-		userId,
-	);
-	const { data: monthlyPoints, isLoading: pointsLoading } =
-		useGoalMonthlyPoints(id as string, userId);
 	const {
 		data: todayCompletion,
 		refetch: refetchToday,
 		isLoading: isTodayCompletionLoading,
 	} = useTodayCompletion(id as string, userId);
 	const { data: completions } = useGoalCompletions(id as string, userId);
+	const { data: todaysCompletions } = useTodaysCompletionsForGoals(
+		id ? [id as string] : [],
+	);
 
 	const attachmentSheetRef = useRef<AttachmentBottomSheetRef>(null);
 
@@ -60,19 +59,43 @@ export default function GoalDetailsModal() {
 	const uncompleteMutation = useUncompleteGoal();
 	const updateAttachmentMutation = useUpdateCompletion();
 
+	const participantIds = useMemo(
+		() =>
+			goal?.goal_participants.map((participant) => participant.user_id) ?? [],
+		[goal],
+	);
+	const { data: profiles } = useProfilesByIds(participantIds);
+
+	const profileMap = useMemo(() => {
+		const map = new Map<
+			string,
+			{ username: string; nickname?: string | null; avatar_url?: string | null }
+		>();
+
+		for (const profile of profiles ?? []) {
+			map.set(profile.id, {
+				username: profile.username,
+				nickname: profile.nickname,
+				avatar_url: profile.avatar_url,
+			});
+		}
+
+		return map;
+	}, [profiles]);
+
 	if (isLoading || isTodayCompletionLoading) {
-		return (
-			<Screen className="px-6 py-4 justify-center items-center">
-				<ActivityIndicator size="large" />
-				<Text className="mt-4">Loading details...</Text>
-			</Screen>
-		);
+		return <AppLoadingScreen message="Loading details..." />;
 	}
 
 	if (error || !goal) {
 		return (
-			<Screen className="px-6 py-4 justify-center items-center">
-				<Text className="text-red-500">Failed to load goal details</Text>
+			<Screen className="items-center justify-center px-6 py-4">
+				<Text
+					className="text-base text-state-danger"
+					style={{ color: colors.danger }}
+				>
+					Failed to load goal details
+				</Text>
 			</Screen>
 		);
 	}
@@ -142,104 +165,108 @@ export default function GoalDetailsModal() {
 	};
 
 	const participant = goal.goal_participants.find((p) => p.user_id === userId);
+	const iconName = participant?.icon || "Target";
+	const iconColor = participant?.color || colors.actionPrimary;
+	const completedDateKeys = (completions ?? []).map((completion) =>
+		String(completion.completed_date),
+	);
+	const completedParticipants = new Set(
+		(todaysCompletions ?? []).map((completion) => completion.user_id),
+	);
+	const participantItems = goal.goal_participants.map((goalParticipant) => {
+		const profile = profileMap.get(goalParticipant.user_id);
+		return {
+			id: goalParticipant.user_id,
+			name:
+				profile?.nickname ||
+				profile?.username ||
+				(goalParticipant.user_id === goal.owner_id ? "Owner" : "Participant"),
+			username: profile?.username || "user",
+			avatarUrl: profile?.avatar_url ?? undefined,
+			completed: completedParticipants.has(goalParticipant.user_id),
+			role: goalParticipant.user_id === goal.owner_id ? "owner" : "member",
+		} as const;
+	});
+	const isInviteState = !!inviteId && !isParticipant;
+	const showPrimaryAction = isParticipant || isInviteState;
+	const primaryButtonLabel = isInviteState
+		? acceptInviteMutation.isPending
+			? "Accepting..."
+			: "Accept Invite"
+		: isCompletedToday
+			? "Undo Completion"
+			: "Complete Goal";
+	const secondaryButtonLabel = declineInviteMutation.isPending
+		? "Declining..."
+		: "Decline Invite";
 
 	return (
-		<Screen className="px-6 py-4">
-			<ScrollView contentContainerClassName="flex-grow items-center justify-center gap-4 pb-10">
-				<GoalDetails
-					goal={goal}
-					isParticipant={isParticipant}
-					streak={streak}
-					streakLoading={streakLoading}
-					monthlyPoints={monthlyPoints}
-					pointsLoading={pointsLoading}
-					iconName={participant?.icon || "Target"}
-					color={participant?.color || "#4f46e5"}
-				/>
+		<Screen className="bg-surface-bg">
+			<ScrollView
+				showsVerticalScrollIndicator={false}
+				contentContainerClassName="px-6 py-4"
+				contentContainerStyle={{
+					paddingBottom: showPrimaryAction
+						? Math.max(insets.bottom + 120, 144)
+						: Math.max(insets.bottom + 32, 40),
+				}}
+			>
+				<View className="gap-6">
+					<GoalDetailHeader
+						goal={goal}
+						goalId={id as string}
+						isParticipant={isParticipant}
+						iconName={iconName}
+						iconColor={iconColor}
+						textStrongColor={colors.textStrong}
+						textDefaultColor={colors.textDefault}
+					/>
 
-				<View className="mt-4 w-full max-w-xs gap-4">
-					{isParticipant && (
-						<>
-							{goal.attachment_type === ATTACHMENT_TYPES.NONE && (
-								<Button
-									title={isCompletedToday ? "Undo" : "Complete"}
-									onPress={
-										isCompletedToday ? handleUncomplete : () => handleComplete()
-									}
-								/>
-							)}
+					<GoalFrequencyCard
+						frequencyType={goal.frequency_type}
+						frequencyValue={goal.frequency_value}
+						weeklyDays={goal.weekly_days}
+					/>
 
-							{goal.attachment_type !== ATTACHMENT_TYPES.NONE &&
-								(goal.require_attachment ? (
-									<Button
-										title={isCompletedToday ? "Completed \u2713" : "Complete"}
-										onPress={() => handleComplete()}
-										disabled={isCompletedToday}
-									/>
-								) : !isCompletedToday ? (
-									<Button title="Complete" onPress={() => handleComplete()} />
-								) : (
-									<View className="gap-2">
-										<Button
-											title="Add Attachment"
-											onPress={handleAddAttachment}
-										/>
-										{todayCompletion?.attachment_data && (
-											<Text className="text-center text-green-600 text-xs">
-												Attachment present
-											</Text>
-										)}
-										<Button
-											title="Undo"
-											color="red"
-											onPress={handleUncomplete}
-											disabled={uncompleteMutation.isPending}
-										/>
-									</View>
-								))}
-						</>
-					)}
+					<GoalConsistencyHeatmap
+						completedDates={completedDateKeys}
+						frequencyType={goal.frequency_type}
+						frequencyValue={goal.frequency_value}
+						startDate={goal.start_date}
+						weeklyDays={goal.weekly_days}
+					/>
 
-					{inviteId && !isParticipant ? (
-						<View className="gap-4">
-							<Button
-								title={
-									acceptInviteMutation.isPending
-										? "Accepting..."
-										: "Accept Invite"
-								}
-								onPress={handleAcceptInvite}
-								disabled={
-									acceptInviteMutation.isPending ||
-									declineInviteMutation.isPending
-								}
-							/>
-							<Button
-								title={
-									declineInviteMutation.isPending
-										? "Declining..."
-										: "Decline Invite"
-								}
-								color="red"
-								onPress={handleDeclineInvite}
-								disabled={
-									acceptInviteMutation.isPending ||
-									declineInviteMutation.isPending
-								}
-							/>
-						</View>
-					) : isParticipant ? (
-						<Button
-							title="EDIT GOAL"
-							onPress={() => router.push(`/app/goal/edit/${id}` as Href)}
-						/>
-					) : null}
+					<GoalParticipantsList participants={participantItems} />
+
+					<GoalAttachmentAction
+						goal={goal}
+						isParticipant={isParticipant}
+						isCompletedToday={isCompletedToday}
+						hasAttachment={!!todayCompletion?.attachment_data}
+						onPress={handleAddAttachment}
+						actionPrimaryColor={colors.actionPrimary}
+					/>
 				</View>
-
-				{isParticipant && completions && (
-					<GoalCompletionsList completions={completions} />
-				)}
 			</ScrollView>
+
+			<GoalActionButtons
+				showPrimaryAction={showPrimaryAction}
+				isInviteState={isInviteState}
+				isCompletedToday={isCompletedToday}
+				isPending={
+					completeMutation.isPending ||
+					uncompleteMutation.isPending ||
+					acceptInviteMutation.isPending ||
+					declineInviteMutation.isPending
+				}
+				insetsBottom={insets.bottom}
+				primaryButtonLabel={primaryButtonLabel}
+				secondaryButtonLabel={secondaryButtonLabel}
+				onAcceptInvite={handleAcceptInvite}
+				onCompleteGoal={() => handleComplete()}
+				onUndoComplete={handleUncomplete}
+				onDeclineInvite={handleDeclineInvite}
+			/>
 
 			{goal && (
 				<AttachmentBottomSheet

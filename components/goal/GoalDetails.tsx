@@ -3,6 +3,7 @@ import { Text, View } from "react-native";
 import { dayNumberToName } from "@/constants/days";
 import { FREQUENCY_TYPES } from "@/constants/frequencyTypes";
 import type { GoalWithParticipant } from "@/schemas/goal.schema";
+import { hexToRgba } from "@/utils/color.utils";
 import { formatToISODate } from "@/utils/date.utils";
 import { DynamicIcon } from "@/utils/icons";
 
@@ -16,14 +17,6 @@ type GoalDetailsProps = {
 	iconName?: string;
 	color?: string;
 };
-
-function hexToRgba(hex: string, alpha: number): string {
-	const h = hex.replace("#", "");
-	const r = parseInt(h.slice(0, 2), 16);
-	const g = parseInt(h.slice(2, 4), 16);
-	const b = parseInt(h.slice(4, 6), 16);
-	return `rgba(${r},${g},${b},${alpha})`;
-}
 
 export const GoalDetails = memo(function GoalDetails({
 	goal,
@@ -39,7 +32,6 @@ export const GoalDetails = memo(function GoalDetails({
 
 	return (
 		<View className="w-full gap-8 items-center">
-			{/* Centered Header with Icon and Title */}
 			<View className="items-center gap-4">
 				<View
 					className="h-24 w-24 items-center justify-center rounded-3xl shadow-sm"
@@ -53,7 +45,6 @@ export const GoalDetails = memo(function GoalDetails({
 			</View>
 
 			<View className="w-full gap-6">
-				{/* Description */}
 				{goal.description && (
 					<View className="items-center gap-2">
 						<Text className="text-sm font-bold uppercase tracking-widest text-text-light">
@@ -65,7 +56,6 @@ export const GoalDetails = memo(function GoalDetails({
 					</View>
 				)}
 
-				{/* Frequency Info */}
 				<View className="items-center gap-2">
 					<Text className="text-sm font-bold uppercase tracking-widest text-text-light">
 						Frequency
@@ -79,7 +69,6 @@ export const GoalDetails = memo(function GoalDetails({
 					</Text>
 				</View>
 
-				{/* Schedule Info */}
 				<View className="items-center gap-2">
 					<Text className="text-sm font-bold uppercase tracking-widest text-text-light">
 						Schedule

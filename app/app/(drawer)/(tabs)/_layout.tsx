@@ -10,7 +10,12 @@ export default function AppLayout() {
 	useInvites(user?.id);
 
 	return (
-		<Tabs screenOptions={{ headerShown: false }}>
+		<Tabs
+			screenOptions={{
+				headerShown: false,
+				tabBarStyle: { display: "none" },
+			}}
+		>
 			<Tabs.Screen name="index" options={{ title: "Home" }} />
 		</Tabs>
 	);

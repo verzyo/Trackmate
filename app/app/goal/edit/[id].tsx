@@ -1,21 +1,28 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { router, useLocalSearchParams } from "expo-router";
-import { Flag, Target } from "phosphor-react-native";
-import { useEffect, useState } from "react";
+import { useColorScheme } from "nativewind";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import {
-	ActivityIndicator,
-	Button,
-	Pressable,
-	ScrollView,
-	Text,
-	View,
-} from "react-native";
-import { ZodError } from "zod";
-import { FormField } from "@/components/forms/FormField";
+import type { ScrollView, TextInput } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { AttachmentTypeSelector } from "@/components/forms/AttachmentTypeSelector";
+import { DatePicker } from "@/components/forms/DatePicker";
+import { FormSection } from "@/components/forms/FormSection";
+import { GoalBasicInfoFields } from "@/components/forms/GoalBasicInfoFields";
+import { GoalFormShell } from "@/components/forms/GoalFormShell";
+import { GoalFrequencyEditor } from "@/components/forms/GoalFrequencyEditor";
 import { InviteManager } from "@/components/forms/InviteManager";
-import { GoalScheduleEditor } from "@/components/goal/GoalScheduleEditor";
-import { Screen } from "@/components/layout/Screen";
+import { GoalAppearancePicker } from "@/components/goal/GoalAppearancePicker";
+import AppLoadingScreen from "@/components/ui/AppLoadingScreen";
+import FilledButton from "@/components/ui/FilledButton";
+import MutedBorderButton from "@/components/ui/MutedBorderButton";
+import {
+	ATTACHMENT_TYPES,
+	type AttachmentType,
+} from "@/constants/attachmentTypes";
 import { FREQUENCY_TYPES } from "@/constants/frequencyTypes";
+import { useKeyboard } from "@/hooks/common/useKeyboard";
+import { useThemeColors } from "@/hooks/common/useThemeColors";
 import { useToday } from "@/hooks/common/useToday";
 import {
 	useCreateInvite,
@@ -26,19 +33,23 @@ import {
 } from "@/hooks/goal/useGoalMutations";
 import { useGoal, useGoalCompletions } from "@/hooks/goal/useGoalQueries";
 import { useInviteManagement } from "@/hooks/goal/useInviteManagement";
-import { createWeeklyDaysSchema } from "@/schemas/goal.schema";
+import {
+	type GoalForm,
+	GoalFormSchema,
+	type UpdateGoalMetadataParams,
+} from "@/schemas/goal.schema";
 import { useAuthStore } from "@/store/auth.store";
-import { cn } from "@/utils/cn";
 import { formatToISODate } from "@/utils/date.utils";
 import { showAlert } from "@/utils/error.utils";
 
-type GoalForm = {
-	title: string;
-	description: string;
-};
-
-export default function EditGoalModal() {
+export default function EditGoalScreen() {
 	const { id } = useLocalSearchParams<{ id: string }>();
+	const colors = useThemeColors();
+	const { colorScheme } = useColorScheme();
+	const isDark = colorScheme === "dark";
+	const insets = useSafeAreaInsets();
+	const scrollViewRef = useRef<ScrollView>(null);
+	const { keyboardHeight } = useKeyboard();
 	const { data: goal, isLoading: isGoalLoading } = useGoal(id as string);
 	const updateMetadataMutation = useUpdateGoalMetadata();
 	const deleteGoalMutation = useDeleteGoal();
@@ -48,118 +59,169 @@ export default function EditGoalModal() {
 
 	const { user } = useAuthStore();
 	const userId = user?.id;
-
 	const isOwner = goal?.owner_id === userId;
-
 	const { data: completions } = useGoalCompletions(id as string, userId);
 	const hasCompletions = (completions?.length ?? 0) > 0;
-
 	const today = useToday();
-
 	const { invitees, addInvite, removeInvite } = useInviteManagement(
 		userId,
 		goal?.goal_participants.map((p) => p.user_id),
 	);
-
 	const [startDate, setStartDate] = useState(today);
-	const [weeklyDaysInput, setWeeklyDaysInput] = useState("1");
+	const [selectedIcon, setSelectedIcon] = useState("Flag");
+	const [selectedColor, setSelectedColor] = useState("#3b82f6");
+	const [initialIcon, setInitialIcon] = useState("Flag");
+	const [initialColor, setInitialColor] = useState("#3b82f6");
 
-	const [initialStartDate, setInitialStartDate] = useState<Date | null>(null);
-	const [initialWeeklyDays, setInitialWeeklyDays] = useState<string | null>(
-		null,
-	);
-
-	const [selectedIcon, setSelectedIcon] = useState<string>("Flag");
-	const [selectedColor, setSelectedColor] = useState<string>("#3b82f6");
-	const [initialIcon, setInitialIcon] = useState<string>("Flag");
-	const [initialColor, setInitialColor] = useState<string>("#3b82f6");
-
-	const { control, handleSubmit, reset } = useForm<GoalForm>({
+	const {
+		control,
+		handleSubmit,
+		reset,
+		setValue,
+		watch,
+		formState: { errors },
+	} = useForm<GoalForm>({
+		resolver: zodResolver(GoalFormSchema),
 		defaultValues: {
 			title: "",
 			description: "",
+			frequency_type: FREQUENCY_TYPES.INTERVAL,
+			interval_days: "1",
+			weekly_days: [1],
+			attachment_type: ATTACHMENT_TYPES.NONE,
+			require_attachment: false,
+			color: "#3b82f6",
+			icon: "Flag",
 		},
 	});
 
+	const freqType = watch("frequency_type");
+	const watchedAttachmentType = watch("attachment_type") as AttachmentType;
+	const intervalInputValue = watch("interval_days") ?? "1";
+	const intervalValue = parseInt(intervalInputValue || "1", 10);
+	const scheduledDays = watch("weekly_days") || [];
+	const frequencyEditDisabled = !isOwner || hasCompletions;
+
+	const toggleDay = (val: number) => {
+		if (frequencyEditDisabled) return;
+		const current = watch("weekly_days") || [];
+		const next = current.includes(val)
+			? current.filter((d) => d !== val)
+			: [...current, val];
+		setValue("weekly_days", next, { shouldValidate: true });
+	};
+
+	const handleInviteInputFocus = (_input: TextInput | null) => {
+		requestAnimationFrame(() => {
+			scrollViewRef.current?.scrollToEnd({ animated: true });
+		});
+	};
+
 	useEffect(() => {
 		if (goal) {
-			if (goal.start_date) {
-				const date = new Date(goal.start_date);
-				const utcDate = new Date(
-					Date.UTC(
-						date.getUTCFullYear(),
-						date.getUTCMonth(),
-						date.getUTCDate(),
-					),
-				);
-				setStartDate(utcDate);
-				setInitialStartDate(utcDate);
-			}
-			if (goal.weekly_days) {
-				const days = goal.weekly_days.join(", ");
-				setWeeklyDaysInput(days);
-				setInitialWeeklyDays(days);
-			}
+			const participant = goal.goal_participants.find(
+				(p) => p.user_id === userId,
+			);
+			const start = goal.start_date ? new Date(goal.start_date) : today;
+			const normalizedStartDate = new Date(
+				Date.UTC(
+					start.getUTCFullYear(),
+					start.getUTCMonth(),
+					start.getUTCDate(),
+				),
+			);
 
-			if (userId) {
-				const participant = goal.goal_participants.find(
-					(p) => p.user_id === userId,
-				);
-				if (participant) {
-					setSelectedIcon(participant.icon || "Flag");
-					setSelectedColor(participant.color || "#3b82f6");
-					setInitialIcon(participant.icon || "Flag");
-					setInitialColor(participant.color || "#3b82f6");
-				}
-			}
+			setStartDate(normalizedStartDate);
+			setSelectedIcon(participant?.icon || "Flag");
+			setSelectedColor(participant?.color || "#3b82f6");
+			setInitialIcon(participant?.icon || "Flag");
+			setInitialColor(participant?.color || "#3b82f6");
 
 			reset({
 				title: goal.title,
 				description: goal.description || "",
+				frequency_type: goal.frequency_type,
+				interval_days: String(goal.frequency_value),
+				weekly_days: goal.weekly_days ?? [1],
+				attachment_type: goal.attachment_type,
+				require_attachment: goal.require_attachment,
+				color: participant?.color || "#3b82f6",
+				icon: participant?.icon || "Flag",
 			});
 		}
-	}, [goal, reset, userId]);
+	}, [goal, reset, today, userId]);
 
 	const onSave = async (data: GoalForm) => {
+		if (!goal) return;
 		try {
-			const metadataParams: Record<string, unknown> = {
-				goal_id: id as string,
-			};
-			let hasChanges = false;
+			const metadataParams: Record<string, unknown> = { goal_id: id as string };
+			let hasMetadataChanges = false;
 
 			if (isOwner) {
-				if (data.title !== goal?.title) {
+				if (data.title !== goal.title) {
 					metadataParams.title = data.title;
-					hasChanges = true;
+					hasMetadataChanges = true;
 				}
-				if (data.description !== (goal?.description || "")) {
+				if (data.description !== (goal.description || "")) {
 					metadataParams.description = data.description;
-					hasChanges = true;
+					hasMetadataChanges = true;
 				}
 
 				if (!hasCompletions) {
-					if (
-						initialStartDate === null ||
-						startDate.getTime() !== initialStartDate.getTime()
-					) {
-						metadataParams.start_date = formatToISODate(startDate);
-						hasChanges = true;
+					let frequencyValue = 1;
+					let weeklyDays: number[] | null = null;
+
+					if (data.frequency_type === FREQUENCY_TYPES.INTERVAL) {
+						frequencyValue = parseInt(data.interval_days, 10);
+					} else {
+						weeklyDays = data.weekly_days.length > 0 ? data.weekly_days : [];
+						frequencyValue = weeklyDays.length > 0 ? weeklyDays.length : 1;
 					}
 
-					if (goal?.frequency_type === FREQUENCY_TYPES.WEEKLY) {
-						if (weeklyDaysInput !== (initialWeeklyDays ?? "")) {
-							const uniqueDays = createWeeklyDaysSchema(
-								goal.frequency_value,
-							).parse(weeklyDaysInput);
-							metadataParams.weekly_days = uniqueDays;
-							hasChanges = true;
-						}
+					const originalWeekly = goal.weekly_days ?? [];
+					const nextWeekly = weeklyDays ?? [];
+					const weeklyChanged =
+						originalWeekly.length !== nextWeekly.length ||
+						[...originalWeekly]
+							.sort()
+							.some((day, index) => day !== [...nextWeekly].sort()[index]);
+
+					if (
+						data.frequency_type !== goal.frequency_type ||
+						frequencyValue !== goal.frequency_value
+					) {
+						metadataParams.frequency_type = data.frequency_type;
+						metadataParams.frequency_value = frequencyValue;
+						hasMetadataChanges = true;
 					}
+
+					if (weeklyChanged) {
+						metadataParams.weekly_days = weeklyDays;
+						hasMetadataChanges = true;
+					}
+
+					const nextStartDate = formatToISODate(startDate);
+					const currentStartDate = goal.start_date
+						? formatToISODate(new Date(goal.start_date))
+						: null;
+					if (nextStartDate !== currentStartDate) {
+						metadataParams.start_date = nextStartDate;
+						hasMetadataChanges = true;
+					}
+				}
+
+				if (data.attachment_type !== goal.attachment_type) {
+					metadataParams.attachment_type = data.attachment_type;
+					hasMetadataChanges = true;
+				}
+				if (data.require_attachment !== goal.require_attachment) {
+					metadataParams.require_attachment = data.require_attachment;
+					hasMetadataChanges = true;
 				}
 			}
 
-			const invitePromises = [];
-			if (invitees.length > 0 && userId) {
+			const invitePromises: Promise<unknown>[] = [];
+			if (isOwner && invitees.length > 0 && userId) {
 				invitePromises.push(
 					...invitees.map((invitee) =>
 						createInviteMutation.mutateAsync({
@@ -174,7 +236,11 @@ export default function EditGoalModal() {
 			const participantChanges =
 				selectedIcon !== initialIcon || selectedColor !== initialColor;
 
-			if (!hasChanges && invitePromises.length === 0 && !participantChanges) {
+			if (
+				!hasMetadataChanges &&
+				invitePromises.length === 0 &&
+				!participantChanges
+			) {
 				router.back();
 				return;
 			}
@@ -192,16 +258,10 @@ export default function EditGoalModal() {
 				);
 			}
 
-			if (hasChanges) {
+			if (hasMetadataChanges) {
 				promises.push(
 					updateMetadataMutation.mutateAsync(
-						metadataParams as {
-							goal_id: string;
-							title?: string;
-							description?: string;
-							start_date?: string;
-							weekly_days?: number[];
-						},
+						metadataParams as UpdateGoalMetadataParams,
 					),
 				);
 			}
@@ -209,173 +269,144 @@ export default function EditGoalModal() {
 			await Promise.all(promises);
 			router.back();
 		} catch (error) {
-			let errorMessage =
+			const errorMessage =
 				error instanceof Error ? error.message : "Failed to update goal";
-			if (error instanceof ZodError) {
-				errorMessage = error.issues[0].message;
-			}
 			showAlert(errorMessage);
 		}
 	};
 
-	const isSaving =
-		updateMetadataMutation.isPending ||
-		createInviteMutation.isPending ||
-		updateParticipantMutation.isPending;
-
-	if (isGoalLoading || !goal) {
-		return (
-			<Screen className="px-6 py-4 justify-center items-center">
-				<ActivityIndicator size="large" />
-			</Screen>
-		);
+	if (isGoalLoading) {
+		return <AppLoadingScreen />;
 	}
 
-	const handleDelete = async () => {
-		try {
-			await deleteGoalMutation.mutateAsync(id as string);
-			router.dismissAll();
-		} catch (_e) {
-			showAlert("Failed to delete goal");
-		}
-	};
-
-	const handleLeave = async () => {
-		if (!userId) return;
-		try {
-			await leaveGoalMutation.mutateAsync(id as string);
-			router.dismissAll();
-		} catch (_e) {
-			showAlert("Failed to leave goal");
-		}
-	};
+	const isLoading =
+		updateMetadataMutation.isPending ||
+		deleteGoalMutation.isPending ||
+		createInviteMutation.isPending ||
+		leaveGoalMutation.isPending ||
+		updateParticipantMutation.isPending;
 
 	return (
-		<Screen className="px-6 py-4">
-			<ScrollView contentContainerClassName="flex-grow items-center justify-center gap-4">
-				{isOwner && (
-					<>
-						<FormField
-							control={control}
-							name="title"
-							label="Title*"
-							placeholder="e.g. Morning Run"
-							className="text-center w-full"
-						/>
+		<GoalFormShell
+			title="Edit Goal"
+			scrollViewRef={scrollViewRef}
+			insetsBottom={insets.bottom}
+			keyboardHeight={keyboardHeight}
+			isDark={isDark}
+		>
+			<GoalAppearancePicker
+				selectedIcon={selectedIcon}
+				selectedColor={selectedColor}
+				onIconChange={setSelectedIcon}
+				onColorChange={setSelectedColor}
+			/>
 
-						<FormField
-							control={control}
-							name="description"
-							label="Description"
-							placeholder="Optional details"
-							className="text-center w-full"
-						/>
-					</>
-				)}
+			<GoalBasicInfoFields
+				control={control}
+				titleError={errors.title?.message}
+				descriptionError={errors.description?.message}
+				editable={isOwner}
+			/>
 
-				<View className="h-[1px] bg-gray-300 w-full my-4" />
+			<FormSection title="Frequency*" titleColor={colors.textStrong}>
+				<GoalFrequencyEditor
+					frequencyType={freqType}
+					onFrequencyTypeChange={(val) =>
+						setValue("frequency_type", val, { shouldValidate: true })
+					}
+					intervalValue={intervalValue}
+					intervalInputValue={intervalInputValue}
+					onIntervalChange={(text) => {
+						if (frequencyEditDisabled) return;
+						const sanitized = text.replace(/\D/g, "");
+						setValue(
+							"interval_days",
+							sanitized === "" ? "" : String(Math.max(1, Number(sanitized))),
+						);
+					}}
+					onIntervalBlur={() => {
+						if (!intervalInputValue || intervalValue < 1) {
+							setValue("interval_days", "1");
+						}
+					}}
+					onIncrementInterval={() =>
+						setValue("interval_days", (intervalValue + 1).toString())
+					}
+					onDecrementInterval={() =>
+						setValue("interval_days", Math.max(1, intervalValue - 1).toString())
+					}
+					scheduledDays={scheduledDays}
+					onToggleDay={toggleDay}
+					weeklyDaysError={errors.weekly_days?.message}
+					disabled={frequencyEditDisabled}
+					textStrongColor={colors.textStrong}
+					textLightColor={colors.textLight}
+					textDefaultColor={colors.textDefault}
+					actionPrimaryColor={colors.actionPrimary}
+				/>
+			</FormSection>
 
-				<Text className="font-bold text-lg">Frequency</Text>
-				<Text>
-					Type: <Text className="capitalize">{goal.frequency_type}</Text>
-				</Text>
-				<Text>
-					Value:{" "}
-					{goal.frequency_type === FREQUENCY_TYPES.INTERVAL
-						? `${goal.frequency_value} days`
-						: `${goal.frequency_value} days per week`}
-				</Text>
+			<DatePicker
+				label="Start Date*"
+				value={startDate}
+				onChange={setStartDate}
+				disabled={frequencyEditDisabled}
+			/>
 
-				{isOwner && (
-					<GoalScheduleEditor
-						goal={goal}
-						hasCompletions={hasCompletions}
-						startDate={startDate}
-						onStartDateChange={setStartDate}
-						weeklyDaysInput={weeklyDaysInput}
-						onWeeklyDaysChange={setWeeklyDaysInput}
-					/>
-				)}
+			<FormSection title="Attachment" titleColor={colors.textStrong}>
+				<AttachmentTypeSelector
+					control={control}
+					nameType="attachment_type"
+					nameRequire="require_attachment"
+					setValue={setValue}
+					watchedType={watchedAttachmentType}
+					disabled={!isOwner}
+				/>
+			</FormSection>
 
-				<View className="w-full mt-4 items-center">
-					<Text className="font-bold text-lg mb-2">Your Goal Appearance</Text>
-					<View className="flex-row gap-4">
-						<Pressable onPress={() => setSelectedIcon("Flag")}>
-							<Flag
-								size={32}
-								color={selectedIcon === "Flag" ? selectedColor : "gray"}
-								weight={selectedIcon === "Flag" ? "fill" : "regular"}
-							/>
-						</Pressable>
-						<Pressable onPress={() => setSelectedIcon("Target")}>
-							<Target
-								size={32}
-								color={selectedIcon === "Target" ? selectedColor : "gray"}
-								weight={selectedIcon === "Target" ? "fill" : "regular"}
-							/>
-						</Pressable>
-					</View>
-
-					<View className="flex-row gap-2 mt-4">
-						{[
-							"#ef4444",
-							"#3b82f6",
-							"#22c55e",
-							"#eab308",
-							"#a855f7",
-							"#f97316",
-						].map((color) => (
-							<Pressable
-								key={color}
-								onPress={() => setSelectedColor(color)}
-								style={{ backgroundColor: color }}
-								className={cn(
-									"w-8 h-8 rounded-full",
-									selectedColor === color && "border-2 border-black",
-								)}
-							/>
-						))}
-					</View>
-				</View>
-
-				<View className="mt-4 mb-6 w-full max-w-xs">
-					<Button
-						title={isSaving ? "Saving..." : "Save Changes"}
-						onPress={handleSubmit(onSave)}
-						disabled={isSaving}
-					/>
-				</View>
-
-				<View className="h-[1px] bg-gray-300 w-full my-4" />
-
-				{isOwner && (
+			{isOwner && (
+				<FormSection title="Participants" titleColor={colors.textStrong}>
 					<InviteManager
 						invitees={invitees}
 						onAdd={addInvite}
 						onRemove={removeInvite}
+						onInputFocus={handleInviteInputFocus}
+						onInputPress={handleInviteInputFocus}
 					/>
-				)}
+				</FormSection>
+			)}
 
-				<View className="mt-4 pb-10">
-					{isOwner ? (
-						<Button
-							title={
-								deleteGoalMutation.isPending ? "Deleting..." : "Delete goal"
-							}
-							color="red"
-							onPress={handleDelete}
-							disabled={isSaving || deleteGoalMutation.isPending}
-						/>
-					) : (
-						<Button
-							title={leaveGoalMutation.isPending ? "Leaving..." : "Leave goal"}
-							color="red"
-							onPress={handleLeave}
-							disabled={isSaving || leaveGoalMutation.isPending}
-						/>
-					)}
-				</View>
-			</ScrollView>
-		</Screen>
+			<FilledButton
+				onPress={handleSubmit(onSave)}
+				disabled={isLoading}
+				className="mt-auto"
+				label={isLoading ? "Saving..." : "Save Goal"}
+			/>
+
+			{isOwner ? (
+				<FilledButton
+					onPress={() => {
+						deleteGoalMutation.mutate(id as string, {
+							onSuccess: () => router.push("/app/(drawer)/(tabs)"),
+						});
+					}}
+					disabled={deleteGoalMutation.isPending}
+					variant="danger"
+					label={
+						deleteGoalMutation.isPending ? "Deleting goal..." : "Delete Goal"
+					}
+				/>
+			) : (
+				<MutedBorderButton
+					onPress={() => {
+						leaveGoalMutation.mutate(id as string, {
+							onSuccess: () => router.push("/app/(drawer)/(tabs)"),
+						});
+					}}
+					disabled={leaveGoalMutation.isPending}
+					label={leaveGoalMutation.isPending ? "Leaving..." : "Leave Goal"}
+				/>
+			)}
+		</GoalFormShell>
 	);
 }

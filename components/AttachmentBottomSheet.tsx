@@ -1,7 +1,13 @@
 import { BottomSheetModal, BottomSheetView } from "@gorhom/bottom-sheet";
 import * as ImagePicker from "expo-image-picker";
 import { forwardRef, useImperativeHandle, useRef, useState } from "react";
-import { Button, Text, TextInput, View } from "react-native";
+import {
+	ActivityIndicator,
+	Pressable,
+	Text,
+	TextInput,
+	View,
+} from "react-native";
 import type {
 	AttachmentData,
 	GoalWithParticipant,
@@ -103,7 +109,13 @@ const AttachmentBottomSheet = forwardRef<AttachmentBottomSheetRef, Props>(
 					<Text className="text-lg font-bold mb-4">Provide Proof</Text>
 					{attachmentType === "photo" && (
 						<View className="mb-4">
-							<Button title="Pick an image" onPress={pickImage} />
+							<Pressable
+								onPress={pickImage}
+								disabled={isSubmitting}
+								className="h-12 rounded-xl bg-action-primary items-center justify-center"
+							>
+								<Text className="text-white font-bold">Pick an image</Text>
+							</Pressable>
 							{imageUri && (
 								<Text className="mt-2 text-green-600">Image selected</Text>
 							)}
@@ -114,7 +126,7 @@ const AttachmentBottomSheet = forwardRef<AttachmentBottomSheetRef, Props>(
 							placeholder="https://example.com"
 							value={url}
 							onChangeText={setUrl}
-							className="border border-gray-300 p-2 mb-4 rounded"
+							className="border border-border bg-surface-bg p-4 mb-4 rounded-xl text-text-strong"
 						/>
 					)}
 					{attachmentType === "text" && (
@@ -124,20 +136,25 @@ const AttachmentBottomSheet = forwardRef<AttachmentBottomSheetRef, Props>(
 							onChangeText={setText}
 							multiline
 							numberOfLines={4}
-							className="border border-gray-300 p-2 mb-4 rounded"
+							className="border border-border bg-surface-bg p-4 mb-4 rounded-xl text-text-strong"
 						/>
 					)}
 					<View className="flex-row justify-end gap-2 mt-4">
-						<Button
-							title="Cancel"
+						<Pressable
 							onPress={() => bottomSheetRef.current?.dismiss()}
 							disabled={isSubmitting}
-						/>
-						<Button
-							title="Complete"
+							className="h-12 px-4 rounded-xl bg-surface-bg border border-border items-center justify-center"
+						>
+							<Text className="font-bold text-text-strong">Cancel</Text>
+						</Pressable>
+						<Pressable
 							onPress={handleSubmit}
 							disabled={isSubmitting}
-						/>
+							className="h-12 px-4 rounded-xl bg-action-primary items-center justify-center flex-row gap-2"
+						>
+							{isSubmitting && <ActivityIndicator color="white" />}
+							<Text className="text-white font-bold">Complete</Text>
+						</Pressable>
 					</View>
 				</BottomSheetView>
 			</BottomSheetModal>
