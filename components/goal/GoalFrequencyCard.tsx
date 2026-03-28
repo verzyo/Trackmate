@@ -33,9 +33,9 @@ export function GoalFrequencyCard({
 
 	if (frequencyType === FREQUENCY_TYPES.WEEKLY && scheduledDays.length > 0) {
 		return (
-			<View className="w-full rounded-[32px] border border-border bg-surface-fg p-5">
+			<View className="w-full rounded-[32px] border border-border bg-surface-fg p-6">
 				<Text
-					className="mb-4 text-2xl font-bold text-text-strong"
+					className="mb-3 text-xl font-bold text-text-strong"
 					style={{ color: colors.textStrong }}
 				>
 					Frequency
@@ -49,12 +49,12 @@ export function GoalFrequencyCard({
 							<View
 								key={day.value}
 								className={cn(
-									"h-11 w-11 items-center justify-center rounded-full",
+									"h-10 w-10 items-center justify-center rounded-full",
 									active ? "bg-action-primary" : "bg-state-muted-bg",
 								)}
 							>
 								<Text
-									className="text-base font-bold"
+									className="text-sm font-bold"
 									style={{
 										color: active ? "#ffffff" : colors.textLight,
 									}}
@@ -73,18 +73,18 @@ export function GoalFrequencyCard({
 		frequencyValue === 1 ? "Every day" : `Every ${frequencyValue} days`;
 
 	return (
-		<View className="w-full flex-row items-center justify-between rounded-full border border-border bg-surface-fg px-5 py-6">
+		<View className="w-full flex-row items-center justify-between rounded-full border border-border bg-surface-fg px-5 py-4">
 			<Text
-				className="text-2xl font-bold text-text-strong"
+				className="text-xl font-bold text-text-strong"
 				style={{ color: colors.textStrong }}
 			>
 				Frequency
 			</Text>
 
 			<View className="flex-row items-center gap-2">
-				<ArrowsClockwise size={24} color={colors.actionPrimary} weight="bold" />
+				<ArrowsClockwise size={20} color={colors.actionPrimary} weight="bold" />
 				<Text
-					className="text-xl font-medium"
+					className="text-base font-medium"
 					style={{ color: colors.actionPrimary }}
 				>
 					{label}

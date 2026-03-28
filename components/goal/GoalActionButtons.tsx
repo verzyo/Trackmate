@@ -42,6 +42,7 @@ export function GoalActionButtons({
 					<MutedBorderButton
 						onPress={onUndoComplete}
 						disabled={isPending}
+						className="bg-label-bg opacity-100"
 						label={primaryButtonLabel}
 					/>
 				) : (

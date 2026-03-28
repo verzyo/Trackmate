@@ -1,17 +1,17 @@
-import { CheckIcon, FireIcon } from "phosphor-react-native";
-import {
-	cloneElement,
-	isValidElement,
-	memo,
-	type ReactElement,
-	type ReactNode,
-	useMemo,
-} from "react";
-import { Pressable, Text, View } from "react-native";
 import AvatarStack from "@/components/ui/AvatarStack";
 import PersonalTag from "@/components/ui/PersonalTag";
 import type { GoalWithParticipant } from "@/schemas/goal.schema";
 import { hexToRgba } from "@/utils/color.utils";
+import { CheckIcon, FireIcon } from "phosphor-react-native";
+import {
+    cloneElement,
+    isValidElement,
+    memo,
+    type ReactElement,
+    type ReactNode,
+    useMemo,
+} from "react";
+import { Pressable, Text, View } from "react-native";
 
 function filledIcon(icon: ReactNode, color: string, size = 28): ReactNode {
 	if (!isValidElement(icon)) return icon;
@@ -85,7 +85,7 @@ export const GoalItem = memo(function GoalItem({
 	return (
 		<Pressable
 			onPress={onPress}
-			className="w-full flex-col items-start gap-4 overflow-hidden rounded-2xl border border-border bg-surface-fg p-5"
+			className="w-full flex-col items-start gap-4 overflow-hidden rounded-[32px] border border-border bg-surface-fg p-5"
 		>
 			{isCompletedToday && (
 				<View
@@ -97,7 +97,7 @@ export const GoalItem = memo(function GoalItem({
 			<View className="flex-row items-center justify-between self-stretch">
 				<View className="flex-1 flex-row items-center gap-4 pr-4">
 					<View
-						className="h-16 w-16 shrink-0 items-center justify-center rounded-2xl"
+						className="h-16 w-16 shrink-0 items-center justify-center rounded-3xl"
 						style={{ backgroundColor: iconBg }}
 					>
 						{filledIcon(icon, color)}
@@ -105,7 +105,11 @@ export const GoalItem = memo(function GoalItem({
 
 					<View className="flex-1 flex-col justify-center gap-1">
 						<Text
-							className="font-bold text-2xl leading-9 text-text-strong"
+							className={
+								goal.title.length > 16
+									? "font-bold text-xl leading-8 text-text-strong"
+									: "font-bold text-2xl leading-9 text-text-strong"
+							}
 							numberOfLines={1}
 						>
 							{goal.title}

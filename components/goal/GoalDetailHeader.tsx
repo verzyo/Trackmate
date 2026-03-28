@@ -1,11 +1,11 @@
-import { type Href, router } from "expo-router";
-import { PencilSimple } from "phosphor-react-native";
-import { Text, View } from "react-native";
 import CircleIconButton from "@/components/ui/CircleIconButton";
 import PageHeader from "@/components/ui/PageHeader";
 import type { GoalWithParticipant } from "@/schemas/goal.schema";
 import { hexToRgba } from "@/utils/color.utils";
 import { DynamicIcon } from "@/utils/icons";
+import { type Href, router } from "expo-router";
+import { PencilSimple } from "phosphor-react-native";
+import { Text, View } from "react-native";
 
 type GoalDetailHeaderProps = {
 	goal: GoalWithParticipant;
@@ -27,7 +27,7 @@ export function GoalDetailHeader({
 	textDefaultColor,
 }: GoalDetailHeaderProps) {
 	return (
-		<>
+		<View>
 			<PageHeader
 				title="Goal Details"
 				rightElement={
@@ -40,7 +40,7 @@ export function GoalDetailHeader({
 					) : undefined
 				}
 			/>
-			<View className="flex-row items-center gap-5">
+			<View className="flex-row items-center gap-4">
 				<View
 					className="h-32 w-32 items-center justify-center rounded-[32px]"
 					style={{ backgroundColor: hexToRgba(iconColor, 0.15) }}
@@ -53,9 +53,13 @@ export function GoalDetailHeader({
 					/>
 				</View>
 
-				<View className="flex-1 gap-2">
+				<View className="flex-1 gap-1.5">
 					<Text
-						className="text-4xl font-bold leading-[44px] text-text-strong"
+						className={
+							goal.title.length > 16
+								? "text-2xl font-bold leading-8 text-text-strong"
+								: "text-3xl font-bold leading-9 text-text-strong"
+						}
 						style={{ color: textStrongColor }}
 					>
 						{goal.title}
@@ -63,7 +67,7 @@ export function GoalDetailHeader({
 
 					{goal.description ? (
 						<Text
-							className="text-lg leading-8 text-text-default"
+							className="text-base leading-6 text-text-default"
 							style={{ color: textDefaultColor }}
 						>
 							{goal.description}
@@ -71,6 +75,6 @@ export function GoalDetailHeader({
 					) : null}
 				</View>
 			</View>
-		</>
+		</View>
 	);
 }

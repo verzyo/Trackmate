@@ -3,10 +3,11 @@ import {
 	DrawerContentScrollView,
 } from "@react-navigation/drawer";
 import { type Href, useRouter } from "expo-router";
-import { EnvelopeSimple, SignOut, User } from "phosphor-react-native";
+import { EnvelopeSimple, User } from "phosphor-react-native";
 import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Avatar from "@/components/ui/Avatar";
+import MutedBorderButton from "@/components/ui/MutedBorderButton";
 import { useThemeColors } from "@/hooks/common/useThemeColors";
 import { useProfile } from "@/hooks/profile/useProfileHooks";
 import { supabase } from "@/lib/supabase";
@@ -37,11 +38,7 @@ export function CustomDrawerContent(props: DrawerContentComponentProps) {
 	];
 
 	return (
-		<SafeAreaView
-			style={{ flex: 1 }}
-			edges={["top", "bottom"]}
-			className="bg-surface-bg"
-		>
+		<SafeAreaView edges={["top", "bottom"]} className="bg-surface-bg flex-1">
 			<View className="px-6 py-8 border-b border-border bg-surface-bg">
 				<View className="flex-row items-center gap-4">
 					<Avatar
@@ -68,9 +65,13 @@ export function CustomDrawerContent(props: DrawerContentComponentProps) {
 
 			<DrawerContentScrollView
 				{...props}
-				contentContainerStyle={{ paddingTop: 16, paddingHorizontal: 16 }}
+				contentContainerStyle={{
+					paddingTop: 16,
+					paddingHorizontal: 16,
+					flexGrow: 1,
+				}}
 			>
-				<View className="gap-2">
+				<View className="gap-2 flex-1">
 					{menuItems.map((item) => {
 						const isActive = activeRouteName === item.name;
 						const Icon = item.icon;
@@ -88,9 +89,10 @@ export function CustomDrawerContent(props: DrawerContentComponentProps) {
 									color={isActive ? colors.actionPrimary : colors.textDefault}
 								/>
 								<Text
-									className={`text-base font-semibold ${
-										isActive ? "text-action-primary" : "text-text-default"
-									}`}
+									className="text-base font-semibold"
+									style={{
+										color: isActive ? colors.actionPrimary : colors.textDefault,
+									}}
 								>
 									{item.label}
 								</Text>
@@ -100,14 +102,11 @@ export function CustomDrawerContent(props: DrawerContentComponentProps) {
 				</View>
 			</DrawerContentScrollView>
 
-			<View className="p-6 border-t border-border">
-				<Pressable
+			<View className="p-6">
+				<MutedBorderButton
+					label="Log out"
 					onPress={() => supabase.auth.signOut()}
-					className="flex-row items-center gap-4 py-4 px-4 rounded-2xl bg-state-danger/10"
-				>
-					<SignOut size={22} color={colors.danger} weight="bold" />
-					<Text className="text-state-danger font-bold text-base">Log out</Text>
-				</Pressable>
+				/>
 			</View>
 		</SafeAreaView>
 	);

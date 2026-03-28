@@ -1,23 +1,23 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import type {
-	AttachmentData,
-	CreateGoalParams,
-	GoalWithParticipant,
-	UpdateGoalMetadataParams,
+    AttachmentData,
+    CreateGoalParams,
+    GoalWithParticipant,
+    UpdateGoalMetadataParams,
 } from "@/schemas/goal.schema";
 import {
-	acceptInvite,
-	completeGoal,
-	createGoal,
-	createInvite,
-	declineInvite,
-	deleteGoal,
-	leaveGoal,
-	uncompleteGoal,
-	updateCompletionWithAttachment,
-	updateGoalMetadata,
+    acceptInvite,
+    completeGoal,
+    createGoal,
+    createInvite,
+    declineInvite,
+    deleteGoal,
+    leaveGoal,
+    uncompleteGoal,
+    updateCompletionWithAttachment,
+    updateGoalMetadata,
 } from "@/services/goal.service";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { goalKeys } from "./useGoalQueries";
 
 type CompletionVariables = {
@@ -142,17 +142,62 @@ export const useUpdateGoalMetadata = () => {
 };
 
 export const useDeleteGoal = () => {
-	return createMutationWithInvalidation(
-		(id: string) => deleteGoal(id),
-		() => [goalKeys.lists()],
-	);
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (id: string) => deleteGoal(id),
+		onMutate: async (goalId) => {
+			await queryClient.cancelQueries({ queryKey: goalKeys.lists() });
+
+			const previousGoals = queryClient.getQueryData<GoalWithParticipant[]>(
+				goalKeys.lists(),
+			);
+
+			queryClient.setQueryData<GoalWithParticipant[]>(
+				goalKeys.lists(),
+				(old) => old?.filter((goal) => goal.id !== goalId) ?? [],
+			);
+
+			return { previousGoals };
+		},
+		onError: (_err, _goalId, context) => {
+			if (context?.previousGoals) {
+				queryClient.setQueryData(goalKeys.lists(), context.previousGoals);
+			}
+		},
+		onSettled: () => {
+			queryClient.invalidateQueries({ queryKey: goalKeys.lists() });
+		},
+	});
 };
 
 export const useLeaveGoal = () => {
-	return createMutationWithInvalidation(
-		(goalId: string) => leaveGoal(goalId),
-		(goalId) => [goalKeys.lists(), goalKeys.detail(goalId)],
-	);
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (goalId: string) => leaveGoal(goalId),
+		onMutate: async (goalId) => {
+			await queryClient.cancelQueries({ queryKey: goalKeys.lists() });
+
+			const previousGoals = queryClient.getQueryData<GoalWithParticipant[]>(
+				goalKeys.lists(),
+			);
+
+			queryClient.setQueryData<GoalWithParticipant[]>(
+				goalKeys.lists(),
+				(old) => old?.filter((goal) => goal.id !== goalId) ?? [],
+			);
+
+			return { previousGoals };
+		},
+		onError: (_err, _goalId, context) => {
+			if (context?.previousGoals) {
+				queryClient.setQueryData(goalKeys.lists(), context.previousGoals);
+			}
+		},
+		onSettled: (_, __, goalId) => {
+			queryClient.invalidateQueries({ queryKey: goalKeys.lists() });
+			queryClient.invalidateQueries({ queryKey: goalKeys.detail(goalId) });
+		},
+	});
 };
 
 export const useCompleteGoal = () => {
@@ -340,9 +385,19 @@ export const useCreateInvite = () => {
 
 export const useAcceptInvite = () => {
 	return createMutationWithInvalidation(
-		({ inviteId, userId: _userId }: { inviteId: string; userId: string }) =>
-			acceptInvite(inviteId),
-		(variables) => [goalKeys.invites(variables.userId), goalKeys.lists()],
+		({
+			inviteId,
+			userId,
+		}: {
+			inviteId: string;
+			userId: string;
+			goalId: string;
+		}) => acceptInvite(inviteId, userId),
+		(variables) => [
+			goalKeys.invites(variables.userId),
+			goalKeys.lists(),
+			goalKeys.detail(variables.goalId),
+		],
 	);
 };
 

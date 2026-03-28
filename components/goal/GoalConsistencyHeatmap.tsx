@@ -192,10 +192,10 @@ export function GoalConsistencyHeatmap({
 	);
 
 	return (
-		<View className="w-full rounded-[32px] border border-border bg-surface-fg p-5">
-			<View className="mb-4 flex-row items-center justify-between">
+		<View className="w-full rounded-[32px] border border-border bg-surface-fg p-6">
+			<View className="mb-3 flex-row items-center justify-between">
 				<Text
-					className="text-2xl font-bold text-text-strong"
+					className="text-xl font-bold text-text-strong"
 					style={{ color: colors.textStrong }}
 				>
 					Consistency

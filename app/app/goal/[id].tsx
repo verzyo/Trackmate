@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { router, useLocalSearchParams } from "expo-router";
 import { useMemo, useRef } from "react";
 import { ScrollView, Text, View } from "react-native";
@@ -22,6 +23,7 @@ import {
 	useUpdateCompletion,
 } from "@/hooks/goal/useGoalMutations";
 import {
+	goalKeys,
 	useGoal,
 	useGoalCompletions,
 	useTodayCompletion,
@@ -37,18 +39,20 @@ export default function GoalDetailsModal() {
 		id: string;
 		inviteId?: string;
 	}>();
+	const goalId = Array.isArray(id) ? id[0] : id;
 	const userId = useAuthStore((state) => state.user?.id);
+	const queryClient = useQueryClient();
 	const colors = useThemeColors();
 	const insets = useSafeAreaInsets();
-	const { data: goal, isLoading, error } = useGoal(id as string);
+	const { data: goal, isLoading, error } = useGoal(goalId as string);
 	const {
 		data: todayCompletion,
 		refetch: refetchToday,
 		isLoading: isTodayCompletionLoading,
-	} = useTodayCompletion(id as string, userId);
-	const { data: completions } = useGoalCompletions(id as string, userId);
+	} = useTodayCompletion(goalId as string, userId);
+	const { data: completions } = useGoalCompletions(goalId as string, userId);
 	const { data: todaysCompletions } = useTodaysCompletionsForGoals(
-		id ? [id as string] : [],
+		goalId ? [goalId] : [],
 	);
 
 	const attachmentSheetRef = useRef<AttachmentBottomSheetRef>(null);
@@ -106,13 +110,18 @@ export default function GoalDetailsModal() {
 	);
 
 	const handleAcceptInvite = async () => {
-		if (!inviteId) return;
+		if (!inviteId || !goalId) return;
 		try {
 			await acceptInviteMutation.mutateAsync({
 				inviteId,
 				userId: userId as string,
+				goalId,
 			});
-			router.setParams({ inviteId: undefined });
+			queryClient.removeQueries({
+				queryKey: goalKeys.detail(goalId),
+				exact: true,
+			});
+			router.push(`/app/goal/edit/${goalId}`);
 		} catch (e) {
 			showAlert(getErrorMessage(e, "Failed to accept invite"));
 		}
@@ -214,7 +223,7 @@ export default function GoalDetailsModal() {
 				<View className="gap-6">
 					<GoalDetailHeader
 						goal={goal}
-						goalId={id as string}
+						goalId={goalId as string}
 						isParticipant={isParticipant}
 						iconName={iconName}
 						iconColor={iconColor}

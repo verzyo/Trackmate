@@ -1,7 +1,7 @@
-import { Drawer } from "expo-router/drawer";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { CustomDrawerContent } from "@/components/layout/CustomDrawerContent";
 import { useThemeColors } from "@/hooks/common/useThemeColors";
+import { Drawer } from "expo-router/drawer";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 export default function DrawerLayout() {
 	const colors = useThemeColors();
@@ -15,9 +15,12 @@ export default function DrawerLayout() {
 				screenOptions={{
 					headerShown: false,
 					drawerType: "front",
-					drawerPosition: "right", // Pop out from the right side
+					drawerPosition: "right",
+					swipeEnabled: true,
+					swipeEdgeWidth: 50,
+					swipeMinDistance: 20,
 					drawerStyle: {
-						width: "85%",
+						width: 280,
 						backgroundColor: colors.surfaceBg,
 					},
 					overlayColor: "rgba(0,0,0,0.5)",

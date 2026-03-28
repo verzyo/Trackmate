@@ -1,13 +1,15 @@
-import { BottomSheetModal, BottomSheetView } from "@gorhom/bottom-sheet";
-import * as ImagePicker from "expo-image-picker";
-import { forwardRef, useImperativeHandle, useRef, useState } from "react";
 import {
-	ActivityIndicator,
-	Pressable,
-	Text,
-	TextInput,
-	View,
-} from "react-native";
+	BottomSheetBackdrop,
+	BottomSheetModal,
+	BottomSheetTextInput,
+	BottomSheetView,
+} from "@gorhom/bottom-sheet";
+import * as ImagePicker from "expo-image-picker";
+import { X } from "phosphor-react-native";
+import { forwardRef, useImperativeHandle, useRef, useState } from "react";
+import { ActivityIndicator, Pressable, Text, View } from "react-native";
+import { FilledButton } from "@/components/ui/FilledButton";
+import { useThemeColors } from "@/hooks/common/useThemeColors";
 import type {
 	AttachmentData,
 	GoalWithParticipant,
@@ -30,9 +32,10 @@ const AttachmentBottomSheet = forwardRef<AttachmentBottomSheetRef, Props>(
 	({ goal, onComplete }, ref) => {
 		const bottomSheetRef = useRef<BottomSheetModal>(null);
 		const { user } = useAuthStore();
+		const colors = useThemeColors();
 		const [url, setUrl] = useState("");
+		const [urlError, setUrlError] = useState<string | null>(null);
 		const [text, setText] = useState("");
-		const [imageUri, setImageUri] = useState<string | null>(null);
 		const [isSubmitting, setIsSubmitting] = useState(false);
 
 		const attachmentType = goal.attachment_type;
@@ -49,42 +52,36 @@ const AttachmentBottomSheet = forwardRef<AttachmentBottomSheetRef, Props>(
 				quality: 0.8,
 			});
 			if (!result.canceled) {
-				setImageUri(result.assets[0].uri);
+				const uri = result.assets[0].uri;
+				await handleImageSelected(uri);
 			}
 		};
 
-		const handleSubmit = async () => {
+		const takePhoto = async () => {
+			const { status } = await ImagePicker.requestCameraPermissionsAsync();
+			if (status !== "granted") {
+				showAlert("Camera permission is required to take photos");
+				return;
+			}
+
+			const result = await ImagePicker.launchCameraAsync({
+				mediaTypes: ["images"],
+				quality: 0.8,
+			});
+			if (!result.canceled) {
+				const uri = result.assets[0].uri;
+				await handleImageSelected(uri);
+			}
+		};
+		const handleImageSelected = async (uri: string) => {
 			if (!user) return;
 			setIsSubmitting(true);
 			try {
-				let data: AttachmentData | undefined;
-				if (attachmentType === "photo") {
-					if (!imageUri && requireAttachment)
-						throw new Error("Please select an image");
-					if (imageUri) {
-						const path = await uploadAttachment(
-							user.id,
-							imageUri,
-							"image/jpeg",
-						);
-						data = { type: "photo", path };
-					}
-				} else if (attachmentType === "url") {
-					if (!url.trim() && requireAttachment)
-						throw new Error("Please enter a URL");
-					if (url.trim()) data = { type: "url", url: url.trim() };
-				} else if (attachmentType === "text") {
-					if (!text.trim() && requireAttachment)
-						throw new Error("Please enter text");
-					if (text.trim()) data = { type: "text", content: text.trim() };
-				}
-
+				const path = await uploadAttachment(user.id, uri, "image/jpeg");
+				const data: AttachmentData = { type: "photo", path };
 				await onComplete(data);
 				bottomSheetRef.current?.dismiss();
-
-				setUrl("");
-				setText("");
-				setImageUri(null);
+				resetState();
 			} catch (error) {
 				const message = error instanceof Error ? error.message : String(error);
 				showAlert(message);
@@ -93,69 +90,212 @@ const AttachmentBottomSheet = forwardRef<AttachmentBottomSheetRef, Props>(
 			}
 		};
 
-		const handleDismiss = () => {
+		const handleUrlChange = (value: string) => {
+			setUrl(value);
+			setUrlError(null);
+		};
+
+		const handleSubmitUrl = async () => {
+			if (!url.trim() && requireAttachment) {
+				setUrlError("Please enter a URL");
+				return;
+			}
+			if (url.trim()) {
+				const urlRegex = /^https?:\/\/.+/;
+				if (!urlRegex.test(url.trim())) {
+					setUrlError("Provide valid URL");
+					return;
+				}
+			}
+			await submitData(
+				url.trim() ? { type: "url", url: url.trim() } : undefined,
+			);
+		};
+
+		const handleSubmitText = async () => {
+			if (!text.trim() && requireAttachment) {
+				showAlert("Please enter text");
+				return;
+			}
+			await submitData(
+				text.trim() ? { type: "text", content: text.trim() } : undefined,
+			);
+		};
+
+		const submitData = async (data: AttachmentData | undefined) => {
+			if (!user) return;
+			setIsSubmitting(true);
+			try {
+				await onComplete(data);
+				bottomSheetRef.current?.dismiss();
+				resetState();
+			} catch (error) {
+				const message = error instanceof Error ? error.message : String(error);
+				showAlert(message);
+			} finally {
+				setIsSubmitting(false);
+			}
+		};
+
+		const resetState = () => {
 			setUrl("");
+			setUrlError(null);
 			setText("");
-			setImageUri(null);
+		};
+
+		const handleDismiss = () => {
+			resetState();
+		};
+
+		const getTitle = () => {
+			switch (attachmentType) {
+				case "photo":
+					return "Attachment Required";
+				case "url":
+					return "Attachment Required";
+				case "text":
+					return "Attachment Required";
+				default:
+					return "Provide Proof";
+			}
+		};
+
+		const getSnapPoints = () => {
+			switch (attachmentType) {
+				case "photo":
+					return ["20%"];
+				case "url":
+					return urlError ? ["27%"] : ["25%"];
+				case "text":
+					return ["33%"];
+				default:
+					return ["35%"];
+			}
 		};
 
 		return (
 			<BottomSheetModal
 				ref={bottomSheetRef}
-				snapPoints={["50%"]}
+				snapPoints={getSnapPoints()}
+				enableDynamicSizing={false}
+				enablePanDownToClose={true}
 				onDismiss={handleDismiss}
+				backdropComponent={(props) => (
+					<BottomSheetBackdrop
+						{...props}
+						disappearsOnIndex={-1}
+						appearsOnIndex={0}
+						opacity={0.5}
+						pressBehavior="close"
+					/>
+				)}
+				backgroundStyle={{
+					backgroundColor: colors.surfaceFg,
+					borderRadius: 32,
+				}}
+				handleIndicatorStyle={{ backgroundColor: colors.border }}
 			>
-				<BottomSheetView className="p-4">
-					<Text className="text-lg font-bold mb-4">Provide Proof</Text>
-					{attachmentType === "photo" && (
-						<View className="mb-4">
-							<Pressable
-								onPress={pickImage}
-								disabled={isSubmitting}
-								className="h-12 rounded-xl bg-action-primary items-center justify-center"
-							>
-								<Text className="text-white font-bold">Pick an image</Text>
-							</Pressable>
-							{imageUri && (
-								<Text className="mt-2 text-green-600">Image selected</Text>
-							)}
-						</View>
-					)}
-					{attachmentType === "url" && (
-						<TextInput
-							placeholder="https://example.com"
-							value={url}
-							onChangeText={setUrl}
-							className="border border-border bg-surface-bg p-4 mb-4 rounded-xl text-text-strong"
-						/>
-					)}
-					{attachmentType === "text" && (
-						<TextInput
-							placeholder="Write your proof..."
-							value={text}
-							onChangeText={setText}
-							multiline
-							numberOfLines={4}
-							className="border border-border bg-surface-bg p-4 mb-4 rounded-xl text-text-strong"
-						/>
-					)}
-					<View className="flex-row justify-end gap-2 mt-4">
-						<Pressable
-							onPress={() => bottomSheetRef.current?.dismiss()}
-							disabled={isSubmitting}
-							className="h-12 px-4 rounded-xl bg-surface-bg border border-border items-center justify-center"
+				<BottomSheetView className="flex-1 p-6">
+					{/* Header with X button */}
+					<View className="flex-row items-center justify-between mb-6">
+						<Text
+							className="text-xl font-bold"
+							style={{ color: colors.textStrong }}
 						>
-							<Text className="font-bold text-text-strong">Cancel</Text>
-						</Pressable>
-						<Pressable
-							onPress={handleSubmit}
-							disabled={isSubmitting}
-							className="h-12 px-4 rounded-xl bg-action-primary items-center justify-center flex-row gap-2"
-						>
-							{isSubmitting && <ActivityIndicator color="white" />}
-							<Text className="text-white font-bold">Complete</Text>
+							{getTitle()}
+						</Text>
+						<Pressable onPress={() => bottomSheetRef.current?.dismiss()}>
+							<X size={24} color={colors.textLight} weight="bold" />
 						</Pressable>
 					</View>
+
+					{isSubmitting && (
+						<View className="items-center justify-center py-8">
+							<ActivityIndicator color={colors.actionPrimary} size="large" />
+							<Text style={{ color: colors.textDefault }} className="mt-4">
+								Processing...
+							</Text>
+						</View>
+					)}
+
+					{!isSubmitting && attachmentType === "photo" && (
+						<View className="flex-row gap-3 mb-4">
+							<FilledButton
+								label="Pick Image"
+								onPress={pickImage}
+								disabled={isSubmitting}
+								variant="primary"
+								className="flex-1"
+							/>
+							<FilledButton
+								label="Take Photo"
+								onPress={takePhoto}
+								disabled={isSubmitting}
+								variant="primary"
+								className="flex-1"
+							/>
+						</View>
+					)}
+
+					{!isSubmitting && attachmentType === "url" && (
+						<View className="gap-4">
+							<BottomSheetTextInput
+								placeholder="https://example.com"
+								placeholderTextColor={colors.textLight}
+								value={url}
+								onChangeText={handleUrlChange}
+								className="h-14 px-4 rounded-full border"
+								style={{
+									backgroundColor: colors.surfaceBg,
+									borderColor: urlError ? colors.danger : colors.border,
+									color: colors.textStrong,
+								}}
+								autoCapitalize="none"
+								autoCorrect={false}
+								keyboardType="url"
+							/>
+							{urlError && (
+								<Text
+									style={{ color: colors.danger }}
+									className="text-sm font-medium"
+								>
+									{urlError}
+								</Text>
+							)}
+							<FilledButton
+								label="Submit"
+								onPress={handleSubmitUrl}
+								disabled={isSubmitting || (!url.trim() && requireAttachment)}
+								variant="primary"
+							/>
+						</View>
+					)}
+
+					{!isSubmitting && attachmentType === "text" && (
+						<View className="gap-4">
+							<BottomSheetTextInput
+								placeholder="Write your proof..."
+								placeholderTextColor={colors.textLight}
+								value={text}
+								onChangeText={setText}
+								multiline
+								numberOfLines={4}
+								className="h-32 px-4 py-3 rounded-3xl border"
+								style={{
+									backgroundColor: colors.surfaceBg,
+									borderColor: colors.border,
+									color: colors.textStrong,
+									textAlignVertical: "top",
+								}}
+							/>
+							<FilledButton
+								label="Submit"
+								onPress={handleSubmitText}
+								disabled={isSubmitting || (!text.trim() && requireAttachment)}
+								variant="primary"
+							/>
+						</View>
+					)}
 				</BottomSheetView>
 			</BottomSheetModal>
 		);

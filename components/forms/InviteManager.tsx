@@ -57,7 +57,7 @@ export function InviteManager({
 					onChangeText={setInviteUsername}
 					onFocus={() => onInputFocus?.(inputRef.current)}
 					onPressIn={() => onInputPress?.(inputRef.current)}
-					placeholder="handle"
+					placeholder="username"
 					autoCapitalize="none"
 					className="flex-1 h-14 rounded-full border border-border bg-surface-fg px-5 text-base text-text-strong"
 					placeholderTextColor={colors.textLight}

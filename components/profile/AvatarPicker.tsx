@@ -21,7 +21,9 @@ export function AvatarPicker({
 				{displayedAvatar ? (
 					<Image
 						source={{ uri: displayedAvatar }}
-						className="h-32 w-32 rounded-full bg-state-muted-bg"
+						className="bg-state-muted-bg"
+						style={{ width: 128, height: 128, borderRadius: 9999 }}
+						contentFit="cover"
 					/>
 				) : (
 					<View className="h-32 w-32 rounded-full bg-state-muted-bg items-center justify-center">

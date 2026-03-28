@@ -33,10 +33,10 @@ export function SegmentedControl<T extends string>({
 						key={option.value}
 						disabled={disabled}
 						onPress={() => onChange(option.value)}
-						className={cn(
-							"flex-1 h-full items-center justify-center rounded-full",
-							isActive ? "bg-surface-fg" : "bg-transparent",
-						)}
+						className="flex-1 h-full items-center justify-center rounded-full"
+						style={{
+							backgroundColor: isActive ? colors.surfaceBg : "transparent",
+						}}
 					>
 						<Text
 							className={cn(

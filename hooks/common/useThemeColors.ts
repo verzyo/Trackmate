@@ -5,7 +5,7 @@ export function useThemeColors() {
 	const isDark = colorScheme === "dark";
 
 	return {
-		actionPrimary: isDark ? "#6366f1" : "#4f46e5",
+		actionPrimary: "#4f46e5",
 		actionSecondary: isDark ? "#1e293b" : "#ffffff",
 		textStrong: isDark ? "#f1f5f9" : "#0f172a",
 		textDefault: isDark ? "#94a3b8" : "#475569",

@@ -39,7 +39,7 @@ body {
 }
 
 .dark {
-	--color-action-primary: #6366f1;
+	--color-action-primary: #4f46e5;
 	--color-action-primary-fg: #ffffff;
 	--color-action-secondary: #1e293b;
 	--color-action-secondary-fg: #f1f5f9;
@@ -52,7 +52,7 @@ body {
 	--color-surface-fg: #1e293b;
 
 	--color-state-success: #4ade80;
-	--color-state-danger: #f87171;
+	--color-state-danger: #ef4444;
 	--color-state-muted-bg: rgba(148, 163, 184, 0.15);
 	--color-state-muted-fg: #94a3b8;
 

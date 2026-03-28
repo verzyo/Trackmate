@@ -108,11 +108,49 @@ export const fetchInvites = async (userId: string) => {
 	return GoalInviteWithDetailsSchema.array().parse(data ?? []);
 };
 
-export const acceptInvite = async (inviteId: string) => {
+export const acceptInvite = async (inviteId: string, userId: string) => {
+	const { data: inviteData, error: inviteDataError } = await supabase
+		.from("goal_invites")
+		.select("goal_id, goal:goals(owner_id)")
+		.eq("id", inviteId)
+		.maybeSingle();
+
+	if (inviteDataError) throw inviteDataError;
+
 	const { error } = await supabase.rpc("accept_invite", {
 		p_invite_id: inviteId,
 	});
 	if (error) throw error;
+
+	const goalOwner = Array.isArray(inviteData?.goal)
+		? inviteData.goal[0]
+		: inviteData?.goal;
+	const ownerId = goalOwner?.owner_id;
+	const goalId = inviteData?.goal_id;
+
+	if (!ownerId || !goalId) return;
+
+	const { data: ownerParticipant, error: ownerParticipantError } =
+		await supabase
+			.from("goal_participants")
+			.select("icon, color")
+			.eq("goal_id", goalId)
+			.eq("user_id", ownerId)
+			.maybeSingle();
+
+	if (ownerParticipantError || !ownerParticipant) return;
+
+	const { error: updateParticipantError } = await supabase.rpc(
+		"update_participant",
+		{
+			p_goal_id: goalId,
+			p_user_id: userId,
+			p_icon: ownerParticipant.icon,
+			p_color: ownerParticipant.color,
+		},
+	);
+
+	if (updateParticipantError) return;
 };
 
 export const declineInvite = async (inviteId: string) => {

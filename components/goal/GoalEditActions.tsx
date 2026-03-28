@@ -1,7 +1,6 @@
-import { router } from "expo-router";
 import FilledButton from "@/components/ui/FilledButton";
-import MutedBorderButton from "@/components/ui/MutedBorderButton";
 import { useDeleteGoal, useLeaveGoal } from "@/hooks/goal/useGoalMutations";
+import { router } from "expo-router";
 
 interface GoalEditActionsProps {
 	goalId: string;
@@ -30,13 +29,14 @@ export function GoalEditActions({ goalId, isOwner }: GoalEditActionsProps) {
 	}
 
 	return (
-		<MutedBorderButton
+		<FilledButton
 			onPress={() => {
 				leaveGoalMutation.mutate(goalId, {
 					onSuccess: () => router.push("/app/(drawer)/(tabs)"),
 				});
 			}}
 			disabled={leaveGoalMutation.isPending}
+			variant="danger"
 			label={leaveGoalMutation.isPending ? "Leaving..." : "Leave Goal"}
 		/>
 	);

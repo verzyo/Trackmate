@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Alert, Platform, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -7,11 +7,13 @@ import { FormField } from "@/components/forms/FormField";
 import { Screen } from "@/components/layout/Screen";
 import { AvatarPicker } from "@/components/profile/AvatarPicker";
 import FilledButton from "@/components/ui/FilledButton";
+import ImagePickerBottomSheet, {
+	type ImagePickerBottomSheetRef,
+} from "@/components/ui/ImagePickerBottomSheet";
 import MutedBorderButton from "@/components/ui/MutedBorderButton";
 import PageHeader from "@/components/ui/PageHeader";
 import { useErrorHandler } from "@/hooks/common/useErrorHandler";
 import {
-	pickAvatar,
 	useDeleteMyAccount,
 	useProfile,
 	useUpdateProfile,
@@ -42,6 +44,7 @@ export default function ProfileScreen() {
 		useState<string>("image/jpeg");
 	const [removeAvatarFlag, setRemoveAvatarFlag] = useState(false);
 	const [isLoggingOut, setIsLoggingOut] = useState(false);
+	const imagePickerRef = useRef<ImagePickerBottomSheetRef>(null);
 
 	const {
 		control,
@@ -70,24 +73,19 @@ export default function ProfileScreen() {
 		}
 	}, [profile, user, reset]);
 
-	const handlePickAvatar = async () => {
-		try {
-			const asset = await pickAvatar();
-
-			if (asset) {
-				setPendingAvatarUri(asset.uri);
-				setPendingAvatarMime(asset.mimeType ?? "image/jpeg");
-				setRemoveAvatarFlag(false);
-			}
-		} catch (e: unknown) {
-			const message = (e as Error)?.message || "Failed to pick avatar";
-			handleError(message, "Failed to pick avatar", "Profile Update");
-		}
+	const handlePickAvatar = () => {
+		imagePickerRef.current?.present();
 	};
 
 	const handleRemoveAvatar = () => {
 		setPendingAvatarUri(null);
 		setRemoveAvatarFlag(true);
+	};
+
+	const handleImageSelected = (uri: string, mimeType: string) => {
+		setPendingAvatarUri(uri);
+		setPendingAvatarMime(mimeType);
+		setRemoveAvatarFlag(false);
 	};
 
 	const displayedAvatar =
@@ -300,6 +298,14 @@ export default function ProfileScreen() {
 					</View>
 				</View>
 			</ScrollView>
+
+			<ImagePickerBottomSheet
+				ref={imagePickerRef}
+				title="Select Profile Photo"
+				mode="avatar"
+				onImageSelected={handleImageSelected}
+				enablePanDownToClose={true}
+			/>
 		</Screen>
 	);
 }

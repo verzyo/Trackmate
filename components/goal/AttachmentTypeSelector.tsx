@@ -1,3 +1,9 @@
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
+import {
+	ATTACHMENT_TYPES,
+	type AttachmentType,
+} from "@/constants/attachmentTypes";
+import { cn } from "@/utils/cn";
 import {
 	type Control,
 	Controller,
@@ -7,12 +13,6 @@ import {
 	type UseFormSetValue,
 } from "react-hook-form";
 import { Pressable, Text, View } from "react-native";
-import { SegmentedControl } from "@/components/ui/SegmentedControl";
-import {
-	ATTACHMENT_TYPES,
-	type AttachmentType,
-} from "@/constants/attachmentTypes";
-import { cn } from "@/utils/cn";
 
 type AttachmentTypeSelectorProps<T extends FieldValues> = {
 	control: Control<T>;
@@ -76,7 +76,7 @@ export function AttachmentTypeSelector<T extends FieldValues>({
 									Require Attachment
 								</Text>
 								<Text className="text-text-light text-sm">
-									Must provide proof to log this goal
+									Participants must upload a proof
 								</Text>
 							</View>
 							<View

@@ -22,6 +22,7 @@ type GoalAppearancePickerProps = {
 	selectedColor: string;
 	onIconChange: (icon: string) => void;
 	onColorChange: (color: string) => void;
+	stackColorsUnderIcon?: boolean;
 };
 
 export function GoalAppearancePicker({
@@ -29,12 +30,19 @@ export function GoalAppearancePicker({
 	selectedColor,
 	onIconChange,
 	onColorChange,
+	stackColorsUnderIcon = false,
 }: GoalAppearancePickerProps) {
 	const iconPickerRef = useRef<BottomSheetModal>(null);
 
 	return (
 		<>
-			<View className="flex-row items-center justify-between">
+			<View
+				className={
+					stackColorsUnderIcon
+						? "w-full items-center gap-4"
+						: "flex-row items-center justify-between"
+				}
+			>
 				<Pressable
 					onPress={() => iconPickerRef.current?.present()}
 					className="relative h-32 w-32 items-center justify-center rounded-[32px] border-2 border-dashed"
@@ -54,7 +62,13 @@ export function GoalAppearancePicker({
 					</View>
 				</Pressable>
 
-				<View className="flex-1 ml-4 flex-row flex-wrap justify-end gap-3 max-w-[230px]">
+				<View
+					className={
+						stackColorsUnderIcon
+							? "w-[228px] self-center flex-row flex-wrap justify-center gap-3"
+							: "ml-4 max-w-[230px] flex-1 flex-row flex-wrap justify-end gap-3"
+					}
+				>
 					{GOAL_APPEARANCE_COLORS.map((color) => {
 						const isSelected = selectedColor === color;
 						return (
