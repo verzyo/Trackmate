@@ -12,11 +12,7 @@ type PageHeaderProps = {
 	rightElement?: ReactNode;
 };
 
-export default function PageHeader({
-	title,
-	onBack,
-	rightElement,
-}: PageHeaderProps) {
+export function PageHeader({ title, onBack, rightElement }: PageHeaderProps) {
 	const router = useRouter();
 	const colors = useThemeColors();
 
@@ -40,3 +36,5 @@ export default function PageHeader({
 		</View>
 	);
 }
+
+export default PageHeader;

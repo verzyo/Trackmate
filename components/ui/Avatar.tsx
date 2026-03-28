@@ -8,7 +8,7 @@ interface AvatarProps {
 	size?: number;
 }
 
-export default function Avatar({
+export function Avatar({
 	name,
 	imageUrl,
 	completed = false,
@@ -70,3 +70,5 @@ export default function Avatar({
 		</View>
 	);
 }
+
+export default Avatar;

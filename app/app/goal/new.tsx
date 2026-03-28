@@ -1,46 +1,39 @@
-import { zodResolver } from "@hookform/resolvers/zod";
 import { router } from "expo-router";
 import { useColorScheme } from "nativewind";
 import { useRef, useState } from "react";
-import { useForm } from "react-hook-form";
-import type { ScrollView, TextInput } from "react-native";
+import type { ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { AttachmentTypeSelector } from "@/components/forms/AttachmentTypeSelector";
 import { DatePicker } from "@/components/forms/DatePicker";
 import { FormSection } from "@/components/forms/FormSection";
 import { GoalBasicInfoFields } from "@/components/forms/GoalBasicInfoFields";
 import { GoalFormShell } from "@/components/forms/GoalFormShell";
-import { GoalFrequencyEditor } from "@/components/forms/GoalFrequencyEditor";
 import { InviteManager } from "@/components/forms/InviteManager";
-import {
-	GOAL_APPEARANCE_COLORS,
-	GoalAppearancePicker,
-} from "@/components/goal/GoalAppearancePicker";
+import { AttachmentTypeSelector } from "@/components/goal/AttachmentTypeSelector";
+import { GoalAppearancePicker } from "@/components/goal/GoalAppearancePicker";
+import { GoalFrequencyEditor } from "@/components/goal/GoalFrequencyEditor";
 import FilledButton from "@/components/ui/FilledButton";
-import {
-	ATTACHMENT_TYPES,
-	type AttachmentType,
-} from "@/constants/attachmentTypes";
 import { FREQUENCY_TYPES } from "@/constants/frequencyTypes";
+import { useErrorHandler } from "@/hooks/common/useErrorHandler";
 import { useKeyboard } from "@/hooks/common/useKeyboard";
 import { useThemeColors } from "@/hooks/common/useThemeColors";
 import { useToday } from "@/hooks/common/useToday";
+import { useGoalForm } from "@/hooks/goal/useGoalForm";
 import {
 	useCreateGoal,
 	useCreateInvite,
 	useUpdateParticipant,
 } from "@/hooks/goal/useGoalMutations";
 import { useInviteManagement } from "@/hooks/goal/useInviteManagement";
-import { type GoalForm, GoalFormSchema } from "@/schemas/goal.schema";
+import type { GoalForm } from "@/schemas/goal.schema";
 import { useAuthStore } from "@/store/auth.store";
 import { formatToISODate } from "@/utils/date.utils";
-import { showAlert } from "@/utils/error.utils";
 
 export default function NewGoalScreen() {
 	const { user } = useAuthStore();
 	const userId = user?.id;
 	const colors = useThemeColors();
+	const { handleError } = useErrorHandler();
 	const _insets = useSafeAreaInsets();
 	const scrollViewRef = useRef<ScrollView>(null);
 	const { keyboardHeight } = useKeyboard();
@@ -57,50 +50,22 @@ export default function NewGoalScreen() {
 	const {
 		control,
 		handleSubmit,
-		watch,
 		setValue,
 		formState: { errors },
-	} = useForm<GoalForm>({
-		resolver: zodResolver(GoalFormSchema),
-		defaultValues: {
-			title: "",
-			description: "",
-			frequency_type: FREQUENCY_TYPES.INTERVAL,
-			interval_days: "1",
-			weekly_days: [1],
-			attachment_type: ATTACHMENT_TYPES.NONE,
-			require_attachment: false,
-			color:
-				GOAL_APPEARANCE_COLORS[
-					Math.floor(Math.random() * GOAL_APPEARANCE_COLORS.length)
-				],
-			icon: "Target",
-		},
-	});
-
-	const freqType = watch("frequency_type");
-
-	const selectedColor = watch("color") || GOAL_APPEARANCE_COLORS[0];
-	const selectedIcon = watch("icon") || "Target";
-	const watchedAttachmentType = watch("attachment_type") as AttachmentType;
-	const intervalInputValue = watch("interval_days") ?? "1";
-
-	const intervalValue = parseInt(intervalInputValue || "1", 10);
-	const scheduledDays = watch("weekly_days") || [];
-
-	const toggleDay = (val: number) => {
-		const current = watch("weekly_days") || [];
-		const next = current.includes(val)
-			? current.filter((d) => d !== val)
-			: [...current, val];
-		setValue("weekly_days", next, { shouldValidate: true });
-	};
-
-	const handleInviteInputFocus = (_input: TextInput | null) => {
-		requestAnimationFrame(() => {
-			scrollViewRef.current?.scrollToEnd({ animated: true });
-		});
-	};
+		freqType,
+		intervalInputValue,
+		intervalValue,
+		scheduledDays,
+		watchedAttachmentType,
+		selectedColor,
+		selectedIcon,
+		toggleDay,
+		handleInviteInputFocus,
+		onIntervalChange,
+		onIntervalBlur,
+		onIncrementInterval,
+		onDecrementInterval,
+	} = useGoalForm({ scrollViewRef });
 
 	const onSubmit = async (data: GoalForm) => {
 		if (!userId) return;
@@ -155,9 +120,7 @@ export default function NewGoalScreen() {
 				);
 			}
 		} catch (error) {
-			showAlert(
-				error instanceof Error ? error.message : "Failed to create goal",
-			);
+			handleError(error, "Failed to create goal");
 		}
 	};
 
@@ -193,24 +156,10 @@ export default function NewGoalScreen() {
 					}
 					intervalValue={intervalValue}
 					intervalInputValue={intervalInputValue}
-					onIntervalChange={(text) => {
-						const sanitized = text.replace(/\D/g, "");
-						setValue(
-							"interval_days",
-							sanitized === "" ? "" : String(Math.max(1, Number(sanitized))),
-						);
-					}}
-					onIntervalBlur={() => {
-						if (!intervalInputValue || intervalValue < 1) {
-							setValue("interval_days", "1");
-						}
-					}}
-					onIncrementInterval={() =>
-						setValue("interval_days", (intervalValue + 1).toString())
-					}
-					onDecrementInterval={() =>
-						setValue("interval_days", Math.max(1, intervalValue - 1).toString())
-					}
+					onIntervalChange={onIntervalChange}
+					onIntervalBlur={onIntervalBlur}
+					onIncrementInterval={onIncrementInterval}
+					onDecrementInterval={onDecrementInterval}
 					scheduledDays={scheduledDays}
 					onToggleDay={toggleDay}
 					weeklyDaysError={errors.weekly_days?.message}

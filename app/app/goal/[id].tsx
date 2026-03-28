@@ -274,20 +274,24 @@ export default function GoalDetailsModal() {
 					goal={goal}
 					onComplete={async (attachmentData) => {
 						if (!userId) return;
-						if (goal.require_attachment) {
-							await completeMutation.mutateAsync({
-								goalId: goal.id,
-								userId,
-								attachmentData,
-							});
-						} else if (attachmentData) {
-							await updateAttachmentMutation.mutateAsync({
-								goalId: goal.id,
-								userId,
-								attachmentData,
-							});
+						try {
+							if (goal.require_attachment) {
+								await completeMutation.mutateAsync({
+									goalId: goal.id,
+									userId,
+									attachmentData,
+								});
+							} else if (attachmentData) {
+								await updateAttachmentMutation.mutateAsync({
+									goalId: goal.id,
+									userId,
+									attachmentData,
+								});
+							}
+							refetchToday();
+						} catch (e) {
+							showAlert(getErrorMessage(e, "Failed to update completion"));
 						}
-						refetchToday();
 					}}
 				/>
 			)}

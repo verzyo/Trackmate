@@ -3,15 +3,17 @@ import { useNavigation } from "@react-navigation/native";
 import { useQueryClient } from "@tanstack/react-query";
 import { type Href, router, useFocusEffect } from "expo-router";
 import { useCallback, useMemo, useRef, useState } from "react";
-import { RefreshControl, ScrollView, Text, View } from "react-native";
+import { RefreshControl, ScrollView, View } from "react-native";
 import AttachmentBottomSheet, {
 	type AttachmentBottomSheetRef,
 } from "@/components/AttachmentBottomSheet";
 import GreetingHeader from "@/components/GreetingHeader";
-import { GoalItem } from "@/components/goal/GoalItem";
+import { TodaySection } from "@/components/goal/TodaySection";
+import { UpcomingSection } from "@/components/goal/UpcomingSection";
 import { Screen } from "@/components/layout/Screen";
 import FloatingActionButton from "@/components/ui/FloatingActionButton";
 import { ATTACHMENT_TYPES } from "@/constants/attachmentTypes";
+import { useErrorHandler } from "@/hooks/common/useErrorHandler";
 import {
 	goalKeys,
 	useGoals,
@@ -25,8 +27,6 @@ import { usePrefetchGoals } from "@/hooks/goal/usePrefetchGoals";
 import { useProfile, useProfilesByIds } from "@/hooks/profile/useProfileHooks";
 import type { GoalWithParticipant } from "@/schemas/goal.schema";
 import { useAuthStore } from "@/store/auth.store";
-import { getErrorMessage, showAlert } from "@/utils/error.utils";
-import { getIconComponent } from "@/utils/icons";
 
 const getGreeting = () => {
 	const h = new Date().getHours();
@@ -69,6 +69,7 @@ export default function HomeScreen() {
 		useNavigation<DrawerNavigationProp<Record<string, undefined>>>();
 	const { user } = useAuthStore();
 	const userId = user?.id;
+	const { handleError } = useErrorHandler();
 
 	const [selectedGoal, setSelectedGoal] = useState<GoalWithParticipant | null>(
 		null,
@@ -211,7 +212,7 @@ export default function HomeScreen() {
 		try {
 			await toggleCompletion(goal.id, isCompleted);
 		} catch (error) {
-			showAlert(getErrorMessage(error, "Failed to update completion"));
+			handleError(error, "Failed to update completion");
 		}
 	};
 
@@ -235,75 +236,22 @@ export default function HomeScreen() {
 							onAvatarPress={() => navigation.openDrawer()}
 						/>
 
-						<View className="flex-col items-start justify-start gap-4">
-							<Text className="font-semibold text-lg leading-7 text-text-strong">
-								Today
-							</Text>
-							<View className="w-full flex-col items-start justify-start gap-3.5">
-								{error && (
-									<Text className="text-base text-state-danger">
-										Failed to load goals
-									</Text>
-								)}
-								{showNoGoalsDueToday ? (
-									<Text className="text-base text-text-light">
-										No goals due today
-									</Text>
-								) : (
-									groupedGoals.today.map((goal) => {
-										const participant = goal.goal_participants?.find(
-											(p) => p.user_id === userId,
-										);
-										return (
-											<GoalItem
-												key={goal.id}
-												goal={goal}
-												variant="today"
-												userId={userId}
-												isCompleted={goal.isCompleted}
-												icon={getIconComponent(participant?.icon || "Target")}
-												color={participant?.color || "#4f46e5"}
-												onToggle={() => handleToggle(goal, goal.isCompleted)}
-												onPress={() =>
-													router.push(`/app/goal/${goal.id}` as Href)
-												}
-												participantAvatars={participantAvatars[goal.id] || []}
-											/>
-										);
-									})
-								)}
-							</View>
-						</View>
+						<TodaySection
+							goals={groupedGoals.today}
+							userId={userId}
+							error={error}
+							showNoGoalsDueToday={showNoGoalsDueToday}
+							participantAvatars={participantAvatars}
+							onToggle={handleToggle}
+							onPress={(id) => router.push(`/app/goal/${id}` as Href)}
+						/>
 
-						{groupedGoals.upcoming.length > 0 && (
-							<View className="mt-2 flex-col items-start justify-start gap-4">
-								<Text className="font-semibold text-lg leading-7 text-text-strong">
-									Upcoming
-								</Text>
-								<View className="w-full flex-col items-start justify-start gap-3.5">
-									{groupedGoals.upcoming.map((goal) => {
-										const participant = goal.goal_participants?.find(
-											(p) => p.user_id === userId,
-										);
-										return (
-											<GoalItem
-												key={goal.id}
-												goal={goal}
-												variant="upcoming"
-												userId={userId}
-												subtitle={`in ${goal.daysUntil} ${goal.daysUntil === 1 ? "day" : "days"}`}
-												icon={getIconComponent(participant?.icon || "Target")}
-												color={participant?.color || "#4f46e5"}
-												onPress={() =>
-													router.push(`/app/goal/${goal.id}` as Href)
-												}
-												participantAvatars={participantAvatars[goal.id] || []}
-											/>
-										);
-									})}
-								</View>
-							</View>
-						)}
+						<UpcomingSection
+							goals={groupedGoals.upcoming}
+							userId={userId}
+							participantAvatars={participantAvatars}
+							onPress={(id) => router.push(`/app/goal/${id}` as Href)}
+						/>
 					</View>
 				</ScrollView>
 			</Screen>

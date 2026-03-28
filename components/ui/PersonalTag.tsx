@@ -4,7 +4,7 @@ interface PersonalTagProps {
 	muted?: boolean;
 }
 
-export default function PersonalTag({ muted }: PersonalTagProps) {
+export function PersonalTag({ muted }: PersonalTagProps) {
 	return (
 		<View className="items-center justify-center rounded-full bg-label-bg px-3 py-0.5">
 			<Text
@@ -17,3 +17,5 @@ export default function PersonalTag({ muted }: PersonalTagProps) {
 		</View>
 	);
 }
+
+export default PersonalTag;

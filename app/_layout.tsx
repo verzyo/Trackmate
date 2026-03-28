@@ -6,9 +6,9 @@ import React, { useEffect } from "react";
 import { Platform, Pressable, Text, useColorScheme, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import Toast from "react-native-toast-message";
-import { toastConfig } from "@/components/ui/ToastConfig";
 import { queryClient } from "@/lib/queryClient";
 import { useAuthStore } from "@/store/auth.store";
+import { toastConfig } from "@/utils/toast";
 
 import "@/global.css";
 

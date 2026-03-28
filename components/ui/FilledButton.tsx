@@ -11,7 +11,7 @@ type FilledButtonProps = Omit<PressableProps, "children"> & {
 	labelClassName?: string;
 };
 
-export default function FilledButton({
+export function FilledButton({
 	label,
 	variant = "primary",
 	withShadow = true,
@@ -41,3 +41,5 @@ export default function FilledButton({
 		</Pressable>
 	);
 }
+
+export default FilledButton;

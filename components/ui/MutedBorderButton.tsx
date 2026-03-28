@@ -7,7 +7,7 @@ type MutedBorderButtonProps = PressableProps & {
 	labelClassName?: string;
 };
 
-export default function MutedBorderButton({
+export function MutedBorderButton({
 	label,
 	className,
 	labelClassName,
@@ -32,3 +32,5 @@ export default function MutedBorderButton({
 		</Pressable>
 	);
 }
+
+export default MutedBorderButton;

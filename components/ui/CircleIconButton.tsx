@@ -8,7 +8,7 @@ type CircleIconButtonProps = Omit<PressableProps, "children"> & {
 	className?: string;
 };
 
-export default function CircleIconButton({
+export function CircleIconButton({
 	children,
 	className,
 	disabled,
@@ -29,3 +29,5 @@ export default function CircleIconButton({
 		</Pressable>
 	);
 }
+
+export default CircleIconButton;

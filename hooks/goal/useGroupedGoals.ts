@@ -7,6 +7,17 @@ import {
 	isTodayUTC,
 } from "@/utils/date.utils";
 
+/**
+ * Hook to group goals into "today" and "upcoming" categories.
+ *
+ * @param goals - The list of goals with participant details.
+ * @param userId - The current user's ID.
+ * @param todaysCompletions - List of goal IDs completed by the user today.
+ * @returns An object containing two arrays: `today` and `upcoming`.
+ *
+ * Goals in `today` are those that have a due date today according to the user's timezone.
+ * Goals in `upcoming` are those due in the future.
+ */
 export function useGroupedGoals(
 	goals: GoalWithParticipant[] | undefined,
 	userId: string | undefined,

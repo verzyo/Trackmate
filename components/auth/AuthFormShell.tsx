@@ -10,7 +10,7 @@ type AuthFormShellProps = {
 	contentClassName?: string;
 };
 
-export default function AuthFormShell({
+export function AuthFormShell({
 	scrollViewRef,
 	insetsBottom,
 	keyboardHeight,
@@ -29,3 +29,5 @@ export default function AuthFormShell({
 		</FormShell>
 	);
 }
+
+export default AuthFormShell;

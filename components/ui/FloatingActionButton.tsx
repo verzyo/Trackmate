@@ -5,9 +5,7 @@ type FloatingActionButtonProps = {
 	onPress: () => void;
 };
 
-export default function FloatingActionButton({
-	onPress,
-}: FloatingActionButtonProps) {
+export function FloatingActionButton({ onPress }: FloatingActionButtonProps) {
 	return (
 		<Pressable
 			onPress={onPress}
@@ -18,3 +16,5 @@ export default function FloatingActionButton({
 		</Pressable>
 	);
 }
+
+export default FloatingActionButton;

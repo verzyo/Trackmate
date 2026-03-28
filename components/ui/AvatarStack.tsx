@@ -13,7 +13,7 @@ interface AvatarStackProps {
 	overlap?: number;
 }
 
-export default function AvatarStack({
+export function AvatarStack({
 	avatars,
 	size = 32,
 	overlap = 6,
@@ -96,3 +96,5 @@ export default function AvatarStack({
 		</View>
 	);
 }
+
+export default AvatarStack;

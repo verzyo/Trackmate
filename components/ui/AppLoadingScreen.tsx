@@ -5,7 +5,7 @@ type AppLoadingScreenProps = {
 	message?: string;
 };
 
-export default function AppLoadingScreen({
+export function AppLoadingScreen({
 	message = "Loading, please wait...",
 }: AppLoadingScreenProps) {
 	const colors = useThemeColors();
@@ -27,3 +27,5 @@ export default function AppLoadingScreen({
 		</View>
 	);
 }
+
+export default AppLoadingScreen;

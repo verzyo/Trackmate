@@ -10,7 +10,7 @@ type GreetingHeaderProps = {
 	onAvatarPress?: () => void;
 };
 
-export default function GreetingHeader({
+export function GreetingHeader({
 	greeting,
 	dayString,
 	profileName,
@@ -47,3 +47,5 @@ export default function GreetingHeader({
 		</View>
 	);
 }
+
+export default GreetingHeader;

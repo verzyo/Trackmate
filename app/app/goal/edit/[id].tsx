@@ -1,29 +1,25 @@
-import { zodResolver } from "@hookform/resolvers/zod";
 import { router, useLocalSearchParams } from "expo-router";
 import { useColorScheme } from "nativewind";
 import { useEffect, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
-import type { ScrollView, TextInput } from "react-native";
+import type { ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { AttachmentTypeSelector } from "@/components/forms/AttachmentTypeSelector";
 import { DatePicker } from "@/components/forms/DatePicker";
 import { FormSection } from "@/components/forms/FormSection";
 import { GoalBasicInfoFields } from "@/components/forms/GoalBasicInfoFields";
 import { GoalFormShell } from "@/components/forms/GoalFormShell";
-import { GoalFrequencyEditor } from "@/components/forms/GoalFrequencyEditor";
 import { InviteManager } from "@/components/forms/InviteManager";
+import { AttachmentTypeSelector } from "@/components/goal/AttachmentTypeSelector";
 import { GoalAppearancePicker } from "@/components/goal/GoalAppearancePicker";
+import { GoalEditActions } from "@/components/goal/GoalEditActions";
+import { GoalFrequencyEditor } from "@/components/goal/GoalFrequencyEditor";
 import AppLoadingScreen from "@/components/ui/AppLoadingScreen";
 import FilledButton from "@/components/ui/FilledButton";
-import MutedBorderButton from "@/components/ui/MutedBorderButton";
-import {
-	ATTACHMENT_TYPES,
-	type AttachmentType,
-} from "@/constants/attachmentTypes";
 import { FREQUENCY_TYPES } from "@/constants/frequencyTypes";
+import { useErrorHandler } from "@/hooks/common/useErrorHandler";
 import { useKeyboard } from "@/hooks/common/useKeyboard";
 import { useThemeColors } from "@/hooks/common/useThemeColors";
 import { useToday } from "@/hooks/common/useToday";
+import { useGoalForm } from "@/hooks/goal/useGoalForm";
 import {
 	useCreateInvite,
 	useDeleteGoal,
@@ -33,18 +29,14 @@ import {
 } from "@/hooks/goal/useGoalMutations";
 import { useGoal, useGoalCompletions } from "@/hooks/goal/useGoalQueries";
 import { useInviteManagement } from "@/hooks/goal/useInviteManagement";
-import {
-	type GoalForm,
-	GoalFormSchema,
-	type UpdateGoalMetadataParams,
-} from "@/schemas/goal.schema";
+import type { GoalForm, UpdateGoalMetadataParams } from "@/schemas/goal.schema";
 import { useAuthStore } from "@/store/auth.store";
 import { formatToISODate } from "@/utils/date.utils";
-import { showAlert } from "@/utils/error.utils";
 
 export default function EditGoalScreen() {
 	const { id } = useLocalSearchParams<{ id: string }>();
 	const colors = useThemeColors();
+	const { handleError } = useErrorHandler();
 	const { colorScheme } = useColorScheme();
 	const isDark = colorScheme === "dark";
 	const insets = useSafeAreaInsets();
@@ -78,43 +70,33 @@ export default function EditGoalScreen() {
 		handleSubmit,
 		reset,
 		setValue,
-		watch,
 		formState: { errors },
-	} = useForm<GoalForm>({
-		resolver: zodResolver(GoalFormSchema),
-		defaultValues: {
-			title: "",
-			description: "",
-			frequency_type: FREQUENCY_TYPES.INTERVAL,
-			interval_days: "1",
-			weekly_days: [1],
-			attachment_type: ATTACHMENT_TYPES.NONE,
-			require_attachment: false,
-			color: "#3b82f6",
-			icon: "Flag",
-		},
-	});
+		freqType,
+		intervalInputValue,
+		intervalValue,
+		scheduledDays,
+		watchedAttachmentType,
+		toggleDay,
+		handleInviteInputFocus,
+		onIntervalBlur,
+		onIncrementInterval,
+		onDecrementInterval,
+	} = useGoalForm({ scrollViewRef });
 
-	const freqType = watch("frequency_type");
-	const watchedAttachmentType = watch("attachment_type") as AttachmentType;
-	const intervalInputValue = watch("interval_days") ?? "1";
-	const intervalValue = parseInt(intervalInputValue || "1", 10);
-	const scheduledDays = watch("weekly_days") || [];
 	const frequencyEditDisabled = !isOwner || hasCompletions;
 
-	const toggleDay = (val: number) => {
+	const handleIntervalChange = (text: string) => {
 		if (frequencyEditDisabled) return;
-		const current = watch("weekly_days") || [];
-		const next = current.includes(val)
-			? current.filter((d) => d !== val)
-			: [...current, val];
-		setValue("weekly_days", next, { shouldValidate: true });
+		const sanitized = text.replace(/\D/g, "");
+		setValue(
+			"interval_days",
+			sanitized === "" ? "" : String(Math.max(1, Number(sanitized))),
+		);
 	};
 
-	const handleInviteInputFocus = (_input: TextInput | null) => {
-		requestAnimationFrame(() => {
-			scrollViewRef.current?.scrollToEnd({ animated: true });
-		});
+	const handleToggleDay = (val: number) => {
+		if (frequencyEditDisabled) return;
+		toggleDay(val);
 	};
 
 	useEffect(() => {
@@ -269,9 +251,7 @@ export default function EditGoalScreen() {
 			await Promise.all(promises);
 			router.back();
 		} catch (error) {
-			const errorMessage =
-				error instanceof Error ? error.message : "Failed to update goal";
-			showAlert(errorMessage);
+			handleError(error, "Failed to update goal");
 		}
 	};
 
@@ -316,27 +296,12 @@ export default function EditGoalScreen() {
 					}
 					intervalValue={intervalValue}
 					intervalInputValue={intervalInputValue}
-					onIntervalChange={(text) => {
-						if (frequencyEditDisabled) return;
-						const sanitized = text.replace(/\D/g, "");
-						setValue(
-							"interval_days",
-							sanitized === "" ? "" : String(Math.max(1, Number(sanitized))),
-						);
-					}}
-					onIntervalBlur={() => {
-						if (!intervalInputValue || intervalValue < 1) {
-							setValue("interval_days", "1");
-						}
-					}}
-					onIncrementInterval={() =>
-						setValue("interval_days", (intervalValue + 1).toString())
-					}
-					onDecrementInterval={() =>
-						setValue("interval_days", Math.max(1, intervalValue - 1).toString())
-					}
+					onIntervalChange={handleIntervalChange}
+					onIntervalBlur={onIntervalBlur}
+					onIncrementInterval={onIncrementInterval}
+					onDecrementInterval={onDecrementInterval}
 					scheduledDays={scheduledDays}
-					onToggleDay={toggleDay}
+					onToggleDay={handleToggleDay}
 					weeklyDaysError={errors.weekly_days?.message}
 					disabled={frequencyEditDisabled}
 					textStrongColor={colors.textStrong}
@@ -383,30 +348,7 @@ export default function EditGoalScreen() {
 				label={isLoading ? "Saving..." : "Save Goal"}
 			/>
 
-			{isOwner ? (
-				<FilledButton
-					onPress={() => {
-						deleteGoalMutation.mutate(id as string, {
-							onSuccess: () => router.push("/app/(drawer)/(tabs)"),
-						});
-					}}
-					disabled={deleteGoalMutation.isPending}
-					variant="danger"
-					label={
-						deleteGoalMutation.isPending ? "Deleting goal..." : "Delete Goal"
-					}
-				/>
-			) : (
-				<MutedBorderButton
-					onPress={() => {
-						leaveGoalMutation.mutate(id as string, {
-							onSuccess: () => router.push("/app/(drawer)/(tabs)"),
-						});
-					}}
-					disabled={leaveGoalMutation.isPending}
-					label={leaveGoalMutation.isPending ? "Leaving..." : "Leave Goal"}
-				/>
-			)}
+			<GoalEditActions goalId={id as string} isOwner={isOwner} />
 		</GoalFormShell>
 	);
 }

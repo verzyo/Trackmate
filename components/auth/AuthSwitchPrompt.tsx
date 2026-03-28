@@ -6,7 +6,7 @@ type AuthSwitchPromptProps = {
 	onPress: () => void;
 };
 
-export default function AuthSwitchPrompt({
+export function AuthSwitchPrompt({
 	promptText,
 	actionText,
 	onPress,
@@ -24,3 +24,5 @@ export default function AuthSwitchPrompt({
 		</View>
 	);
 }
+
+export default AuthSwitchPrompt;
