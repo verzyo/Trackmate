@@ -240,6 +240,7 @@ export default function HomeScreen() {
 							goals={groupedGoals.today}
 							userId={userId}
 							error={error}
+							isLoading={isGoalsLoading || isCompletionsLoading}
 							showNoGoalsDueToday={showNoGoalsDueToday}
 							participantAvatars={participantAvatars}
 							onToggle={handleToggle}

@@ -1,12 +1,12 @@
 import * as PhosphorIcons from "phosphor-react-native";
 import { Pressable, Text, TextInput, View } from "react-native";
+import { FrequencyTypeSelector } from "@/components/forms/FrequencyTypeSelector";
+import { WeekDaySelector } from "@/components/forms/WeekDaySelector";
 import {
 	FREQUENCY_TYPES,
 	type FrequencyType,
 } from "@/constants/frequencyTypes";
 import { cn } from "@/utils/cn";
-import { FrequencyTypeSelector } from "./FrequencyTypeSelector";
-import { WeekDaySelector } from "./WeekDaySelector";
 
 type GoalFrequencyEditorProps = {
 	frequencyType: FrequencyType;

@@ -1,5 +1,6 @@
 import { Text, View } from "react-native";
 import { GoalItem } from "@/components/goal/GoalItem";
+import { GoalLoading } from "@/components/goal/GoalLoading";
 import type { GoalWithParticipant } from "@/schemas/goal.schema";
 import { getIconComponent } from "@/utils/icons";
 
@@ -7,6 +8,7 @@ type TodaySectionProps = {
 	goals: (GoalWithParticipant & { isCompleted: boolean })[];
 	userId: string | undefined;
 	error: Error | null;
+	isLoading: boolean;
 	showNoGoalsDueToday: boolean;
 	participantAvatars: Record<
 		string,
@@ -25,6 +27,7 @@ export function TodaySection({
 	goals,
 	userId,
 	error,
+	isLoading,
 	showNoGoalsDueToday,
 	participantAvatars,
 	onToggle,
@@ -36,12 +39,13 @@ export function TodaySection({
 				Today
 			</Text>
 			<View className="w-full flex-col items-start justify-start gap-3.5">
-				{error && (
+				{isLoading ? (
+					<GoalLoading />
+				) : error ? (
 					<Text className="text-base text-state-danger">
 						Failed to load goals
 					</Text>
-				)}
-				{showNoGoalsDueToday ? (
+				) : showNoGoalsDueToday ? (
 					<Text className="text-base text-text-light">No goals due today</Text>
 				) : (
 					goals.map((goal) => {
