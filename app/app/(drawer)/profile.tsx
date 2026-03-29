@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import * as ImagePicker from "expo-image-picker";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Alert, Platform, ScrollView, View } from "react-native";
@@ -73,8 +74,22 @@ export default function ProfileScreen() {
 		}
 	}, [profile, user, reset]);
 
-	const handlePickAvatar = () => {
-		imagePickerRef.current?.present();
+	const handlePickAvatar = async () => {
+		if (Platform.OS === "web") {
+			// On web, immediately open image picker
+			const result = await ImagePicker.launchImageLibraryAsync({
+				mediaTypes: ["images"],
+				allowsEditing: true,
+				aspect: [1, 1],
+				quality: 0.8,
+			});
+			if (!result.canceled) {
+				const asset = result.assets[0];
+				handleImageSelected(asset.uri, asset.mimeType ?? "image/jpeg");
+			}
+		} else {
+			imagePickerRef.current?.present();
+		}
 	};
 
 	const handleRemoveAvatar = () => {

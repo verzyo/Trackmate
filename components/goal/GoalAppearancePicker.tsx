@@ -1,7 +1,7 @@
 import type { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { PencilSimple } from "phosphor-react-native";
-import { useRef } from "react";
-import { Pressable, View } from "react-native";
+import { useRef, useState } from "react";
+import { Platform, Pressable, View } from "react-native";
 import { IconPickerBottomSheet } from "@/components/goal/IconPickerBottomSheet";
 import { hexToRgba } from "@/utils/color.utils";
 import { DynamicIcon } from "@/utils/icons";
@@ -33,6 +33,19 @@ export function GoalAppearancePicker({
 	stackColorsUnderIcon = false,
 }: GoalAppearancePickerProps) {
 	const iconPickerRef = useRef<BottomSheetModal>(null);
+	const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
+
+	const openIconPicker = () => {
+		if (Platform.OS === "web") {
+			setIsIconPickerOpen(true);
+		} else {
+			iconPickerRef.current?.present();
+		}
+	};
+
+	const closeIconPicker = () => {
+		setIsIconPickerOpen(false);
+	};
 
 	return (
 		<>
@@ -44,7 +57,7 @@ export function GoalAppearancePicker({
 				}
 			>
 				<Pressable
-					onPress={() => iconPickerRef.current?.present()}
+					onPress={openIconPicker}
 					className="relative h-32 w-32 items-center justify-center rounded-[32px] border-2 border-dashed"
 					style={{
 						backgroundColor: hexToRgba(selectedColor, 0.15),
@@ -95,6 +108,8 @@ export function GoalAppearancePicker({
 
 			<IconPickerBottomSheet
 				modalRef={iconPickerRef}
+				isOpen={isIconPickerOpen}
+				onClose={closeIconPicker}
 				selectedIcon={selectedIcon}
 				selectedColor={selectedColor}
 				onSelect={onIconChange}

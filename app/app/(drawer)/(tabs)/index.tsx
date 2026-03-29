@@ -1,9 +1,10 @@
 import type { DrawerNavigationProp } from "@react-navigation/drawer";
 import { useNavigation } from "@react-navigation/native";
 import { useQueryClient } from "@tanstack/react-query";
+import * as ImagePicker from "expo-image-picker";
 import { type Href, router, useFocusEffect } from "expo-router";
 import { useCallback, useMemo, useRef, useState } from "react";
-import { RefreshControl, ScrollView, View } from "react-native";
+import { Platform, RefreshControl, ScrollView, View } from "react-native";
 import AttachmentBottomSheet, {
 	type AttachmentBottomSheetRef,
 } from "@/components/AttachmentBottomSheet";
@@ -26,7 +27,9 @@ import { useGroupedGoals } from "@/hooks/goal/useGroupedGoals";
 import { usePrefetchGoals } from "@/hooks/goal/usePrefetchGoals";
 import { useProfile, useProfilesByIds } from "@/hooks/profile/useProfileHooks";
 import type { GoalWithParticipant } from "@/schemas/goal.schema";
+import { uploadAttachment } from "@/services/attachment.service";
 import { useAuthStore } from "@/store/auth.store";
+import { showAlert } from "@/utils/error.utils";
 
 const getGreeting = () => {
 	const h = new Date().getHours();
@@ -204,6 +207,29 @@ export default function HomeScreen() {
 			goal.attachment_type !== ATTACHMENT_TYPES.NONE &&
 			goal.require_attachment
 		) {
+			// On web with photo attachment, immediately open image picker
+			if (
+				Platform.OS === "web" &&
+				goal.attachment_type === ATTACHMENT_TYPES.PHOTO
+			) {
+				const result = await ImagePicker.launchImageLibraryAsync({
+					mediaTypes: ["images"],
+					quality: 0.8,
+				});
+				if (!result.canceled) {
+					try {
+						const uri = result.assets[0].uri;
+						const path = await uploadAttachment(userId, uri, "image/jpeg");
+						await toggleCompletion(goal.id, false, { type: "photo", path });
+					} catch (error) {
+						const message =
+							error instanceof Error ? error.message : String(error);
+						showAlert(message);
+					}
+				}
+				return;
+			}
+			// For other attachment types or native, show bottom sheet
 			setSelectedGoal(goal);
 			attachmentSheetRef.current?.present();
 			return;

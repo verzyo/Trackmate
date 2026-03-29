@@ -1,29 +1,29 @@
 {
-  "project_info": {
-    "project_number": "572283718728",
-    "project_id": "trackmate-4596b",
-    "storage_bucket": "trackmate-4596b.firebasestorage.app"
-  },
-  "client": [
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:572283718728:android:28b2708486919a0b411c7d",
-        "android_client_info": {
-          "package_name": "com.verzyo.Trackmate"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyA90o3raVYAIF2s27_4OH8j0QRtNK5PSxA"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    }
-  ],
-  "configuration_version": "1"
+	"project_info": {
+		"project_number": "572283718728",
+		"project_id": "trackmate-4596b",
+		"storage_bucket": "trackmate-4596b.firebasestorage.app"
+	},
+	"client": [
+		{
+			"client_info": {
+				"mobilesdk_app_id": "1:572283718728:android:28b2708486919a0b411c7d",
+				"android_client_info": {
+					"package_name": "com.verzyo.Trackmate"
+				}
+			},
+			"oauth_client": [],
+			"api_key": [
+				{
+					"current_key": "AIzaSyA90o3raVYAIF2s27_4OH8j0QRtNK5PSxA"
+				}
+			],
+			"services": {
+				"appinvite_service": {
+					"other_platform_oauth_client": []
+				}
+			}
+		}
+	],
+	"configuration_version": "1"
 }

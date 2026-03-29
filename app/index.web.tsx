@@ -1,6 +1,6 @@
-import { Screen } from "@/components/layout/Screen";
 import { useRouter } from "expo-router";
 import { Image, Pressable, ScrollView, Text, View } from "react-native";
+import { Screen } from "@/components/layout/Screen";
 
 const Logo = () => (
 	<View style={{ width: 80, height: 80 }}>
@@ -114,7 +114,7 @@ const FeatureSection = ({
 );
 
 export default function LandingScreen() {
-	const router = useRouter();
+	const _router = useRouter();
 
 	return (
 		<Screen
@@ -180,7 +180,13 @@ export default function LandingScreen() {
 							justifyContent: "center",
 						}}
 					>
-						<Button onPress={() => { window.location.href = "/app"; }}>Open Web App</Button>
+						<Button
+							onPress={() => {
+								window.location.href = "/app";
+							}}
+						>
+							Open Web App
+						</Button>
 						<Button variant="secondary">Download APK</Button>
 					</View>
 				</View>

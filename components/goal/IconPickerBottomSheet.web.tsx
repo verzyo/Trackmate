@@ -1,19 +1,12 @@
-import {
-	BottomSheetBackdrop,
-	BottomSheetFlatList,
-	BottomSheetModal,
-	BottomSheetTextInput,
-} from "@gorhom/bottom-sheet";
 import * as PhosphorIcons from "phosphor-react-native";
 import { MagnifyingGlass, X } from "phosphor-react-native";
-import { type RefObject, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
 	FlatList,
-	Platform,
+	Modal,
 	Pressable,
 	Text,
 	TextInput,
-	useWindowDimensions,
 	View,
 } from "react-native";
 import { useThemeColors } from "@/hooks/common/useThemeColors";
@@ -47,22 +40,21 @@ Object.keys(PhosphorIcons).forEach((key) => {
 const ALL_ICONS = Array.from(iconSet).sort();
 
 type IconPickerBottomSheetProps = {
-	modalRef: RefObject<BottomSheetModal | null>;
-	isOpen?: boolean;
-	onClose?: () => void;
+	isOpen: boolean;
+	onClose: () => void;
 	selectedIcon: string;
 	selectedColor: string;
 	onSelect: (icon: string) => void;
 };
 
 export function IconPickerBottomSheet({
-	modalRef,
+	isOpen,
+	onClose,
 	selectedIcon,
 	selectedColor,
 	onSelect,
 }: IconPickerBottomSheetProps) {
 	const colors = useThemeColors();
-	const { width } = useWindowDimensions();
 	const [query, setQuery] = useState("");
 
 	const filteredIcons = useMemo(() => {
@@ -73,30 +65,22 @@ export function IconPickerBottomSheet({
 
 	const iconPickerSelectedBackground = hexToRgba(colors.actionPrimary, 0.12);
 	const iconPreviewColor = selectedColor || colors.actionPrimary;
-	const iconGridColumns = Platform.OS === "web" ? 5 : 4;
-	const iconGridGap = 8;
-	const iconGridHorizontalPadding = 48;
-	const maxContentWidth = Platform.OS === "web" ? 600 : width;
-	const iconTileSize = Math.max(
-		52,
-		Math.min(
-			72,
-			Math.floor(
-				(maxContentWidth -
-					iconGridHorizontalPadding -
-					iconGridGap * (iconGridColumns - 1)) /
-					iconGridColumns,
-			),
-		),
-	);
-	const iconSize = Math.max(22, Math.floor(iconTileSize * 0.42));
+	const iconGridColumns = 6;
+	const iconGridGap = 10;
+	const iconTileSize = 56;
+	const iconSize = 24;
+	const gridWidth =
+		iconGridColumns * iconTileSize + (iconGridColumns - 1) * iconGridGap;
+
+	const handleSelect = (item: string) => {
+		onSelect(item);
+		onClose();
+		setQuery("");
+	};
 
 	const renderIconTile = (item: string) => (
 		<Pressable
-			onPress={() => {
-				onSelect(item);
-				modalRef.current?.dismiss();
-			}}
+			onPress={() => handleSelect(item)}
 			className="items-center justify-center rounded-2xl border"
 			style={{
 				height: iconTileSize,
@@ -119,48 +103,44 @@ export function IconPickerBottomSheet({
 	);
 
 	return (
-		<BottomSheetModal
-			ref={modalRef}
-			snapPoints={["75%"]}
-			enableDynamicSizing={false}
-			onDismiss={() => setQuery("")}
-			backdropComponent={(props) => (
-				<BottomSheetBackdrop
-					{...props}
-					disappearsOnIndex={-1}
-					appearsOnIndex={0}
-					opacity={0.5}
-				/>
-			)}
-			backgroundStyle={{
-				backgroundColor: colors.surfaceFg,
-				borderRadius: 32,
-			}}
-			handleIndicatorStyle={{ backgroundColor: colors.border }}
+		<Modal
+			visible={isOpen}
+			transparent
+			animationType="fade"
+			onRequestClose={onClose}
 		>
-			<View className="flex-1 p-6">
-				<View className="flex-row items-center justify-between mb-6">
-					<Text
-						className="text-xl font-bold text-text-strong"
-						style={{ color: colors.textStrong }}
-					>
-						Choose an Icon
-					</Text>
-					<Pressable onPress={() => modalRef.current?.dismiss()}>
-						<X size={24} color={colors.textLight} weight="bold" />
-					</Pressable>
-				</View>
-
+			<View
+				className="flex-1 items-center justify-center"
+				style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
+			>
 				<View
-					className="mb-6 h-14 flex-row items-center rounded-[32px] px-4"
+					className="w-full max-w-[480px] max-h-[85vh] rounded-[24px] p-5 overflow-hidden"
 					style={{
-						backgroundColor: colors.surfaceBg,
-						borderColor: colors.border,
-						borderWidth: 1,
+						backgroundColor: colors.surfaceFg,
+						margin: 16,
 					}}
 				>
-					<MagnifyingGlass size={20} color={colors.textLight} />
-					{Platform.OS === "web" ? (
+					<View className="flex-row items-center justify-between mb-6">
+						<Text
+							className="text-xl font-bold text-text-strong"
+							style={{ color: colors.textStrong }}
+						>
+							Choose an Icon
+						</Text>
+						<Pressable onPress={onClose}>
+							<X size={24} color={colors.textLight} weight="bold" />
+						</Pressable>
+					</View>
+
+					<View
+						className="mb-6 h-14 flex-row items-center rounded-[32px] px-4"
+						style={{
+							backgroundColor: colors.surfaceBg,
+							borderColor: colors.border,
+							borderWidth: 1,
+						}}
+					>
+						<MagnifyingGlass size={20} color={colors.textLight} />
 						<TextInput
 							value={query}
 							onChangeText={setQuery}
@@ -173,26 +153,14 @@ export function IconPickerBottomSheet({
 								color: colors.textStrong,
 								backgroundColor: "transparent",
 							}}
+							autoFocus={false}
 						/>
-					) : (
-						<BottomSheetTextInput
-							value={query}
-							onChangeText={setQuery}
-							placeholder="Search icons..."
-							placeholderTextColor={colors.textLight}
-							style={{
-								flex: 1,
-								marginLeft: 12,
-								fontSize: 16,
-								color: colors.textStrong,
-								backgroundColor: "transparent",
-							}}
-						/>
-					)}
-				</View>
+					</View>
 
-				{Platform.OS === "web" ? (
-					<View className="self-center" style={{ width: 340 }}>
+					<View
+						className="self-center"
+						style={{ width: gridWidth, height: 360 }}
+					>
 						<FlatList
 							data={filteredIcons}
 							keyExtractor={(item: string) => item}
@@ -204,23 +172,11 @@ export function IconPickerBottomSheet({
 								marginBottom: 8,
 							}}
 							renderItem={({ item }: { item: string }) => renderIconTile(item)}
+							showsVerticalScrollIndicator={true}
 						/>
 					</View>
-				) : (
-					<BottomSheetFlatList
-						data={filteredIcons}
-						keyExtractor={(item: string) => item}
-						numColumns={iconGridColumns}
-						contentContainerStyle={{ paddingBottom: 12 }}
-						columnWrapperStyle={{
-							justifyContent: "flex-start",
-							columnGap: iconGridGap,
-							marginBottom: 8,
-						}}
-						renderItem={({ item }: { item: string }) => renderIconTile(item)}
-					/>
-				)}
+				</View>
 			</View>
-		</BottomSheetModal>
+		</Modal>
 	);
 }
