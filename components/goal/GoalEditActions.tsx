@@ -1,6 +1,6 @@
+import { router } from "expo-router";
 import FilledButton from "@/components/ui/FilledButton";
 import { useDeleteGoal, useLeaveGoal } from "@/hooks/goal/useGoalMutations";
-import { router } from "expo-router";
 
 interface GoalEditActionsProps {
 	goalId: string;

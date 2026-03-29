@@ -1,9 +1,3 @@
-import { SegmentedControl } from "@/components/ui/SegmentedControl";
-import {
-	ATTACHMENT_TYPES,
-	type AttachmentType,
-} from "@/constants/attachmentTypes";
-import { cn } from "@/utils/cn";
 import {
 	type Control,
 	Controller,
@@ -13,6 +7,12 @@ import {
 	type UseFormSetValue,
 } from "react-hook-form";
 import { Pressable, Text, View } from "react-native";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
+import {
+	ATTACHMENT_TYPES,
+	type AttachmentType,
+} from "@/constants/attachmentTypes";
+import { cn } from "@/utils/cn";
 
 type AttachmentTypeSelectorProps<T extends FieldValues> = {
 	control: Control<T>;
