@@ -34,11 +34,11 @@ export function TodaySection({
 	onPress,
 }: TodaySectionProps) {
 	return (
-		<View className="flex-col items-start justify-start gap-4">
+		<View className="flex-col items-start justify-start gap-3">
 			<Text className="font-semibold text-lg leading-7 text-text-strong">
 				Today
 			</Text>
-			<View className="w-full flex-col items-start justify-start gap-3.5">
+			<View className="w-full flex-col items-start justify-start gap-3">
 				{isLoading ? (
 					<GoalLoading />
 				) : error ? (

@@ -27,11 +27,11 @@ export function UpcomingSection({
 	if (goals.length === 0) return null;
 
 	return (
-		<View className="mt-2 flex-col items-start justify-start gap-4">
+		<View className="mt-2 flex-col items-start justify-start gap-3">
 			<Text className="font-semibold text-lg leading-7 text-text-strong">
 				Upcoming
 			</Text>
-			<View className="w-full flex-col items-start justify-start gap-3.5">
+			<View className="w-full flex-col items-start justify-start gap-3">
 				{goals.map((goal) => {
 					const participant = goal.goal_participants?.find(
 						(p) => p.user_id === userId,

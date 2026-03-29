@@ -1,12 +1,18 @@
 import { supabase } from "@/lib/supabase";
 import type {
 	AttachmentData,
+	AttachmentItem,
 	CreateGoalParams,
+	LeaderboardEntry,
+	ParticipantMonthlyPoints,
 	UpdateGoalMetadataParams,
 } from "@/schemas/goal.schema";
 import {
+	AttachmentItemSchema,
 	GoalInviteWithDetailsSchema,
 	GoalWithParticipantSchema,
+	LeaderboardEntrySchema,
+	ParticipantMonthlyPointsSchema,
 } from "@/schemas/goal.schema";
 import { formatToISODate, getTodayUTC } from "@/utils/date.utils";
 
@@ -274,4 +280,126 @@ export const getSignedUrl = async (path: string) => {
 		.createSignedUrl(path, 3600);
 	if (error) throw error;
 	return data?.signedUrl;
+};
+
+export const fetchGoalLeaderboard = async (
+	goalId: string,
+): Promise<LeaderboardEntry[]> => {
+	const { data, error } = await supabase.rpc("get_goal_leaderboard", {
+		p_goal_id: goalId,
+	});
+	if (error) {
+		console.error("fetchGoalLeaderboard RPC Error:", error);
+		throw error;
+	}
+	console.log("fetchGoalLeaderboard raw data:", data);
+	try {
+		return LeaderboardEntrySchema.array().parse(data ?? []);
+	} catch (parseError) {
+		console.error("fetchGoalLeaderboard Parse Error:", parseError);
+		return data as LeaderboardEntry[];
+	}
+};
+
+export const fetchGoalMonthlyPointsForAll = async (
+	goalId: string,
+): Promise<ParticipantMonthlyPoints[]> => {
+	const { data, error } = await supabase.rpc("get_goal_monthly_points_all", {
+		p_goal_id: goalId,
+	});
+	if (error) {
+		console.error("fetchGoalMonthlyPointsForAll RPC Error:", error);
+		throw error;
+	}
+	try {
+		return ParticipantMonthlyPointsSchema.array().parse(data ?? []);
+	} catch (parseError) {
+		console.error("fetchGoalMonthlyPointsForAll Parse Error:", parseError);
+		return data as ParticipantMonthlyPoints[];
+	}
+};
+
+export const fetchGoalPendingInvites = async (goalId: string) => {
+	const { data, error } = await supabase
+		.from("goal_invites")
+		.select(
+			`*, 
+			 invitee:profiles!invitee_id(username, nickname, avatar_url)`,
+		)
+		.eq("goal_id", goalId);
+
+	if (error) throw error;
+	return data ?? [];
+};
+
+export const fetchRecentAttachments = async (
+	goalId: string,
+	limit = 5,
+): Promise<AttachmentItem[]> => {
+	// First, fetch completions with attachment data
+	const { data: completionsData, error: completionsError } = await supabase
+		.from("goal_completions")
+		.select("id, goal_id, user_id, completed_at, attachment_data")
+		.eq("goal_id", goalId)
+		.not("attachment_data", "is", null)
+		.order("completed_at", { ascending: false })
+		.limit(limit);
+
+	if (completionsError) {
+		console.error("fetchRecentAttachments Error:", completionsError);
+		throw completionsError;
+	}
+
+	if (!completionsData || completionsData.length === 0) {
+		return [];
+	}
+
+	// Get unique user IDs from completions
+	const userIds = [...new Set(completionsData.map((c) => c.user_id))];
+
+	// Fetch profiles for those users
+	const { data: profilesData, error: profilesError } = await supabase
+		.from("profiles")
+		.select("id, username, nickname, avatar_url")
+		.in("id", userIds);
+
+	if (profilesError) {
+		console.error("fetchRecentAttachments Profiles Error:", profilesError);
+		// Continue with empty profiles - we'll show what we can
+	}
+
+	// Create a map of user_id to profile
+	const profileMap = new Map(
+		(profilesData ?? []).map((p) => [
+			p.id,
+			{ username: p.username, nickname: p.nickname, avatar_url: p.avatar_url },
+		]),
+	);
+
+	// Transform the data
+	const transformed = completionsData.map((item) => {
+		const profile = profileMap.get(item.user_id);
+		return {
+			id: item.id,
+			goal_id: item.goal_id,
+			user_id: item.user_id,
+			completed_at: item.completed_at,
+			attachment_data: item.attachment_data as {
+				type: string;
+				path?: string;
+				url?: string;
+				content?: string;
+			},
+			username: profile?.username ?? "Unknown",
+			nickname: profile?.nickname ?? null,
+			avatar_url: profile?.avatar_url ?? null,
+		};
+	});
+
+	try {
+		return AttachmentItemSchema.array().parse(transformed);
+	} catch (parseError) {
+		console.error("fetchRecentAttachments Parse Error:", parseError);
+		return transformed as AttachmentItem[];
+	}
 };

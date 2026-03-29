@@ -223,7 +223,7 @@ export default function ProfileScreen() {
 					paddingBottom: Math.max(insets.bottom + 16, 24),
 				}}
 			>
-				<View className="flex-1 gap-8">
+				<View className="flex-1 w-full max-w-3xl self-center gap-8">
 					<View className="flex-col gap-8">
 						<PageHeader title="Profile Settings" />
 

@@ -35,7 +35,7 @@ export function GoalFrequencyCard({
 		return (
 			<View className="w-full rounded-[32px] border border-border bg-surface-fg p-6">
 				<Text
-					className="mb-3 text-xl font-bold text-text-strong"
+					className="mb-4 text-xl font-bold text-text-strong"
 					style={{ color: colors.textStrong }}
 				>
 					Frequency
@@ -73,7 +73,7 @@ export function GoalFrequencyCard({
 		frequencyValue === 1 ? "Every day" : `Every ${frequencyValue} days`;
 
 	return (
-		<View className="w-full flex-row items-center justify-between rounded-full border border-border bg-surface-fg px-5 py-4">
+		<View className="flex-row items-center justify-between rounded-full border border-border bg-surface-fg px-6 py-4">
 			<Text
 				className="text-xl font-bold text-text-strong"
 				style={{ color: colors.textStrong }}

@@ -85,7 +85,7 @@ export const GoalItem = memo(function GoalItem({
 	return (
 		<Pressable
 			onPress={onPress}
-			className="w-full flex-col items-start gap-4 overflow-hidden rounded-[32px] border border-border bg-surface-fg p-5"
+			className="w-full flex-col items-start gap-4 overflow-hidden rounded-[32px] border border-border bg-surface-fg p-6"
 		>
 			{isCompletedToday && (
 				<View

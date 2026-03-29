@@ -81,29 +81,52 @@ export default function EditGoalScreen() {
 				description: goal.description || "",
 				icon: participant?.icon || "Flag",
 				color: participant?.color || "#3b82f6",
+				frequency_type: goal.frequency_type,
+				interval_days: String(goal.frequency_value),
+				weekly_days: (goal.weekly_days || []).map((day) =>
+					day === 7 ? 0 : day,
+				),
+				attachment_type: goal.attachment_type,
+				require_attachment: goal.require_attachment,
 			});
 		}
 	}, [goal, reset, userId]);
 
 	const onSave = async (data: GoalForm) => {
-		if (!goal) return;
+		console.log("onSave called with data:", data);
+		console.log("goal:", goal, "isOwner:", isOwner, "userId:", userId);
+		if (!goal) {
+			console.log("No goal, returning");
+			return;
+		}
 		try {
 			const metadataParams: Record<string, unknown> = { goal_id: id as string };
 			let hasMetadataChanges = false;
 
 			if (isOwner) {
+				console.log("Checking metadata changes...");
+				console.log("data.title:", data.title, "goal.title:", goal.title);
+				console.log(
+					"data.description:",
+					data.description,
+					"goal.description:",
+					goal.description,
+				);
 				if (data.title !== goal.title) {
 					metadataParams.title = data.title;
 					hasMetadataChanges = true;
+					console.log("Title changed");
 				}
 				if (data.description !== (goal.description || "")) {
 					metadataParams.description = data.description;
 					hasMetadataChanges = true;
+					console.log("Description changed");
 				}
 			}
 
 			const invitePromises: Promise<unknown>[] = [];
 			if (isOwner && invitees.length > 0 && userId) {
+				console.log("Processing invites:", invitees);
 				invitePromises.push(
 					...invitees.map((invitee) =>
 						createInviteMutation.mutateAsync({
@@ -117,12 +140,25 @@ export default function EditGoalScreen() {
 
 			const participantChanges =
 				selectedIcon !== initialIcon || selectedColor !== initialColor;
+			console.log(
+				"participantChanges:",
+				participantChanges,
+				"selectedIcon:",
+				selectedIcon,
+				"initialIcon:",
+				initialIcon,
+				"selectedColor:",
+				selectedColor,
+				"initialColor:",
+				initialColor,
+			);
 
 			if (
 				!hasMetadataChanges &&
 				invitePromises.length === 0 &&
 				!participantChanges
 			) {
+				console.log("No changes detected, going back");
 				router.back();
 				return;
 			}
@@ -130,6 +166,7 @@ export default function EditGoalScreen() {
 			const promises = [...invitePromises];
 
 			if (participantChanges && userId) {
+				console.log("Adding participant update");
 				promises.push(
 					updateParticipantMutation.mutateAsync({
 						goalId: id as string,
@@ -141,6 +178,7 @@ export default function EditGoalScreen() {
 			}
 
 			if (hasMetadataChanges) {
+				console.log("Adding metadata update:", metadataParams);
 				promises.push(
 					updateMetadataMutation.mutateAsync(
 						metadataParams as UpdateGoalMetadataParams,
@@ -148,9 +186,12 @@ export default function EditGoalScreen() {
 				);
 			}
 
+			console.log("Executing promises:", promises.length);
 			await Promise.all(promises);
+			console.log("Save successful");
 			router.back();
 		} catch (error) {
+			console.error("Save error:", error);
 			handleError(error, "Failed to update goal");
 		}
 	};
@@ -174,21 +215,25 @@ export default function EditGoalScreen() {
 			keyboardHeight={keyboardHeight}
 			isDark={isDark}
 		>
-			<GoalAppearancePicker
-				selectedIcon={selectedIcon}
-				selectedColor={selectedColor}
-				onIconChange={setSelectedIcon}
-				onColorChange={setSelectedColor}
-				stackColorsUnderIcon={!isOwner}
-			/>
+			<FormSection title="Appearance" titleColor={colors.textStrong}>
+				<GoalAppearancePicker
+					selectedIcon={selectedIcon}
+					selectedColor={selectedColor}
+					onIconChange={setSelectedIcon}
+					onColorChange={setSelectedColor}
+					stackColorsUnderIcon={!isOwner}
+				/>
+			</FormSection>
 
 			{isOwner && (
-				<GoalBasicInfoFields
-					control={control}
-					titleError={errors.title?.message}
-					descriptionError={errors.description?.message}
-					editable={isOwner}
-				/>
+				<FormSection title="Basic Info" titleColor={colors.textStrong}>
+					<GoalBasicInfoFields
+						control={control}
+						titleError={errors.title?.message}
+						descriptionError={errors.description?.message}
+						editable={isOwner}
+					/>
+				</FormSection>
 			)}
 
 			{isOwner && (
@@ -199,14 +244,20 @@ export default function EditGoalScreen() {
 						onRemove={removeInvite}
 						onInputFocus={handleInviteInputFocus}
 						onInputPress={handleInviteInputFocus}
+						userId={userId}
+						existingParticipants={goal?.goal_participants.map((p) => p.user_id)}
 					/>
 				</FormSection>
 			)}
 
 			<FilledButton
-				onPress={handleSubmit(onSave)}
+				onPress={() => {
+					console.log("Save button pressed, calling handleSubmit");
+					console.log("Form errors:", errors);
+					handleSubmit(onSave)();
+				}}
 				disabled={isLoading}
-				className="mt-auto"
+				className="mt-4"
 				label={isLoading ? "Saving..." : "Save Goal"}
 			/>
 

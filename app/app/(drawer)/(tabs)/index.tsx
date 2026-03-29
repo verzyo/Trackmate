@@ -221,12 +221,12 @@ export default function HomeScreen() {
 			<Screen className="bg-surface-bg">
 				<ScrollView
 					showsVerticalScrollIndicator={false}
-					contentContainerClassName="flex-grow px-5 py-6"
+					contentContainerClassName="flex-grow px-6 py-4"
 					refreshControl={
 						<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
 					}
 				>
-					<View className="flex-col gap-8 pb-32">
+					<View className="w-full max-w-4xl self-center flex-col gap-6 pb-32">
 						<GreetingHeader
 							greeting={getGreeting()}
 							dayString={getCurrentDayString()}

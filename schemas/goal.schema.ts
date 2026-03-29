@@ -130,3 +130,39 @@ export const createWeeklyDaysSchema = (expectedLength?: number) =>
 		.refine((arr) => (expectedLength ? arr.length === expectedLength : true), {
 			message: `Please select exactly ${expectedLength} days`,
 		});
+
+export const LeaderboardEntrySchema = z.object({
+	user_id: z.string(),
+	username: z.string(),
+	nickname: z.string().nullable(),
+	avatar_url: z.string().nullable(),
+	points: z.number(),
+	streak: z.number(),
+	rank: z.number(),
+});
+export type LeaderboardEntry = z.infer<typeof LeaderboardEntrySchema>;
+
+export const ParticipantMonthlyPointsSchema = z.object({
+	user_id: z.string(),
+	username: z.string(),
+	nickname: z.string().nullable(),
+	avatar_url: z.string().nullable(),
+	month: z.string(),
+	points: z.number(),
+});
+export type ParticipantMonthlyPoints = z.infer<
+	typeof ParticipantMonthlyPointsSchema
+>;
+
+// Recent attachments from goal completions
+export const AttachmentItemSchema = z.object({
+	id: z.string(),
+	goal_id: z.string(),
+	user_id: z.string(),
+	completed_at: z.string(),
+	attachment_data: AttachmentDataSchema.nullable(),
+	username: z.string(),
+	nickname: z.string().nullable(),
+	avatar_url: z.string().nullable(),
+});
+export type AttachmentItem = z.infer<typeof AttachmentItemSchema>;

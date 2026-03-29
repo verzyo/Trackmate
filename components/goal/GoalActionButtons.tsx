@@ -37,7 +37,7 @@ export function GoalActionButtons({
 			style={{ paddingBottom: Math.max(insetsBottom, 16) }}
 			pointerEvents="box-none"
 		>
-			<View className="gap-3">
+			<View className="w-full max-w-4xl self-center gap-3">
 				{isCompletedToday && !isInviteState ? (
 					<MutedBorderButton
 						onPress={onUndoComplete}

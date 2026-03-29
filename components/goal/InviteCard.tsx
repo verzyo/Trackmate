@@ -20,7 +20,7 @@ export function InviteCard({
 	disabled,
 }: InviteCardProps) {
 	return (
-		<View className="gap-4 rounded-3xl border border-border bg-surface-fg p-5">
+		<View className="gap-6 rounded-[32px] border border-border bg-surface-fg p-6">
 			<View className="flex-row items-center justify-between gap-4">
 				<View className="flex-1 flex-row items-center gap-3">
 					<Avatar

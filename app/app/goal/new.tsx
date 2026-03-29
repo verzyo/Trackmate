@@ -13,6 +13,7 @@ import { AttachmentTypeSelector } from "@/components/goal/AttachmentTypeSelector
 import { GoalAppearancePicker } from "@/components/goal/GoalAppearancePicker";
 import { GoalFrequencyEditor } from "@/components/goal/GoalFrequencyEditor";
 import FilledButton from "@/components/ui/FilledButton";
+import { ATTACHMENT_TYPES } from "@/constants/attachmentTypes";
 import { FREQUENCY_TYPES } from "@/constants/frequencyTypes";
 import { useErrorHandler } from "@/hooks/common/useErrorHandler";
 import { useKeyboard } from "@/hooks/common/useKeyboard";
@@ -56,7 +57,6 @@ export default function NewGoalScreen() {
 		intervalInputValue,
 		intervalValue,
 		scheduledDays,
-		watchedAttachmentType,
 		selectedColor,
 		selectedIcon,
 		toggleDay,
@@ -73,7 +73,14 @@ export default function NewGoalScreen() {
 		let activeWeekly: number[] | null = null;
 		if (data.frequency_type === FREQUENCY_TYPES.WEEKLY) {
 			if (data.weekly_days.length > 0) {
-				activeWeekly = data.weekly_days;
+				// Convert 0-6 (Sun-Sat) to 1-7 (Mon-Sun) for database
+				activeWeekly = data.weekly_days.map((day) => (day === 0 ? 7 : day));
+				console.log(
+					"Original days:",
+					data.weekly_days,
+					"-> Converted:",
+					activeWeekly,
+				);
 			}
 		}
 
@@ -95,7 +102,7 @@ export default function NewGoalScreen() {
 				weekly_days: activeWeekly,
 				start_date: formatToISODate(startDate),
 				attachment_type: data.attachment_type,
-				require_attachment: data.require_attachment,
+				require_attachment: data.attachment_type !== ATTACHMENT_TYPES.NONE,
 				icon: data.icon,
 				color: data.color,
 				userId,
@@ -120,6 +127,7 @@ export default function NewGoalScreen() {
 				);
 			}
 		} catch (error) {
+			console.error("Goal creation error:", error);
 			handleError(error, "Failed to create goal");
 		}
 	};
@@ -135,18 +143,22 @@ export default function NewGoalScreen() {
 			keyboardHeight={keyboardHeight}
 			isDark={isDark}
 		>
-			<GoalAppearancePicker
-				selectedIcon={selectedIcon}
-				selectedColor={selectedColor}
-				onIconChange={(icon) => setValue("icon", icon)}
-				onColorChange={(color) => setValue("color", color)}
-			/>
+			<FormSection title="Appearance" titleColor={colors.textStrong}>
+				<GoalAppearancePicker
+					selectedIcon={selectedIcon}
+					selectedColor={selectedColor}
+					onIconChange={(icon) => setValue("icon", icon)}
+					onColorChange={(color) => setValue("color", color)}
+				/>
+			</FormSection>
 
-			<GoalBasicInfoFields
-				control={control}
-				titleError={errors.title?.message}
-				descriptionError={errors.description?.message}
-			/>
+			<FormSection title="Basic Info" titleColor={colors.textStrong}>
+				<GoalBasicInfoFields
+					control={control}
+					titleError={errors.title?.message}
+					descriptionError={errors.description?.message}
+				/>
+			</FormSection>
 
 			<FormSection title="Frequency*" titleColor={colors.textStrong}>
 				<GoalFrequencyEditor
@@ -170,20 +182,12 @@ export default function NewGoalScreen() {
 				/>
 			</FormSection>
 
-			<DatePicker
-				label="Start Date*"
-				value={startDate}
-				onChange={setStartDate}
-			/>
+			<FormSection title="Start Date" titleColor={colors.textStrong}>
+				<DatePicker value={startDate} onChange={setStartDate} />
+			</FormSection>
 
 			<FormSection title="Attachment" titleColor={colors.textStrong}>
-				<AttachmentTypeSelector
-					control={control}
-					nameType="attachment_type"
-					nameRequire="require_attachment"
-					setValue={setValue}
-					watchedType={watchedAttachmentType}
-				/>
+				<AttachmentTypeSelector control={control} nameType="attachment_type" />
 			</FormSection>
 
 			<FormSection title="Participants" titleColor={colors.textStrong}>
@@ -193,12 +197,13 @@ export default function NewGoalScreen() {
 					onRemove={removeInvite}
 					onInputFocus={handleInviteInputFocus}
 					onInputPress={handleInviteInputFocus}
+					userId={userId}
 				/>
 			</FormSection>
 
 			<FilledButton
 				onPress={handleSubmit(onSubmit)}
-				className="mt-auto"
+				className="mt-4"
 				label="Create Goal"
 			/>
 		</GoalFormShell>

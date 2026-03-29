@@ -40,7 +40,7 @@ export function DatePicker({
 			)}
 
 			{Platform.OS === "web" ? (
-				<View className="w-full h-14 rounded-full border border-border bg-surface-fg px-5 flex-row items-center justify-between">
+				<View className="w-full h-14 rounded-full border border-border bg-surface-fg px-5 flex-row items-center justify-between overflow-hidden">
 					<input
 						type="date"
 						value={formatToISODate(value)}
@@ -57,12 +57,19 @@ export function DatePicker({
 							border: "none",
 							outline: "none",
 							background: "transparent",
-							flex: 1,
+							width: "100%",
 							color: "var(--color-text-strong)",
 							fontSize: "16px",
+							cursor: disabled ? "not-allowed" : "pointer",
+							WebkitAppearance: "none",
+							MozAppearance: "none",
+							appearance: "none",
+							paddingRight: "32px",
 						}}
 					/>
-					<CalendarBlank size={20} color={colors.textLight} weight="bold" />
+					<View className="absolute right-5 pointer-events-none">
+						<CalendarBlank size={20} color={colors.textLight} weight="bold" />
+					</View>
 				</View>
 			) : (
 				<Pressable

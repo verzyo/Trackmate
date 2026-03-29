@@ -1,10 +1,4 @@
-import { Text } from "react-native";
-import { Screen } from "@/components/layout/Screen";
-
 export default function LandingScreen() {
-	return (
-		<Screen className="items-center justify-center">
-			<Text>Landing screen</Text>
-		</Screen>
-	);
+	return null;
 }
+

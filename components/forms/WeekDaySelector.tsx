@@ -25,7 +25,7 @@ export function WeekDaySelector({
 	textColor,
 }: WeekDaySelectorProps) {
 	return (
-		<View className="flex-row justify-between rounded-full">
+		<View className="flex-row gap-3 justify-center rounded-full">
 			{WEEK_DAYS.map((day) => {
 				const isSelected = selectedDays.includes(day.value);
 				return (

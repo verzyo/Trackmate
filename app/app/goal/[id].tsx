@@ -1,17 +1,21 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { router, useLocalSearchParams } from "expo-router";
 import { useMemo, useRef } from "react";
-import { ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AttachmentBottomSheet, {
 	type AttachmentBottomSheetRef,
 } from "@/components/AttachmentBottomSheet";
 import { GoalActionButtons } from "@/components/goal/GoalActionButtons";
-import { GoalAttachmentAction } from "@/components/goal/GoalAttachmentAction";
+import { GoalAttachmentsList } from "@/components/goal/GoalAttachmentsList";
 import { GoalConsistencyHeatmap } from "@/components/goal/GoalConsistencyHeatmap";
 import { GoalDetailHeader } from "@/components/goal/GoalDetailHeader";
 import { GoalFrequencyCard } from "@/components/goal/GoalFrequencyCard";
+import { GoalLeaderboardCard } from "@/components/goal/GoalLeaderboardCard";
 import { GoalParticipantsList } from "@/components/goal/GoalParticipantsList";
+import { GoalPendingInvitesList } from "@/components/goal/GoalPendingInvitesList";
+import { GoalPointsChart } from "@/components/goal/GoalPointsChart";
+import { GoalStatsCard } from "@/components/goal/GoalStatsCard";
 import { Screen } from "@/components/layout/Screen";
 import AppLoadingScreen from "@/components/ui/AppLoadingScreen";
 import { useThemeColors } from "@/hooks/common/useThemeColors";
@@ -26,6 +30,12 @@ import {
 	goalKeys,
 	useGoal,
 	useGoalCompletions,
+	useGoalLeaderboard,
+	useGoalMonthlyPoints,
+	useGoalMonthlyPointsForAll,
+	useGoalPendingInvites,
+	useGoalStreak,
+	useRecentAttachments,
 	useTodayCompletion,
 	useTodaysCompletionsForGoals,
 } from "@/hooks/goal/useGoalQueries";
@@ -35,22 +45,44 @@ import { useAuthStore } from "@/store/auth.store";
 import { getErrorMessage, showAlert } from "@/utils/error.utils";
 
 export default function GoalDetailsModal() {
-	const { id, inviteId } = useLocalSearchParams<{
+	const { id, inviteId, participantId } = useLocalSearchParams<{
 		id: string;
 		inviteId?: string;
+		participantId?: string;
 	}>();
 	const goalId = Array.isArray(id) ? id[0] : id;
-	const userId = useAuthStore((state) => state.user?.id);
+	const currentUserId = useAuthStore((state) => state.user?.id);
+	// If participantId is provided, we're viewing another participant's data
+	const viewUserId = participantId || currentUserId;
+	const isViewingOther = !!participantId && participantId !== currentUserId;
 	const queryClient = useQueryClient();
 	const colors = useThemeColors();
 	const insets = useSafeAreaInsets();
+	const { width: screenWidth } = useWindowDimensions();
+	const isWideScreen = screenWidth >= 768;
 	const { data: goal, isLoading, error } = useGoal(goalId as string);
 	const {
 		data: todayCompletion,
 		refetch: refetchToday,
 		isLoading: isTodayCompletionLoading,
-	} = useTodayCompletion(goalId as string, userId);
-	const { data: completions } = useGoalCompletions(goalId as string, userId);
+	} = useTodayCompletion(goalId as string, viewUserId);
+	const { data: completions } = useGoalCompletions(
+		goalId as string,
+		viewUserId,
+	);
+	const { data: streak, isLoading: isStreakLoading } = useGoalStreak(
+		goalId as string,
+		viewUserId,
+	);
+	const { data: monthlyPoints, isLoading: isMonthlyPointsLoading } =
+		useGoalMonthlyPoints(goalId as string, viewUserId);
+	const { data: leaderboard = [], isLoading: isLeaderboardLoading } =
+		useGoalLeaderboard(goalId as string);
+	const { data: monthlyPointsAll = [], isLoading: isMonthlyPointsAllLoading } =
+		useGoalMonthlyPointsForAll(goalId as string);
+	const { data: attachments = [], isLoading: isAttachmentsLoading } =
+		useRecentAttachments(goalId as string, 5);
+	const { data: pendingInvites = [] } = useGoalPendingInvites(goalId as string);
 	const { data: todaysCompletions } = useTodaysCompletionsForGoals(
 		goalId ? [goalId] : [],
 	);
@@ -62,6 +94,12 @@ export default function GoalDetailsModal() {
 	const completeMutation = useCompleteGoal();
 	const uncompleteMutation = useUncompleteGoal();
 	const updateAttachmentMutation = useUpdateCompletion();
+
+	const filteredAttachments = useMemo(() => {
+		if (!participantId) return attachments;
+		// When viewing a specific participant, show only their attachments
+		return attachments.filter((a) => a.user_id === participantId);
+	}, [attachments, participantId]);
 
 	const participantIds = useMemo(
 		() =>
@@ -104,17 +142,21 @@ export default function GoalDetailsModal() {
 		);
 	}
 
-	const isCompletedToday = !!todayCompletion?.id;
-	const isParticipant = goal.goal_participants.some(
-		(p) => p.user_id === userId,
+	const participant = goal?.goal_participants.find(
+		(p) => p.user_id === viewUserId,
 	);
+	const currentUserParticipant = goal?.goal_participants.find(
+		(p) => p.user_id === currentUserId,
+	);
+	const isParticipant = !!currentUserParticipant;
+	const isPersonalGoal = goal.goal_participants.length <= 1;
 
 	const handleAcceptInvite = async () => {
 		if (!inviteId || !goalId) return;
 		try {
 			await acceptInviteMutation.mutateAsync({
 				inviteId,
-				userId: userId as string,
+				userId: currentUserId as string,
 				goalId,
 			});
 			queryClient.removeQueries({
@@ -132,7 +174,7 @@ export default function GoalDetailsModal() {
 		try {
 			await declineInviteMutation.mutateAsync({
 				inviteId,
-				userId: userId as string,
+				userId: currentUserId as string,
 			});
 			router.back();
 		} catch (e) {
@@ -146,11 +188,11 @@ export default function GoalDetailsModal() {
 			return;
 		}
 
-		if (!userId) return;
+		if (!currentUserId) return;
 		try {
 			await completeMutation.mutateAsync({
 				goalId: goal.id,
-				userId,
+				userId: currentUserId,
 				attachmentData,
 			});
 			refetchToday();
@@ -160,20 +202,23 @@ export default function GoalDetailsModal() {
 	};
 
 	const handleUncomplete = async () => {
-		if (!userId) return;
+		if (!currentUserId) return;
 		try {
-			await uncompleteMutation.mutateAsync({ goalId: goal.id, userId });
+			await uncompleteMutation.mutateAsync({
+				goalId: goal.id,
+				userId: currentUserId,
+			});
 			refetchToday();
 		} catch (e) {
 			showAlert(getErrorMessage(e, "Failed to uncomplete goal"));
 		}
 	};
 
-	const handleAddAttachment = () => {
-		attachmentSheetRef.current?.present();
-	};
-
-	const participant = goal.goal_participants.find((p) => p.user_id === userId);
+	const currentUserLeaderboardEntry = leaderboard.find(
+		(entry) => entry.user_id === viewUserId,
+	);
+	const rank = currentUserLeaderboardEntry?.rank ?? null;
+	const statsLoading = isStreakLoading || isMonthlyPointsLoading;
 	const iconName = participant?.icon || "Target";
 	const iconColor = participant?.color || colors.actionPrimary;
 	const completedDateKeys = (completions ?? []).map((completion) =>
@@ -196,8 +241,11 @@ export default function GoalDetailsModal() {
 			role: goalParticipant.user_id === goal.owner_id ? "owner" : "member",
 		} as const;
 	});
+	const isOwner = goal.owner_id === currentUserId;
+	const isCompletedToday = !!todayCompletion?.id;
 	const isInviteState = !!inviteId && !isParticipant;
-	const showPrimaryAction = isParticipant || isInviteState;
+	// When viewing another participant, hide the action buttons
+	const showPrimaryAction = (isParticipant || isInviteState) && !isViewingOther;
 	const primaryButtonLabel = isInviteState
 		? acceptInviteMutation.isPending
 			? "Accepting..."
@@ -220,11 +268,18 @@ export default function GoalDetailsModal() {
 						: Math.max(insets.bottom + 32, 40),
 				}}
 			>
-				<View className="gap-6">
+				<View className="w-full max-w-4xl self-center gap-6">
 					<GoalDetailHeader
 						goal={goal}
 						goalId={goalId as string}
 						isParticipant={isParticipant}
+						isViewingOther={isViewingOther}
+						viewUserName={
+							viewUserId
+								? profileMap.get(viewUserId)?.nickname ||
+									profileMap.get(viewUserId)?.username
+								: undefined
+						}
 						iconName={iconName}
 						iconColor={iconColor}
 						textStrongColor={colors.textStrong}
@@ -237,24 +292,104 @@ export default function GoalDetailsModal() {
 						weeklyDays={goal.weekly_days}
 					/>
 
-					<GoalConsistencyHeatmap
-						completedDates={completedDateKeys}
-						frequencyType={goal.frequency_type}
-						frequencyValue={goal.frequency_value}
-						startDate={goal.start_date}
-						weeklyDays={goal.weekly_days}
-					/>
+					{isParticipant ? (
+						<GoalStatsCard
+							streak={streak}
+							points={monthlyPoints}
+							rank={rank}
+							loading={statsLoading}
+							showRank={!isPersonalGoal}
+						/>
+					) : null}
 
-					<GoalParticipantsList participants={participantItems} />
+					{isParticipant && !isPersonalGoal && !isViewingOther ? (
+						<GoalLeaderboardCard
+							leaderboard={leaderboard}
+							currentUserId={currentUserId}
+							loading={isLeaderboardLoading}
+						/>
+					) : null}
 
-					<GoalAttachmentAction
-						goal={goal}
-						isParticipant={isParticipant}
-						isCompletedToday={isCompletedToday}
-						hasAttachment={!!todayCompletion?.attachment_data}
-						onPress={handleAddAttachment}
-						actionPrimaryColor={colors.actionPrimary}
-					/>
+					{isWideScreen ? (
+						<View className="flex-row gap-4">
+							{isParticipant && !isPersonalGoal && !isViewingOther && (
+								<View className="flex-1" style={{ height: 320 }}>
+									<GoalPointsChart
+										data={monthlyPointsAll}
+										loading={isMonthlyPointsAllLoading}
+									/>
+								</View>
+							)}
+							{isViewingOther && !isPersonalGoal && viewUserId && (
+								<View className="flex-1" style={{ height: 320 }}>
+									<GoalPointsChart
+										data={monthlyPointsAll.filter(
+											(p) => p.user_id === viewUserId,
+										)}
+										loading={isMonthlyPointsAllLoading}
+									/>
+								</View>
+							)}
+							{!isInviteState && (
+								<View className="flex-1" style={{ height: 320 }}>
+									<GoalConsistencyHeatmap
+										completedDates={completedDateKeys}
+										frequencyType={goal.frequency_type}
+										frequencyValue={goal.frequency_value}
+										startDate={goal.start_date}
+										weeklyDays={goal.weekly_days}
+									/>
+								</View>
+							)}
+						</View>
+					) : (
+						<>
+							{isParticipant && !isPersonalGoal && !isViewingOther ? (
+								<GoalPointsChart
+									data={monthlyPointsAll}
+									loading={isMonthlyPointsAllLoading}
+								/>
+							) : null}
+
+							{isViewingOther && !isPersonalGoal && viewUserId && (
+								<GoalPointsChart
+									data={monthlyPointsAll.filter(
+										(p) => p.user_id === viewUserId,
+									)}
+									loading={isMonthlyPointsAllLoading}
+								/>
+							)}
+
+							{!isInviteState && (
+								<GoalConsistencyHeatmap
+									completedDates={completedDateKeys}
+									frequencyType={goal.frequency_type}
+									frequencyValue={goal.frequency_value}
+									startDate={goal.start_date}
+									weeklyDays={goal.weekly_days}
+								/>
+							)}
+						</>
+					)}
+
+					{(isParticipant || isInviteState) && (
+						<GoalParticipantsList
+							participants={participantItems}
+							goalId={goalId as string}
+							currentUserId={currentUserId}
+						/>
+					)}
+
+					{!isViewingOther && (
+						<GoalAttachmentsList
+							attachments={filteredAttachments}
+							loading={isAttachmentsLoading}
+						/>
+					)}
+
+					{!isViewingOther && isOwner && pendingInvites.length > 0 && (
+						<GoalPendingInvitesList invites={pendingInvites} />
+					)}
 				</View>
 			</ScrollView>
 
@@ -277,23 +412,23 @@ export default function GoalDetailsModal() {
 				onDeclineInvite={handleDeclineInvite}
 			/>
 
-			{goal && (
+			{goal && !isViewingOther && (
 				<AttachmentBottomSheet
 					ref={attachmentSheetRef}
 					goal={goal}
 					onComplete={async (attachmentData) => {
-						if (!userId) return;
+						if (!currentUserId) return;
 						try {
 							if (goal.require_attachment) {
 								await completeMutation.mutateAsync({
 									goalId: goal.id,
-									userId,
+									userId: currentUserId,
 									attachmentData,
 								});
 							} else if (attachmentData) {
 								await updateAttachmentMutation.mutateAsync({
 									goalId: goal.id,
-									userId,
+									userId: currentUserId,
 									attachmentData,
 								});
 							}

@@ -11,6 +11,8 @@ type GoalDetailHeaderProps = {
 	goal: GoalWithParticipant;
 	goalId: string;
 	isParticipant: boolean;
+	isViewingOther?: boolean;
+	viewUserName?: string;
 	iconName: string;
 	iconColor: string;
 	textStrongColor: string;
@@ -21,17 +23,24 @@ export function GoalDetailHeader({
 	goal,
 	goalId,
 	isParticipant,
+	isViewingOther,
+	viewUserName,
 	iconName,
 	iconColor,
 	textStrongColor,
 	textDefaultColor,
 }: GoalDetailHeaderProps) {
+	const title =
+		isViewingOther && viewUserName
+			? `${viewUserName}'s Details`
+			: "Goal Details";
+
 	return (
 		<View>
 			<PageHeader
-				title="Goal Details"
+				title={title}
 				rightElement={
-					isParticipant ? (
+					isParticipant && !isViewingOther ? (
 						<CircleIconButton
 							onPress={() => router.push(`/app/goal/edit/${goalId}` as Href)}
 						>

@@ -86,7 +86,7 @@ export default function InvitesScreen() {
 					<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
 				}
 			>
-				<View className="flex-1 gap-8">
+				<View className="flex-1 w-full max-w-3xl self-center gap-8">
 					<PageHeader title="Invitations" />
 
 					{isLoading && (

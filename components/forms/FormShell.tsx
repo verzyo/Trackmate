@@ -52,7 +52,7 @@ export function FormShell({
 						contentContainerClassName={
 							isAuth
 								? "flex-grow items-center justify-center px-6 py-10"
-								: "flex-grow px-6 py-4"
+								: "flex-grow px-6 py-4 items-center"
 						}
 						contentContainerStyle={{
 							paddingBottom:
@@ -60,13 +60,13 @@ export function FormShell({
 								(Platform.OS === "android" ? keyboardHeight : 0),
 						}}
 					>
-						{title ? <PageHeader title={title} /> : null}
 						<View
 							className={cn(
-								isAuth ? "w-full max-w-md gap-10" : "flex-1 gap-8",
+								isAuth ? "w-full max-w-md gap-10" : "w-full max-w-3xl gap-6",
 								contentClassName,
 							)}
 						>
+							{title ? <PageHeader title={title} /> : null}
 							{children}
 						</View>
 					</ScrollView>

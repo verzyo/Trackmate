@@ -7,7 +7,14 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import { X } from "phosphor-react-native";
 import { forwardRef, useImperativeHandle, useRef, useState } from "react";
-import { ActivityIndicator, Pressable, Text, View } from "react-native";
+import {
+	ActivityIndicator,
+	Platform,
+	Pressable,
+	Text,
+	TextInput,
+	View,
+} from "react-native";
 import { FilledButton } from "@/components/ui/FilledButton";
 import { useThemeColors } from "@/hooks/common/useThemeColors";
 import type {
@@ -33,6 +40,7 @@ const AttachmentBottomSheet = forwardRef<AttachmentBottomSheetRef, Props>(
 		const bottomSheetRef = useRef<BottomSheetModal>(null);
 		const { user } = useAuthStore();
 		const colors = useThemeColors();
+		const showCameraAction = Platform.OS !== "web";
 		const [url, setUrl] = useState("");
 		const [urlError, setUrlError] = useState<string | null>(null);
 		const [text, setText] = useState("");
@@ -195,107 +203,147 @@ const AttachmentBottomSheet = forwardRef<AttachmentBottomSheetRef, Props>(
 				}}
 				handleIndicatorStyle={{ backgroundColor: colors.border }}
 			>
-				<BottomSheetView className="flex-1 p-6">
-					{/* Header with X button */}
-					<View className="flex-row items-center justify-between mb-6">
-						<Text
-							className="text-xl font-bold"
-							style={{ color: colors.textStrong }}
-						>
-							{getTitle()}
-						</Text>
-						<Pressable onPress={() => bottomSheetRef.current?.dismiss()}>
-							<X size={24} color={colors.textLight} weight="bold" />
-						</Pressable>
-					</View>
-
-					{isSubmitting && (
-						<View className="items-center justify-center py-8">
-							<ActivityIndicator color={colors.actionPrimary} size="large" />
-							<Text style={{ color: colors.textDefault }} className="mt-4">
-								Processing...
+				<BottomSheetView>
+					<View className="p-6">
+						{/* Header with X button */}
+						<View className="flex-row items-center justify-between mb-6">
+							<Text
+								className="text-xl font-bold"
+								style={{ color: colors.textStrong }}
+							>
+								{getTitle()}
 							</Text>
+							<Pressable onPress={() => bottomSheetRef.current?.dismiss()}>
+								<X size={24} color={colors.textLight} weight="bold" />
+							</Pressable>
 						</View>
-					)}
 
-					{!isSubmitting && attachmentType === "photo" && (
-						<View className="flex-row gap-3 mb-4">
-							<FilledButton
-								label="Pick Image"
-								onPress={pickImage}
-								disabled={isSubmitting}
-								variant="primary"
-								className="flex-1"
-							/>
-							<FilledButton
-								label="Take Photo"
-								onPress={takePhoto}
-								disabled={isSubmitting}
-								variant="primary"
-								className="flex-1"
-							/>
-						</View>
-					)}
-
-					{!isSubmitting && attachmentType === "url" && (
-						<View className="gap-4">
-							<BottomSheetTextInput
-								placeholder="https://example.com"
-								placeholderTextColor={colors.textLight}
-								value={url}
-								onChangeText={handleUrlChange}
-								className="h-14 px-4 rounded-full border"
-								style={{
-									backgroundColor: colors.surfaceBg,
-									borderColor: urlError ? colors.danger : colors.border,
-									color: colors.textStrong,
-								}}
-								autoCapitalize="none"
-								autoCorrect={false}
-								keyboardType="url"
-							/>
-							{urlError && (
-								<Text
-									style={{ color: colors.danger }}
-									className="text-sm font-medium"
-								>
-									{urlError}
+						{isSubmitting && (
+							<View className="items-center justify-center py-8">
+								<ActivityIndicator color={colors.actionPrimary} size="large" />
+								<Text style={{ color: colors.textDefault }} className="mt-4">
+									Processing...
 								</Text>
-							)}
-							<FilledButton
-								label="Submit"
-								onPress={handleSubmitUrl}
-								disabled={isSubmitting || (!url.trim() && requireAttachment)}
-								variant="primary"
-							/>
-						</View>
-					)}
+							</View>
+						)}
 
-					{!isSubmitting && attachmentType === "text" && (
-						<View className="gap-4">
-							<BottomSheetTextInput
-								placeholder="Write your proof..."
-								placeholderTextColor={colors.textLight}
-								value={text}
-								onChangeText={setText}
-								multiline
-								numberOfLines={4}
-								className="h-32 px-4 py-3 rounded-3xl border"
-								style={{
-									backgroundColor: colors.surfaceBg,
-									borderColor: colors.border,
-									color: colors.textStrong,
-									textAlignVertical: "top",
-								}}
-							/>
-							<FilledButton
-								label="Submit"
-								onPress={handleSubmitText}
-								disabled={isSubmitting || (!text.trim() && requireAttachment)}
-								variant="primary"
-							/>
-						</View>
-					)}
+						{!isSubmitting && attachmentType === "photo" && (
+							<View className="flex-row gap-3 mb-4">
+								<FilledButton
+									label="Pick Image"
+									onPress={pickImage}
+									disabled={isSubmitting}
+									variant="primary"
+									className={showCameraAction ? "flex-1" : "w-full"}
+								/>
+								{showCameraAction && (
+									<FilledButton
+										label="Take Photo"
+										onPress={takePhoto}
+										disabled={isSubmitting}
+										variant="primary"
+										className="flex-1"
+									/>
+								)}
+							</View>
+						)}
+
+						{!isSubmitting && attachmentType === "url" && (
+							<View className="gap-4">
+								{Platform.OS === "web" ? (
+									<TextInput
+										placeholder="https://example.com"
+										placeholderTextColor={colors.textLight}
+										value={url}
+										onChangeText={handleUrlChange}
+										className="h-14 px-4 rounded-full border"
+										style={{
+											backgroundColor: colors.surfaceBg,
+											borderColor: urlError ? colors.danger : colors.border,
+											color: colors.textStrong,
+										}}
+										autoCapitalize="none"
+										autoCorrect={false}
+										keyboardType="url"
+									/>
+								) : (
+									<BottomSheetTextInput
+										placeholder="https://example.com"
+										placeholderTextColor={colors.textLight}
+										value={url}
+										onChangeText={handleUrlChange}
+										className="h-14 px-4 rounded-full border"
+										style={{
+											backgroundColor: colors.surfaceBg,
+											borderColor: urlError ? colors.danger : colors.border,
+											color: colors.textStrong,
+										}}
+										autoCapitalize="none"
+										autoCorrect={false}
+										keyboardType="url"
+									/>
+								)}
+								{urlError && (
+									<Text
+										style={{ color: colors.danger }}
+										className="text-sm font-medium"
+									>
+										{urlError}
+									</Text>
+								)}
+								<FilledButton
+									label="Submit"
+									onPress={handleSubmitUrl}
+									disabled={isSubmitting || (!url.trim() && requireAttachment)}
+									variant="primary"
+								/>
+							</View>
+						)}
+
+						{!isSubmitting && attachmentType === "text" && (
+							<View className="gap-4">
+								{Platform.OS === "web" ? (
+									<TextInput
+										placeholder="Write your proof..."
+										placeholderTextColor={colors.textLight}
+										value={text}
+										onChangeText={setText}
+										multiline
+										numberOfLines={4}
+										className="h-32 px-4 py-3 rounded-3xl border"
+										style={{
+											backgroundColor: colors.surfaceBg,
+											borderColor: colors.border,
+											color: colors.textStrong,
+											textAlignVertical: "top",
+										}}
+									/>
+								) : (
+									<BottomSheetTextInput
+										placeholder="Write your proof..."
+										placeholderTextColor={colors.textLight}
+										value={text}
+										onChangeText={setText}
+										multiline
+										numberOfLines={4}
+										className="h-32 px-4 py-3 rounded-3xl border"
+										style={{
+											backgroundColor: colors.surfaceBg,
+											borderColor: colors.border,
+											color: colors.textStrong,
+											textAlignVertical: "top",
+										}}
+									/>
+								)}
+								<FilledButton
+									label="Submit"
+									onPress={handleSubmitText}
+									disabled={isSubmitting || (!text.trim() && requireAttachment)}
+									variant="primary"
+								/>
+							</View>
+						)}
+					</View>
 				</BottomSheetView>
 			</BottomSheetModal>
 		);

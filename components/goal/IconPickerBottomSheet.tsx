@@ -74,13 +74,17 @@ export function IconPickerBottomSheet({
 	const iconGridColumns = Platform.OS === "web" ? 5 : 4;
 	const iconGridGap = 8;
 	const iconGridHorizontalPadding = 48;
+	const maxContentWidth = Platform.OS === "web" ? 600 : width;
 	const iconTileSize = Math.max(
 		52,
-		Math.floor(
-			(width -
-				iconGridHorizontalPadding -
-				iconGridGap * (iconGridColumns - 1)) /
-				iconGridColumns,
+		Math.min(
+			72,
+			Math.floor(
+				(maxContentWidth -
+					iconGridHorizontalPadding -
+					iconGridGap * (iconGridColumns - 1)) /
+					iconGridColumns,
+			),
 		),
 	);
 	const iconSize = Math.max(22, Math.floor(iconTileSize * 0.42));
@@ -186,18 +190,20 @@ export function IconPickerBottomSheet({
 				</View>
 
 				{Platform.OS === "web" ? (
-					<FlatList
-						data={filteredIcons}
-						keyExtractor={(item: string) => item}
-						numColumns={iconGridColumns}
-						contentContainerStyle={{ paddingBottom: 12 }}
-						columnWrapperStyle={{
-							justifyContent: "flex-start",
-							columnGap: iconGridGap,
-							marginBottom: 8,
-						}}
-						renderItem={({ item }: { item: string }) => renderIconTile(item)}
-					/>
+					<View className="self-center" style={{ width: 340 }}>
+						<FlatList
+							data={filteredIcons}
+							keyExtractor={(item: string) => item}
+							numColumns={iconGridColumns}
+							contentContainerStyle={{ paddingBottom: 12 }}
+							columnWrapperStyle={{
+								justifyContent: "flex-start",
+								columnGap: iconGridGap,
+								marginBottom: 8,
+							}}
+							renderItem={({ item }: { item: string }) => renderIconTile(item)}
+						/>
+					</View>
 				) : (
 					<BottomSheetFlatList
 						data={filteredIcons}

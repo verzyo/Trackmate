@@ -6,7 +6,13 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import { X } from "phosphor-react-native";
 import { forwardRef, useImperativeHandle, useRef, useState } from "react";
-import { ActivityIndicator, Pressable, Text, View } from "react-native";
+import {
+	ActivityIndicator,
+	Platform,
+	Pressable,
+	Text,
+	View,
+} from "react-native";
 import { FilledButton } from "@/components/ui/FilledButton";
 import { useThemeColors } from "@/hooks/common/useThemeColors";
 import { showAlert } from "@/utils/error.utils";
@@ -33,6 +39,7 @@ const ImagePickerBottomSheet = forwardRef<ImagePickerBottomSheetRef, Props>(
 		const bottomSheetRef = useRef<BottomSheetModal>(null);
 		const colors = useThemeColors();
 		const [isSubmitting, setIsSubmitting] = useState(false);
+		const showCameraAction = Platform.OS !== "web";
 
 		useImperativeHandle(ref, () => ({
 			present: () => bottomSheetRef.current?.present(),
@@ -104,45 +111,48 @@ const ImagePickerBottomSheet = forwardRef<ImagePickerBottomSheetRef, Props>(
 				}}
 				handleIndicatorStyle={{ backgroundColor: colors.border }}
 			>
-				<BottomSheetView className="flex-1 p-6">
-					{/* Header with X button */}
-					<View className="flex-row items-center justify-between mb-6">
-						<Text
-							className="text-xl font-bold"
-							style={{ color: colors.textStrong }}
-						>
-							{title}
-						</Text>
-						<Pressable onPress={() => bottomSheetRef.current?.dismiss()}>
-							<X size={24} color={colors.textLight} weight="bold" />
-						</Pressable>
-					</View>
-
-					{isSubmitting ? (
-						<View className="items-center justify-center py-4">
-							<ActivityIndicator color={colors.actionPrimary} size="large" />
-							<Text style={{ color: colors.textDefault }} className="mt-4">
-								Processing...
+				<BottomSheetView>
+					<View className="p-6">
+						<View className="mb-6 flex-row items-center justify-between">
+							<Text
+								className="text-xl font-bold"
+								style={{ color: colors.textStrong }}
+							>
+								{title}
 							</Text>
+							<Pressable onPress={() => bottomSheetRef.current?.dismiss()}>
+								<X size={24} color={colors.textLight} weight="bold" />
+							</Pressable>
 						</View>
-					) : (
-						<View className="flex-row gap-3">
-							<FilledButton
-								label="Pick Image"
-								onPress={pickImage}
-								disabled={isSubmitting}
-								variant="primary"
-								className="flex-1"
-							/>
-							<FilledButton
-								label="Take Photo"
-								onPress={takePhoto}
-								disabled={isSubmitting}
-								variant="primary"
-								className="flex-1"
-							/>
-						</View>
-					)}
+
+						{isSubmitting ? (
+							<View className="items-center justify-center py-4">
+								<ActivityIndicator color={colors.actionPrimary} size="large" />
+								<Text className="mt-4" style={{ color: colors.textDefault }}>
+									Processing...
+								</Text>
+							</View>
+						) : (
+							<View className="flex-row gap-3">
+								<FilledButton
+									label="Pick Image"
+									onPress={pickImage}
+									disabled={isSubmitting}
+									variant="primary"
+									className={showCameraAction ? "flex-1" : "w-full"}
+								/>
+								{showCameraAction && (
+									<FilledButton
+										label="Take Photo"
+										onPress={takePhoto}
+										disabled={isSubmitting}
+										variant="primary"
+										className="flex-1"
+									/>
+								)}
+							</View>
+						)}
+					</View>
 				</BottomSheetView>
 			</BottomSheetModal>
 		);

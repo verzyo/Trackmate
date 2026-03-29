@@ -1,14 +1,17 @@
 import { X } from "phosphor-react-native";
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
 	ActivityIndicator,
 	Pressable,
+	ScrollView,
 	Text,
 	TextInput,
 	View,
 } from "react-native";
 import Avatar from "@/components/ui/Avatar";
 import { useThemeColors } from "@/hooks/common/useThemeColors";
+import { useAssociatedPeople } from "@/hooks/profile/useAssociatedPeople";
+import { SuggestedUserAvatar } from "./SuggestedUserAvatar";
 
 export type Invitee = {
 	id: string;
@@ -23,6 +26,8 @@ type InviteManagerProps = {
 	onRemove: (id: string) => void;
 	onInputFocus?: (input: TextInput | null) => void;
 	onInputPress?: (input: TextInput | null) => void;
+	userId?: string;
+	existingParticipants?: string[];
 };
 
 export function InviteManager({
@@ -31,11 +36,22 @@ export function InviteManager({
 	onRemove,
 	onInputFocus,
 	onInputPress,
+	userId,
+	existingParticipants = [],
 }: InviteManagerProps) {
 	const colors = useThemeColors();
 	const [inviteUsername, setInviteUsername] = useState("");
 	const [isAdding, setIsAdding] = useState(false);
 	const inputRef = useRef<TextInput>(null);
+
+	// Build exclude list: existing participants + current invitees + self
+	const excludeUserIds = [
+		...existingParticipants,
+		...invitees.map((i) => i.id),
+		...(userId ? [userId] : []),
+	];
+
+	const { data: suggestedPeople } = useAssociatedPeople(userId, excludeUserIds);
 
 	const handleAdd = async () => {
 		if (!inviteUsername.trim()) return;
@@ -47,6 +63,18 @@ export function InviteManager({
 			setIsAdding(false);
 		}
 	};
+
+	const handleSuggestedUserPress = useCallback(
+		async (_userId: string, username: string) => {
+			setIsAdding(true);
+			try {
+				await onAdd(username);
+			} finally {
+				setIsAdding(false);
+			}
+		},
+		[onAdd],
+	);
 
 	return (
 		<View className="w-full gap-4">
@@ -74,6 +102,33 @@ export function InviteManager({
 					)}
 				</Pressable>
 			</View>
+
+			{suggestedPeople && suggestedPeople.length > 0 && (
+				<View className="gap-2">
+					<Text
+						className="text-sm font-medium text-text-light"
+						style={{ color: colors.textLight }}
+					>
+						Suggested
+					</Text>
+					<ScrollView
+						horizontal
+						showsHorizontalScrollIndicator={false}
+						contentContainerClassName="gap-3"
+					>
+						{suggestedPeople.map((person) => (
+							<SuggestedUserAvatar
+								key={person.id}
+								userId={person.id}
+								username={person.username}
+								nickname={person.nickname ?? undefined}
+								avatarUrl={person.avatar_url ?? undefined}
+								onPress={handleSuggestedUserPress}
+							/>
+						))}
+					</ScrollView>
+				</View>
+			)}
 
 			{invitees.length > 0 && (
 				<View className="gap-2">

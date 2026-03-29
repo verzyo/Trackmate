@@ -2,10 +2,14 @@ import { useQuery } from "@tanstack/react-query";
 import {
 	fetchGoal,
 	fetchGoalCompletions,
+	fetchGoalLeaderboard,
 	fetchGoalMonthlyPoints,
+	fetchGoalMonthlyPointsForAll,
+	fetchGoalPendingInvites,
 	fetchGoalStreak,
 	fetchGoals,
 	fetchInvites,
+	fetchRecentAttachments,
 	fetchTodayCompletion,
 	fetchTodaysCompletions,
 	fetchTodaysCompletionsForGoals,
@@ -29,6 +33,14 @@ export const goalKeys = {
 	invites: (userId: string) => [...goalKeys.all, "invites", userId] as const,
 	todaysCompletionsForGoals: () =>
 		[...goalKeys.all, "todaysCompletionsForGoals"] as const,
+	leaderboard: (goalId: string) =>
+		[...goalKeys.detail(goalId), "leaderboard"] as const,
+	monthlyPointsAll: (goalId: string) =>
+		[...goalKeys.detail(goalId), "monthlyPointsAll"] as const,
+	attachments: (goalId: string) =>
+		[...goalKeys.detail(goalId), "attachments"] as const,
+	pendingInvites: (goalId: string) =>
+		[...goalKeys.detail(goalId), "pendingInvites"] as const,
 };
 
 export const useGoals = () => {
@@ -108,5 +120,37 @@ export const useInvites = (userId: string | undefined) => {
 		queryKey: goalKeys.invites(userId ?? ""),
 		queryFn: () => fetchInvites(userId as string),
 		enabled: !!userId,
+	});
+};
+
+export const useGoalLeaderboard = (goalId: string | undefined) => {
+	return useQuery({
+		queryKey: goalKeys.leaderboard(goalId ?? ""),
+		queryFn: () => fetchGoalLeaderboard(goalId as string),
+		enabled: !!goalId,
+	});
+};
+
+export const useGoalMonthlyPointsForAll = (goalId: string | undefined) => {
+	return useQuery({
+		queryKey: goalKeys.monthlyPointsAll(goalId ?? ""),
+		queryFn: () => fetchGoalMonthlyPointsForAll(goalId as string),
+		enabled: !!goalId,
+	});
+};
+
+export const useRecentAttachments = (goalId: string | undefined, limit = 5) => {
+	return useQuery({
+		queryKey: goalKeys.attachments(goalId ?? ""),
+		queryFn: () => fetchRecentAttachments(goalId as string, limit),
+		enabled: !!goalId,
+	});
+};
+
+export const useGoalPendingInvites = (goalId: string | undefined) => {
+	return useQuery({
+		queryKey: goalKeys.pendingInvites(goalId ?? ""),
+		queryFn: () => fetchGoalPendingInvites(goalId as string),
+		enabled: !!goalId,
 	});
 };

@@ -1,4 +1,4 @@
-import { useRouter } from "expo-router";
+import { useNavigation, useRouter } from "expo-router";
 import { ArrowLeft } from "phosphor-react-native";
 import type { ReactNode } from "react";
 import { Text, View } from "react-native";
@@ -14,11 +14,27 @@ type PageHeaderProps = {
 
 export function PageHeader({ title, onBack, rightElement }: PageHeaderProps) {
 	const router = useRouter();
+	const navigation = useNavigation();
 	const colors = useThemeColors();
+
+	const handleBack = () => {
+		if (onBack) {
+			onBack();
+			return;
+		}
+
+		// Check if we can go back in the navigation state
+		if (navigation.canGoBack()) {
+			router.back();
+		} else {
+			// Fallback to home when no previous screen exists (direct navigation/refresh on web)
+			router.replace("/app");
+		}
+	};
 
 	return (
 		<View className="mb-6 h-16 w-full flex-row items-center justify-between">
-			<CircleIconButton onPress={onBack || (() => router.back())} hitSlop={8}>
+			<CircleIconButton onPress={handleBack} hitSlop={8}>
 				<ArrowLeft size={UI_SIZES.icon.md} color={colors.textStrong} />
 			</CircleIconButton>
 

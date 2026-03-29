@@ -1,4 +1,4 @@
-import { Text, View } from "react-native";
+import { Platform, Text, View } from "react-native";
 import {
 	FREQUENCY_TYPES,
 	type FrequencyType,
@@ -193,7 +193,7 @@ export function GoalConsistencyHeatmap({
 
 	return (
 		<View className="w-full rounded-[32px] border border-border bg-surface-fg p-6">
-			<View className="mb-3 flex-row items-center justify-between">
+			<View className="mb-4 flex-row items-center justify-between">
 				<Text
 					className="text-xl font-bold text-text-strong"
 					style={{ color: colors.textStrong }}
@@ -208,9 +208,9 @@ export function GoalConsistencyHeatmap({
 				</Text>
 			</View>
 
-			<View className="mb-3 flex-row gap-2">
+			<View className="mb-3 flex-row gap-2 px-4">
 				{DAY_COLUMNS.map((day) => (
-					<View key={day.value} className="flex-1 items-center">
+					<View key={day.value} className="flex-1 max-w-[40px] items-center">
 						<Text
 							className="text-sm font-medium text-text-light"
 							style={{ color: colors.textLight }}
@@ -221,23 +221,33 @@ export function GoalConsistencyHeatmap({
 				))}
 			</View>
 
-			<View className="gap-2">
+			<View
+				className="gap-2 self-center"
+				style={{
+					width: Platform.OS === "web" ? 320 : "100%",
+					maxWidth: Platform.OS === "web" ? 320 : undefined,
+				}}
+			>
 				{rows.map((week) => (
 					<View key={`week-${formatDate(week[0])}`} className="flex-row gap-2">
 						{week.map((date) => (
-							<HeatmapCell
+							<View
 								key={formatDate(date)}
-								isToday={date.getTime() === today.getTime()}
-								state={getCellState({
-									date,
-									today,
-									completedSet,
-									frequencyType,
-									frequencyValue,
-									startDate: normalizedStartDate,
-									weeklyDays: scheduledDays,
-								})}
-							/>
+								className="aspect-square flex-1 max-w-[40px]"
+							>
+								<HeatmapCell
+									isToday={date.getTime() === today.getTime()}
+									state={getCellState({
+										date,
+										today,
+										completedSet,
+										frequencyType,
+										frequencyValue,
+										startDate: normalizedStartDate,
+										weeklyDays: scheduledDays,
+									})}
+								/>
+							</View>
 						))}
 					</View>
 				))}

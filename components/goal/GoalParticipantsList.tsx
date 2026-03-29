@@ -1,4 +1,5 @@
-import { Text, View } from "react-native";
+import { router } from "expo-router";
+import { Pressable, Text, View } from "react-native";
 import Avatar from "@/components/ui/Avatar";
 import { useThemeColors } from "@/hooks/common/useThemeColors";
 
@@ -13,15 +14,24 @@ type ParticipantItem = {
 
 type GoalParticipantsListProps = {
 	participants: ParticipantItem[];
+	goalId: string;
+	currentUserId?: string;
 };
 
 export function GoalParticipantsList({
 	participants,
+	goalId,
+	currentUserId,
 }: GoalParticipantsListProps) {
 	const colors = useThemeColors();
 
+	const handleParticipantPress = (participantId: string) => {
+		if (participantId === currentUserId) return;
+		router.push(`/app/goal/${goalId}?participantId=${participantId}`);
+	};
+
 	return (
-		<View className="w-full gap-4">
+		<View className="w-full gap-3">
 			<Text
 				className="text-xl font-medium text-text-default"
 				style={{ color: colors.textDefault }}
@@ -31,9 +41,14 @@ export function GoalParticipantsList({
 
 			<View className="gap-3">
 				{participants.map((participant) => (
-					<View
+					<Pressable
 						key={participant.id}
-						className="flex-row items-center justify-between rounded-full border border-border bg-surface-fg px-4 py-3"
+						onPress={() => handleParticipantPress(participant.id)}
+						disabled={participant.id === currentUserId}
+						className="flex-row items-center justify-between rounded-[24px] border border-border bg-surface-fg px-4 py-3 active:opacity-70"
+						style={{
+							opacity: participant.id === currentUserId ? 1 : undefined,
+						}}
 					>
 						<View className="flex-row items-center gap-3">
 							<Avatar
@@ -43,7 +58,7 @@ export function GoalParticipantsList({
 								size={56}
 							/>
 
-							<View className="gap-0.5">
+							<View className="gap-1">
 								<Text
 									className="text-xl font-bold text-text-strong"
 									style={{ color: colors.textStrong }}
@@ -67,7 +82,7 @@ export function GoalParticipantsList({
 								{participant.role}
 							</Text>
 						</View>
-					</View>
+					</Pressable>
 				))}
 			</View>
 		</View>

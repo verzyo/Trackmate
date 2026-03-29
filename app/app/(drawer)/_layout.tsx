@@ -1,10 +1,14 @@
 import { Drawer } from "expo-router/drawer";
+import { Platform, useWindowDimensions } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { CustomDrawerContent } from "@/components/layout/CustomDrawerContent";
 import { useThemeColors } from "@/hooks/common/useThemeColors";
 
 export default function DrawerLayout() {
 	const colors = useThemeColors();
+	const { width } = useWindowDimensions();
+	const drawerWidth =
+		Platform.OS === "web" ? Math.min(Math.max(width * 0.32, 280), 360) : 280;
 
 	return (
 		<GestureHandlerRootView
@@ -16,11 +20,11 @@ export default function DrawerLayout() {
 					headerShown: false,
 					drawerType: "front",
 					drawerPosition: "right",
-					swipeEnabled: true,
+					swipeEnabled: Platform.OS !== "web",
 					swipeEdgeWidth: 50,
 					swipeMinDistance: 20,
 					drawerStyle: {
-						width: 280,
+						width: drawerWidth,
 						backgroundColor: colors.surfaceBg,
 					},
 					overlayColor: "rgba(0,0,0,0.5)",

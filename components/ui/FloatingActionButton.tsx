@@ -1,5 +1,5 @@
 import { PlusIcon } from "phosphor-react-native";
-import { Pressable } from "react-native";
+import { Pressable, View } from "react-native";
 
 type FloatingActionButtonProps = {
 	onPress: () => void;
@@ -7,13 +7,23 @@ type FloatingActionButtonProps = {
 
 export function FloatingActionButton({ onPress }: FloatingActionButtonProps) {
 	return (
-		<Pressable
-			onPress={onPress}
-			className="absolute right-8 bottom-12 z-50 h-16 w-16 items-center justify-center rounded-full bg-action-primary shadow-lg"
-			style={{ elevation: 10 }}
+		<View
+			className="absolute bottom-12 left-0 right-0 z-50 items-center"
+			pointerEvents="box-none"
 		>
-			<PlusIcon size={32} color="#ffffff" weight="bold" />
-		</Pressable>
+			<View
+				className="w-full max-w-4xl px-6 items-end"
+				pointerEvents="box-none"
+			>
+				<Pressable
+					onPress={onPress}
+					className="h-16 w-16 items-center justify-center rounded-full bg-action-primary shadow-lg"
+					style={{ elevation: 10 }}
+				>
+					<PlusIcon size={32} color="#ffffff" weight="bold" />
+				</Pressable>
+			</View>
+		</View>
 	);
 }
 
