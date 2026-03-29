@@ -1,23 +1,23 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import type {
-    AttachmentData,
-    CreateGoalParams,
-    GoalWithParticipant,
-    UpdateGoalMetadataParams,
+	AttachmentData,
+	CreateGoalParams,
+	GoalWithParticipant,
+	UpdateGoalMetadataParams,
 } from "@/schemas/goal.schema";
 import {
-    acceptInvite,
-    completeGoal,
-    createGoal,
-    createInvite,
-    declineInvite,
-    deleteGoal,
-    leaveGoal,
-    uncompleteGoal,
-    updateCompletionWithAttachment,
-    updateGoalMetadata,
+	acceptInvite,
+	completeGoal,
+	createGoal,
+	createInvite,
+	declineInvite,
+	deleteGoal,
+	leaveGoal,
+	uncompleteGoal,
+	updateCompletionWithAttachment,
+	updateGoalMetadata,
 } from "@/services/goal.service";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { goalKeys } from "./useGoalQueries";
 
 type CompletionVariables = {

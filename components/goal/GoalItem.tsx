@@ -1,17 +1,17 @@
+import { CheckIcon, FireIcon } from "phosphor-react-native";
+import {
+	cloneElement,
+	isValidElement,
+	memo,
+	type ReactElement,
+	type ReactNode,
+	useMemo,
+} from "react";
+import { Pressable, Text, View } from "react-native";
 import AvatarStack from "@/components/ui/AvatarStack";
 import PersonalTag from "@/components/ui/PersonalTag";
 import type { GoalWithParticipant } from "@/schemas/goal.schema";
 import { hexToRgba } from "@/utils/color.utils";
-import { CheckIcon, FireIcon } from "phosphor-react-native";
-import {
-    cloneElement,
-    isValidElement,
-    memo,
-    type ReactElement,
-    type ReactNode,
-    useMemo,
-} from "react";
-import { Pressable, Text, View } from "react-native";
 
 function filledIcon(icon: ReactNode, color: string, size = 28): ReactNode {
 	if (!isValidElement(icon)) return icon;
