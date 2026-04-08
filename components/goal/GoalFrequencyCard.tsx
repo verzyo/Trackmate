@@ -1,11 +1,11 @@
+import { ArrowsClockwise } from "phosphor-react-native";
+import { Text, View } from "react-native";
 import {
-    FREQUENCY_TYPES,
-    type FrequencyType,
+	FREQUENCY_TYPES,
+	type FrequencyType,
 } from "@/constants/frequencyTypes";
 import { useThemeColors } from "@/hooks/common/useThemeColors";
 import { cn } from "@/utils/cn";
-import { ArrowsClockwise } from "phosphor-react-native";
-import { Text, View } from "react-native";
 
 const WEEK_DAYS = [
 	{ label: "M", value: 1 },

@@ -50,10 +50,12 @@ export const useProfile = (userId?: string | null) => {
 };
 
 export const useProfilesByIds = (userIds: string[]) => {
+	const normalizedUserIds = Array.from(new Set(userIds)).sort();
+
 	return useQuery({
-		queryKey: ["profiles", "byIds", ...userIds],
-		queryFn: () => fetchProfilesByIds(userIds),
-		enabled: userIds.length > 0,
+		queryKey: ["profiles", "byIds", ...normalizedUserIds],
+		queryFn: () => fetchProfilesByIds(normalizedUserIds),
+		enabled: normalizedUserIds.length > 0,
 	});
 };
 

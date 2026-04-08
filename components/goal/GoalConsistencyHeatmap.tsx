@@ -1,9 +1,9 @@
+import { Platform, Text, View } from "react-native";
 import {
-    FREQUENCY_TYPES,
-    type FrequencyType,
+	FREQUENCY_TYPES,
+	type FrequencyType,
 } from "@/constants/frequencyTypes";
 import { useThemeColors } from "@/hooks/common/useThemeColors";
-import { Platform, Text, View } from "react-native";
 
 const DAY_COLUMNS = [
 	{ label: "M", value: 1 },

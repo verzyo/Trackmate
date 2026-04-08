@@ -1,5 +1,17 @@
+import { useQueryClient } from "@tanstack/react-query";
+import * as ImagePicker from "expo-image-picker";
+import { router, useLocalSearchParams } from "expo-router";
+import { useMemo, useRef } from "react";
+import {
+	Platform,
+	ScrollView,
+	Text,
+	useWindowDimensions,
+	View,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AttachmentBottomSheet, {
-    type AttachmentBottomSheetRef,
+	type AttachmentBottomSheetRef,
 } from "@/components/AttachmentBottomSheet";
 import { GoalActionButtons } from "@/components/goal/GoalActionButtons";
 import { GoalAttachmentsList } from "@/components/goal/GoalAttachmentsList";
@@ -15,24 +27,24 @@ import { Screen } from "@/components/layout/Screen";
 import AppLoadingScreen from "@/components/ui/AppLoadingScreen";
 import { useThemeColors } from "@/hooks/common/useThemeColors";
 import {
-    useAcceptInvite,
-    useCompleteGoal,
-    useDeclineInvite,
-    useUncompleteGoal,
-    useUpdateCompletion,
+	useAcceptInvite,
+	useCompleteGoal,
+	useDeclineInvite,
+	useUncompleteGoal,
+	useUpdateCompletion,
 } from "@/hooks/goal/useGoalMutations";
 import {
-    goalKeys,
-    useGoal,
-    useGoalCompletions,
-    useGoalLeaderboard,
-    useGoalMonthlyPoints,
-    useGoalMonthlyPointsForAll,
-    useGoalPendingInvites,
-    useGoalStreak,
-    useRecentAttachments,
-    useTodayCompletion,
-    useTodaysCompletionsForGoals,
+	goalKeys,
+	useGoal,
+	useGoalCompletions,
+	useGoalLeaderboard,
+	useGoalMonthlyPoints,
+	useGoalMonthlyPointsForAll,
+	useGoalPendingInvites,
+	useGoalStreak,
+	useRecentAttachments,
+	useTodayCompletion,
+	useTodaysCompletionsForGoals,
 } from "@/hooks/goal/useGoalQueries";
 import { useProfilesByIds } from "@/hooks/profile/useProfileHooks";
 import type { AttachmentData } from "@/schemas/goal.schema";
@@ -40,18 +52,6 @@ import { uploadAttachment } from "@/services/attachment.service";
 import { useAuthStore } from "@/store/auth.store";
 import { getNextDueDate, isTodayUTC } from "@/utils/date.utils";
 import { getErrorMessage, showAlert } from "@/utils/error.utils";
-import { useQueryClient } from "@tanstack/react-query";
-import * as ImagePicker from "expo-image-picker";
-import { router, useLocalSearchParams } from "expo-router";
-import { useMemo, useRef } from "react";
-import {
-    Platform,
-    ScrollView,
-    Text,
-    useWindowDimensions,
-    View,
-} from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function GoalDetailsModal() {
 	const { id, inviteId, participantId } = useLocalSearchParams<{
