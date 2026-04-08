@@ -1,5 +1,11 @@
-import { Pressable, Text, View } from "react-native";
 import { cn } from "@/utils/cn";
+import {
+    Platform,
+    Pressable,
+    Text,
+    useWindowDimensions,
+    View,
+} from "react-native";
 
 const WEEK_DAYS = [
 	{ label: "M", value: 1 },
@@ -24,8 +30,23 @@ export function WeekDaySelector({
 	disabled,
 	textColor,
 }: WeekDaySelectorProps) {
+	const { width } = useWindowDimensions();
+	const compactWebLayout = Platform.OS === "web" && width < 560;
+	const dayGap = Platform.OS === "web" && width < 460 ? 6 : 12;
+	const estimatedAvailableWidth = Math.max(200, width - 96);
+	const rawDaySize = Math.floor(
+		(estimatedAvailableWidth - dayGap * (WEEK_DAYS.length - 1)) /
+			WEEK_DAYS.length,
+	);
+	const daySize = compactWebLayout
+		? Math.max(24, Math.min(40, rawDaySize))
+		: 40;
+
 	return (
-		<View className="flex-row gap-3 justify-center rounded-full">
+		<View
+			className="w-full flex-row justify-between rounded-full"
+			style={{ columnGap: dayGap }}
+		>
 			{WEEK_DAYS.map((day) => {
 				const isSelected = selectedDays.includes(day.value);
 				return (
@@ -34,12 +55,13 @@ export function WeekDaySelector({
 						disabled={disabled}
 						onPress={() => onToggleDay(day.value)}
 						className={cn(
-							"h-10 w-10 rounded-full items-center justify-center",
+							"rounded-full items-center justify-center",
 							isSelected ? "bg-action-primary" : "bg-state-muted-bg",
 						)}
+						style={{ width: daySize, height: daySize }}
 					>
 						<Text
-							className="font-bold"
+							className="font-bold text-sm"
 							style={{ color: isSelected ? "white" : textColor }}
 						>
 							{day.label}

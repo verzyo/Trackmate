@@ -1,12 +1,19 @@
-import * as PhosphorIcons from "phosphor-react-native";
-import { Pressable, Text, TextInput, View } from "react-native";
 import { FrequencyTypeSelector } from "@/components/forms/FrequencyTypeSelector";
 import { WeekDaySelector } from "@/components/forms/WeekDaySelector";
 import {
-	FREQUENCY_TYPES,
-	type FrequencyType,
+    FREQUENCY_TYPES,
+    type FrequencyType,
 } from "@/constants/frequencyTypes";
 import { cn } from "@/utils/cn";
+import * as PhosphorIcons from "phosphor-react-native";
+import {
+    Platform,
+    Pressable,
+    Text,
+    TextInput,
+    useWindowDimensions,
+    View,
+} from "react-native";
 
 type GoalFrequencyEditorProps = {
 	frequencyType: FrequencyType;
@@ -45,6 +52,9 @@ export function GoalFrequencyEditor({
 	textDefaultColor,
 	actionPrimaryColor,
 }: GoalFrequencyEditorProps) {
+	const { width } = useWindowDimensions();
+	const useCompactIntervalLayout = Platform.OS === "web" && width < 560;
+
 	return (
 		<>
 			<FrequencyTypeSelector
@@ -66,8 +76,17 @@ export function GoalFrequencyEditor({
 				)}
 			>
 				{frequencyType === FREQUENCY_TYPES.INTERVAL ? (
-					<View className="flex-row items-center justify-between gap-4">
-						<View className="flex-1 gap-1">
+					<View
+						className={cn(
+							"gap-4",
+							useCompactIntervalLayout
+								? "items-stretch"
+								: "flex-row items-center justify-between",
+						)}
+					>
+						<View
+							className={cn("gap-1", !useCompactIntervalLayout && "flex-1")}
+						>
 							<Text
 								className="font-bold text-text-strong text-base"
 								style={{ color: textStrongColor }}
@@ -85,11 +104,16 @@ export function GoalFrequencyEditor({
 								Recurring gap between logs
 							</Text>
 						</View>
-						<View className="flex-row items-center rounded-full bg-state-muted-bg p-1 gap-2">
+						<View
+							className={cn(
+								"flex-row items-center rounded-full bg-state-muted-bg p-1 gap-2",
+							)}
+							style={useCompactIntervalLayout ? { width: "100%" } : undefined}
+						>
 							<Pressable
 								disabled={intervalValue <= 1 || disabled}
 								onPress={onDecrementInterval}
-								className="h-10 w-10 items-center justify-center rounded-full bg-surface-fg disabled:bg-state-muted-bg"
+								className="h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-fg disabled:bg-state-muted-bg"
 							>
 								<PhosphorIcons.Minus
 									size={16}
@@ -109,17 +133,21 @@ export function GoalFrequencyEditor({
 								textAlign="center"
 								selectTextOnFocus
 								editable={!disabled}
-								className="h-10 min-w-[56px] rounded-full px-3 text-center text-lg font-bold text-text-strong"
+								className={cn(
+									"h-10 rounded-full px-3 text-center text-lg font-bold text-text-strong",
+									useCompactIntervalLayout ? "min-w-0 flex-1" : "w-14",
+								)}
 								style={{
 									color: textStrongColor,
 									paddingVertical: 0,
+									minWidth: useCompactIntervalLayout ? 0 : undefined,
 									lineHeight: 24,
 								}}
 							/>
 							<Pressable
 								disabled={disabled}
 								onPress={onIncrementInterval}
-								className="h-10 w-10 items-center justify-center rounded-full bg-surface-fg disabled:bg-state-muted-bg"
+								className="h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-fg disabled:bg-state-muted-bg"
 							>
 								<PhosphorIcons.Plus
 									size={16}
