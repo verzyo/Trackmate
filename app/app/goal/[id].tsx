@@ -1,14 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
-import * as ImagePicker from "expo-image-picker";
 import { router, useLocalSearchParams } from "expo-router";
 import { useMemo, useRef } from "react";
-import {
-	Platform,
-	ScrollView,
-	Text,
-	useWindowDimensions,
-	View,
-} from "react-native";
+import { ScrollView, Text, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AttachmentBottomSheet, {
 	type AttachmentBottomSheetRef,
@@ -48,7 +41,6 @@ import {
 } from "@/hooks/goal/useGoalQueries";
 import { useProfilesByIds } from "@/hooks/profile/useProfileHooks";
 import type { AttachmentData } from "@/schemas/goal.schema";
-import { uploadAttachment } from "@/services/attachment.service";
 import { useAuthStore } from "@/store/auth.store";
 import { getNextDueDate, isTodayUTC } from "@/utils/date.utils";
 import { getErrorMessage, showAlert } from "@/utils/error.utils";
@@ -196,33 +188,6 @@ export default function GoalDetailsModal() {
 
 	const handleComplete = async (attachmentData?: AttachmentData) => {
 		if (goal.require_attachment && !attachmentData) {
-			// On web with photo attachment, immediately open image picker
-			if (Platform.OS === "web" && goal.attachment_type === "photo") {
-				const result = await ImagePicker.launchImageLibraryAsync({
-					mediaTypes: ["images"],
-					quality: 0.8,
-				});
-				if (!result.canceled) {
-					try {
-						const uri = result.assets[0].uri;
-						const path = await uploadAttachment(
-							currentUserId as string,
-							uri,
-							"image/jpeg",
-						);
-						await completeMutation.mutateAsync({
-							goalId: goal.id,
-							userId: currentUserId as string,
-							attachmentData: { type: "photo", path },
-						});
-						refetchToday();
-					} catch (e) {
-						showAlert(getErrorMessage(e, "Failed to upload attachment"));
-					}
-				}
-				return;
-			}
-			// For other attachment types or native, show bottom sheet
 			attachmentSheetRef.current?.present();
 			return;
 		}

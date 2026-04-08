@@ -60,11 +60,11 @@ export function Avatar({
 					pointerEvents="none"
 					className="absolute border-2 border-state-success"
 					style={{
-						top: 2,
-						right: 2,
-						bottom: 2,
-						left: 2,
-						borderRadius: Math.max((size - 4) / 2, 0),
+						top: 0,
+						right: 0,
+						bottom: 0,
+						left: 0,
+						borderRadius: size / 2,
 					}}
 				/>
 			)}
