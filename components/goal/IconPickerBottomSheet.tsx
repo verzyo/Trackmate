@@ -42,6 +42,24 @@ Object.keys(PhosphorIcons).forEach((key) => {
 			iconSet.add(key);
 		}
 	}
+	if (
+		/^[A-Z][a-zA-Z]*$/.test(key) &&
+		!key.includes("Context") &&
+		!key.includes("Base") &&
+		!key.includes("Props") &&
+		!key.includes("Weight") &&
+		!key.endsWith("Fill") &&
+		!key.endsWith("Light") &&
+		!key.endsWith("Thin") &&
+		!key.endsWith("Bold") &&
+		!key.endsWith("Duotone")
+	) {
+		const comp = (PhosphorIcons as Record<string, unknown>)[key];
+		if (comp && typeof comp === "function" && !componentRefs.has(comp)) {
+			componentRefs.add(comp);
+			iconSet.add(key);
+		}
+	}
 });
 
 const ALL_ICONS = Array.from(iconSet).sort();
@@ -73,21 +91,31 @@ export function IconPickerBottomSheet({
 
 	const iconPickerSelectedBackground = hexToRgba(colors.actionPrimary, 0.12);
 	const iconPreviewColor = selectedColor || colors.actionPrimary;
-	const iconGridColumns = Platform.OS === "web" ? 5 : 4;
 	const iconGridGap = 8;
 	const iconGridHorizontalPadding = 48;
-	const maxContentWidth = Platform.OS === "web" ? 600 : width;
-	const iconTileSize = Math.max(
-		52,
+	const nativeTargetTileSize = 64;
+	const nativeResponsiveColumns = Math.max(
+		3,
 		Math.min(
-			72,
-			Math.floor(
-				(maxContentWidth -
-					iconGridHorizontalPadding -
-					iconGridGap * (iconGridColumns - 1)) /
-					iconGridColumns,
+			6,
+			Math.round(
+				(width - iconGridHorizontalPadding + iconGridGap) /
+					(nativeTargetTileSize + iconGridGap),
 			),
 		),
+	);
+	const iconGridColumns =
+		Platform.OS === "web" ? 5 : Math.max(1, nativeResponsiveColumns);
+	const maxContentWidth = Platform.OS === "web" ? 600 : width;
+	const rawIconTileSize = Math.floor(
+		(maxContentWidth -
+			iconGridHorizontalPadding -
+			iconGridGap * (iconGridColumns - 1)) /
+			iconGridColumns,
+	);
+	const iconTileSize = Math.max(
+		52,
+		Platform.OS === "web" ? Math.min(72, rawIconTileSize) : rawIconTileSize,
 	);
 	const iconSize = Math.max(22, Math.floor(iconTileSize * 0.42));
 
@@ -208,6 +236,7 @@ export function IconPickerBottomSheet({
 					</View>
 				) : (
 					<BottomSheetFlatList
+						key={`icons-${iconGridColumns}`}
 						data={filteredIcons}
 						keyExtractor={(item: string) => item}
 						numColumns={iconGridColumns}
