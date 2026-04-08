@@ -178,6 +178,7 @@ export function GoalConsistencyHeatmap({
 	weeklyDays,
 }: GoalConsistencyHeatmapProps) {
 	const colors = useThemeColors();
+	const heatmapContentMaxWidth = 320;
 	const today = normalizeDate(new Date());
 	const gridStart = addDays(getWeekStart(today), -21);
 	const normalizedStartDate = startDate
@@ -193,7 +194,10 @@ export function GoalConsistencyHeatmap({
 	);
 
 	return (
-		<View className="w-full rounded-[32px] border border-border bg-surface-fg p-6">
+		<View
+			className="w-full rounded-[32px] border border-border bg-surface-fg p-6"
+			style={{ minHeight: Platform.OS === "web" ? 360 : undefined }}
+		>
 			<View className="mb-4 flex-row items-center justify-between">
 				<Text
 					className="text-xl font-bold text-text-strong"
@@ -209,49 +213,48 @@ export function GoalConsistencyHeatmap({
 				</Text>
 			</View>
 
-			<View className="mb-3 flex-row gap-2 px-4">
-				{DAY_COLUMNS.map((day) => (
-					<View key={day.value} className="flex-1 max-w-[40px] items-center">
-						<Text
-							className="text-sm font-medium text-text-light"
-							style={{ color: colors.textLight }}
-						>
-							{day.label}
-						</Text>
-					</View>
-				))}
-			</View>
-
 			<View
-				className="gap-2 self-center"
-				style={{
-					width: Platform.OS === "web" ? 320 : "100%",
-					maxWidth: Platform.OS === "web" ? 320 : undefined,
-				}}
+				className="w-full self-center"
+				style={{ maxWidth: heatmapContentMaxWidth }}
 			>
-				{rows.map((week) => (
-					<View key={`week-${formatDate(week[0])}`} className="flex-row gap-2">
-						{week.map((date) => (
-							<View
-								key={formatDate(date)}
-								className="aspect-square flex-1 max-w-[40px]"
+				<View className="mb-3 flex-row gap-2">
+					{DAY_COLUMNS.map((day) => (
+						<View key={day.value} className="flex-1 items-center">
+							<Text
+								className="text-sm font-medium text-text-light"
+								style={{ color: colors.textLight }}
 							>
-								<HeatmapCell
-									isToday={date.getTime() === today.getTime()}
-									state={getCellState({
-										date,
-										today,
-										completedSet,
-										frequencyType,
-										frequencyValue,
-										startDate: normalizedStartDate,
-										weeklyDays: scheduledDays,
-									})}
-								/>
-							</View>
-						))}
-					</View>
-				))}
+								{day.label}
+							</Text>
+						</View>
+					))}
+				</View>
+
+				<View className="gap-2">
+					{rows.map((week) => (
+						<View
+							key={`week-${formatDate(week[0])}`}
+							className="flex-row gap-2"
+						>
+							{week.map((date) => (
+								<View key={formatDate(date)} className="aspect-square flex-1">
+									<HeatmapCell
+										isToday={date.getTime() === today.getTime()}
+										state={getCellState({
+											date,
+											today,
+											completedSet,
+											frequencyType,
+											frequencyValue,
+											startDate: normalizedStartDate,
+											weeklyDays: scheduledDays,
+										})}
+									/>
+								</View>
+							))}
+						</View>
+					))}
+				</View>
 			</View>
 		</View>
 	);

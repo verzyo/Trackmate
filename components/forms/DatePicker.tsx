@@ -2,7 +2,7 @@ import NativeDateTimePicker, {
 	type DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
 import { CalendarBlank } from "phosphor-react-native";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Platform, Pressable, Text, View } from "react-native";
 import { useThemeColors } from "@/hooks/common/useThemeColors";
 import { cn } from "@/utils/cn";
@@ -23,12 +23,32 @@ export function DatePicker({
 }: DatePickerProps) {
 	const colors = useThemeColors();
 	const [show, setShow] = useState(false);
+	const webDateInputRef = useRef<HTMLInputElement>(null);
 
 	const handleChange = (_event: DateTimePickerEvent, selectedDate?: Date) => {
 		if (Platform.OS === "android") {
 			setShow(false);
 		}
 		if (selectedDate) onChange(toUTCMidnight(selectedDate));
+	};
+
+	const openWebDatePicker = () => {
+		if (disabled) return;
+
+		const input = webDateInputRef.current;
+		if (!input) return;
+
+		const pickerInput = input as HTMLInputElement & {
+			showPicker?: () => void;
+		};
+
+		if (typeof pickerInput.showPicker === "function") {
+			pickerInput.showPicker();
+			return;
+		}
+
+		pickerInput.focus();
+		pickerInput.click();
 	};
 
 	return (
@@ -40,11 +60,20 @@ export function DatePicker({
 			)}
 
 			{Platform.OS === "web" ? (
-				<View className="w-full h-14 rounded-full border border-border bg-surface-fg px-5 flex-row items-center justify-between overflow-hidden">
+				<Pressable
+					onPress={openWebDatePicker}
+					disabled={disabled}
+					className={cn(
+						"relative w-full h-14 rounded-full border border-border bg-surface-fg px-5 flex-row items-center justify-between overflow-hidden",
+						disabled && "opacity-50",
+					)}
+				>
 					<input
+						ref={webDateInputRef}
 						type="date"
 						value={formatToISODate(value)}
 						disabled={disabled}
+						aria-label={label || "Select date"}
 						onChange={(e) => {
 							if (e.target.value) {
 								const [year, month, day] = e.target.value
@@ -54,23 +83,33 @@ export function DatePicker({
 							}
 						}}
 						style={{
+							position: "absolute",
+							top: 0,
+							left: 0,
+							height: 1,
+							width: 1,
 							border: "none",
 							outline: "none",
 							background: "transparent",
-							width: "100%",
-							color: "var(--color-text-strong)",
-							fontSize: "16px",
+							opacity: 0,
+							pointerEvents: "none",
 							cursor: disabled ? "not-allowed" : "pointer",
 							WebkitAppearance: "none",
 							MozAppearance: "none",
 							appearance: "none",
-							paddingRight: "32px",
 						}}
 					/>
-					<View className="absolute right-5 pointer-events-none">
+					<Text className="text-base text-text-strong">
+						{value.toLocaleDateString(undefined, {
+							year: "numeric",
+							month: "2-digit",
+							day: "2-digit",
+						})}
+					</Text>
+					<View className="pointer-events-none">
 						<CalendarBlank size={20} color={colors.textLight} weight="bold" />
 					</View>
-				</View>
+				</Pressable>
 			) : (
 				<Pressable
 					onPress={() => !disabled && setShow(true)}

@@ -1,11 +1,11 @@
-import { cn } from "@/utils/cn";
 import {
-    Platform,
-    Pressable,
-    Text,
-    useWindowDimensions,
-    View,
+	Platform,
+	Pressable,
+	Text,
+	useWindowDimensions,
+	View,
 } from "react-native";
+import { cn } from "@/utils/cn";
 
 const WEEK_DAYS = [
 	{ label: "M", value: 1 },

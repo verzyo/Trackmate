@@ -1,23 +1,23 @@
-import { FilledButton } from "@/components/ui/FilledButton";
-import { useThemeColors } from "@/hooks/common/useThemeColors";
-import type {
-    AttachmentData,
-    GoalWithParticipant,
-} from "@/schemas/goal.schema";
-import { uploadAttachment } from "@/services/attachment.service";
-import { useAuthStore } from "@/store/auth.store";
-import { showAlert } from "@/utils/error.utils";
 import * as ImagePicker from "expo-image-picker";
 import { X } from "phosphor-react-native";
 import { forwardRef, useImperativeHandle, useState } from "react";
 import {
-    ActivityIndicator,
-    Modal,
-    Pressable,
-    Text,
-    TextInput,
-    View,
+	ActivityIndicator,
+	Modal,
+	Pressable,
+	Text,
+	TextInput,
+	View,
 } from "react-native";
+import { FilledButton } from "@/components/ui/FilledButton";
+import { useThemeColors } from "@/hooks/common/useThemeColors";
+import type {
+	AttachmentData,
+	GoalWithParticipant,
+} from "@/schemas/goal.schema";
+import { uploadAttachment } from "@/services/attachment.service";
+import { useAuthStore } from "@/store/auth.store";
+import { showAlert } from "@/utils/error.utils";
 
 type Props = {
 	goal: GoalWithParticipant;

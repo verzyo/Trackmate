@@ -1,5 +1,11 @@
+import type { DrawerNavigationProp } from "@react-navigation/drawer";
+import { useNavigation } from "@react-navigation/native";
+import { useQueryClient } from "@tanstack/react-query";
+import { type Href, router, useFocusEffect } from "expo-router";
+import { useCallback, useMemo, useRef, useState } from "react";
+import { RefreshControl, ScrollView, View } from "react-native";
 import AttachmentBottomSheet, {
-    type AttachmentBottomSheetRef,
+	type AttachmentBottomSheetRef,
 } from "@/components/AttachmentBottomSheet";
 import GreetingHeader from "@/components/GreetingHeader";
 import { TodaySection } from "@/components/goal/TodaySection";
@@ -9,11 +15,11 @@ import FloatingActionButton from "@/components/ui/FloatingActionButton";
 import { ATTACHMENT_TYPES } from "@/constants/attachmentTypes";
 import { useErrorHandler } from "@/hooks/common/useErrorHandler";
 import {
-    goalKeys,
-    useGoals,
-    useInvites,
-    useTodaysCompletions,
-    useTodaysCompletionsForGoals,
+	goalKeys,
+	useGoals,
+	useInvites,
+	useTodaysCompletions,
+	useTodaysCompletionsForGoals,
 } from "@/hooks/goal/useGoalQueries";
 import { useGoalToggle } from "@/hooks/goal/useGoalToggle";
 import { useGroupedGoals } from "@/hooks/goal/useGroupedGoals";
@@ -21,12 +27,6 @@ import { usePrefetchGoals } from "@/hooks/goal/usePrefetchGoals";
 import { useProfile, useProfilesByIds } from "@/hooks/profile/useProfileHooks";
 import type { GoalWithParticipant } from "@/schemas/goal.schema";
 import { useAuthStore } from "@/store/auth.store";
-import type { DrawerNavigationProp } from "@react-navigation/drawer";
-import { useNavigation } from "@react-navigation/native";
-import { useQueryClient } from "@tanstack/react-query";
-import { type Href, router, useFocusEffect } from "expo-router";
-import { useCallback, useMemo, useRef, useState } from "react";
-import { RefreshControl, ScrollView, View } from "react-native";
 
 const getGreeting = () => {
 	const h = new Date().getHours();

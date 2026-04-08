@@ -316,9 +316,9 @@ export default function GoalDetailsModal() {
 					) : null}
 
 					{isWideScreen ? (
-						<View className="flex-row gap-4">
+						<View className="flex-row items-stretch gap-4">
 							{isParticipant && !isPersonalGoal && !isViewingOther && (
-								<View className="flex-1" style={{ height: 320 }}>
+								<View className="min-h-[360px] flex-1 self-stretch">
 									<GoalPointsChart
 										data={monthlyPointsAll}
 										loading={isMonthlyPointsAllLoading}
@@ -326,7 +326,7 @@ export default function GoalDetailsModal() {
 								</View>
 							)}
 							{isViewingOther && !isPersonalGoal && viewUserId && (
-								<View className="flex-1" style={{ height: 320 }}>
+								<View className="min-h-[360px] flex-1 self-stretch">
 									<GoalPointsChart
 										data={monthlyPointsAll.filter(
 											(p) => p.user_id === viewUserId,
@@ -336,7 +336,7 @@ export default function GoalDetailsModal() {
 								</View>
 							)}
 							{!isInviteState && (
-								<View className="flex-1" style={{ height: 320 }}>
+								<View className="min-h-[360px] flex-1 self-stretch">
 									<GoalConsistencyHeatmap
 										completedDates={completedDateKeys}
 										frequencyType={goal.frequency_type}

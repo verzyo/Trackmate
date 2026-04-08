@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import {
 	ActivityIndicator,
 	Platform,
+	StyleSheet,
 	Text,
 	useWindowDimensions,
 	View,
@@ -152,18 +153,19 @@ export function GoalPointsChart({ data, loading }: GoalPointsChartProps) {
 
 	return (
 		<View
-			className="w-full rounded-[32px] border p-6"
+			className="w-full flex-1 rounded-[32px] border p-6"
 			style={{
 				borderColor: colors.border,
 				backgroundColor: colors.surfaceFg,
 				gap: 16,
+				minHeight: Platform.OS === "web" ? 360 : undefined,
 			}}
 		>
 			<Text className="text-xl font-bold" style={{ color: colors.textStrong }}>
 				Points Progress
 			</Text>
 
-			<View className="items-center overflow-hidden">
+			<View className="flex-1 items-center justify-center overflow-hidden">
 				<LineChart
 					data={chartData[0]?.data || []}
 					data2={chartData[1]?.data}
@@ -263,7 +265,10 @@ export function GoalPointsChart({ data, loading }: GoalPointsChartProps) {
 				/>
 			</View>
 
-			<View className="flex-row flex-wrap gap-2">
+			<View
+				className="flex-row flex-wrap gap-2"
+				style={Platform.OS === "web" ? styles.legendContainer : undefined}
+			>
 				{legend.map((item) => (
 					<View
 						key={item.userId}
@@ -299,3 +304,9 @@ function formatMonthLabel(monthStr: string): string {
 	const date = new Date(`${monthStr}-01`);
 	return date.toLocaleDateString("en-US", { month: "short" });
 }
+
+const styles = StyleSheet.create({
+	legendContainer: {
+		marginTop: "auto",
+	},
+});
