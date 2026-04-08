@@ -1,9 +1,9 @@
-import { Platform, Text, View } from "react-native";
 import {
-	FREQUENCY_TYPES,
-	type FrequencyType,
+    FREQUENCY_TYPES,
+    type FrequencyType,
 } from "@/constants/frequencyTypes";
 import { useThemeColors } from "@/hooks/common/useThemeColors";
+import { Platform, Text, View } from "react-native";
 
 const DAY_COLUMNS = [
 	{ label: "M", value: 1 },
@@ -67,7 +67,8 @@ function isScheduledDay({
 	}
 
 	if (frequencyType === FREQUENCY_TYPES.WEEKLY) {
-		return weeklyDays.includes(date.getUTCDay());
+		const backendDay = date.getUTCDay() === 0 ? 7 : date.getUTCDay();
+		return weeklyDays.includes(backendDay);
 	}
 
 	if (!startDate) {

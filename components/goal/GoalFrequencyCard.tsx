@@ -1,11 +1,11 @@
-import { ArrowsClockwise } from "phosphor-react-native";
-import { Text, View } from "react-native";
 import {
-	FREQUENCY_TYPES,
-	type FrequencyType,
+    FREQUENCY_TYPES,
+    type FrequencyType,
 } from "@/constants/frequencyTypes";
 import { useThemeColors } from "@/hooks/common/useThemeColors";
 import { cn } from "@/utils/cn";
+import { ArrowsClockwise } from "phosphor-react-native";
+import { Text, View } from "react-native";
 
 const WEEK_DAYS = [
 	{ label: "M", value: 1 },
@@ -43,7 +43,8 @@ export function GoalFrequencyCard({
 
 				<View className="flex-row items-center justify-between">
 					{WEEK_DAYS.map((day) => {
-						const active = scheduledDays.includes(day.value);
+						const backendDay = day.value === 0 ? 7 : day.value;
+						const active = scheduledDays.includes(backendDay);
 
 						return (
 							<View
