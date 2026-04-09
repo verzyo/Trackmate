@@ -1,6 +1,6 @@
+import { Screen } from "@/components/layout/Screen";
 import { useRouter } from "expo-router";
 import { Image, Pressable, ScrollView, Text, View } from "react-native";
-import { Screen } from "@/components/layout/Screen";
 
 const Logo = () => (
 	<View style={{ width: 80, height: 80 }}>
@@ -187,7 +187,17 @@ export default function LandingScreen() {
 						>
 							Open Web App
 						</Button>
-						<Button variant="secondary">Download APK</Button>
+						<Button
+							variant="secondary"
+							onPress={() => {
+								window.open(
+									"https://expo.dev/artifacts/eas/iHKvgauXFrbE1ZSmgH2QcW.apk",
+									"_blank",
+								);
+							}}
+						>
+							Download APK
+						</Button>
 					</View>
 				</View>
 
