@@ -1,4 +1,4 @@
-import { Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Platform, StyleSheet, Text, View } from "react-native";
 
 const APK_URL = "https://expo.dev/artifacts/eas/iHKvgauXFrbE1ZSmgH2QcW.apk";
 
@@ -10,14 +10,16 @@ export default function LandingScreen() {
 	return (
 		<View style={styles.container}>
 			<Text style={styles.title}>Trackmate</Text>
-			<TouchableOpacity
-				style={styles.button}
-				onPress={() => {
-					window.location.href = APK_URL;
-				}}
+			<a
+				href={APK_URL}
+				target="_blank"
+				rel="noopener noreferrer"
+				style={{ textDecoration: "none" }}
 			>
-				<Text style={styles.buttonText}>Download APK</Text>
-			</TouchableOpacity>
+				<View style={styles.button}>
+					<Text style={styles.buttonText}>Download APK</Text>
+				</View>
+			</a>
 		</View>
 	);
 }
