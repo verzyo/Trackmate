@@ -76,7 +76,6 @@ export default function ProfileScreen() {
 
 	const handlePickAvatar = async () => {
 		if (Platform.OS === "web") {
-			// On web, immediately open image picker
 			const result = await ImagePicker.launchImageLibraryAsync({
 				mediaTypes: ["images"],
 				allowsEditing: true,

@@ -53,7 +53,6 @@ export default function GoalDetailsModal() {
 	}>();
 	const goalId = Array.isArray(id) ? id[0] : id;
 	const currentUserId = useAuthStore((state) => state.user?.id);
-	// If participantId is provided, we're viewing another participant's data
 	const viewUserId = participantId || currentUserId;
 	const isViewingOther = !!participantId && participantId !== currentUserId;
 	const queryClient = useQueryClient();
@@ -98,7 +97,6 @@ export default function GoalDetailsModal() {
 
 	const filteredAttachments = useMemo(() => {
 		if (!participantId) return attachments;
-		// When viewing a specific participant, show only their attachments
 		return attachments.filter((a) => a.user_id === participantId);
 	}, [attachments, participantId]);
 
@@ -248,7 +246,6 @@ export default function GoalDetailsModal() {
 	const isOwner = goal.owner_id === currentUserId;
 	const isCompletedToday = !!todayCompletion?.id;
 	const isInviteState = !!inviteId && !isParticipant;
-	// When viewing another participant, hide the action buttons
 	const showPrimaryAction =
 		(isInviteState || (isParticipant && isDueToday)) && !isViewingOther;
 	const primaryButtonLabel = isInviteState

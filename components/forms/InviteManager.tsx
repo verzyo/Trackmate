@@ -44,7 +44,6 @@ export function InviteManager({
 	const [isAdding, setIsAdding] = useState(false);
 	const inputRef = useRef<TextInput>(null);
 
-	// Build exclude list: existing participants + current invitees + self
 	const excludeUserIds = [
 		...existingParticipants,
 		...invitees.map((i) => i.id),

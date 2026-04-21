@@ -154,7 +154,6 @@ export type ParticipantMonthlyPoints = z.infer<
 	typeof ParticipantMonthlyPointsSchema
 >;
 
-// Recent attachments from goal completions
 export const AttachmentItemSchema = z.object({
 	id: z.string(),
 	goal_id: z.string(),

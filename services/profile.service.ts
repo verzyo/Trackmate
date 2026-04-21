@@ -94,7 +94,6 @@ export const fetchAssociatedPeople = async (
 	userId: string,
 	excludeUserIds: string[] = [],
 ): Promise<PublicProfile[]> => {
-	// First get all goal IDs where user is a participant
 	const { data: userGoals, error: userGoalsError } = await supabase
 		.from("goal_participants")
 		.select("goal_id")
@@ -115,7 +114,6 @@ export const fetchAssociatedPeople = async (
 		goalMates = data ?? [];
 	}
 
-	// Get all people the user has invited
 	const { data: invited, error: invitedError } = await supabase
 		.from("goal_invites")
 		.select("invitee_id")
@@ -123,7 +121,6 @@ export const fetchAssociatedPeople = async (
 
 	if (invitedError) throw invitedError;
 
-	// Get all people who have invited the user
 	const { data: inviters, error: invitersError } = await supabase
 		.from("goal_invites")
 		.select("inviter_id")
@@ -131,7 +128,6 @@ export const fetchAssociatedPeople = async (
 
 	if (invitersError) throw invitersError;
 
-	// Collect all unique user IDs
 	const allUserIds = [
 		...goalMates.map((g) => g.user_id),
 		...(invited?.map((i) => i.invitee_id) ?? []),
@@ -143,7 +139,6 @@ export const fetchAssociatedPeople = async (
 
 	if (uniqueUserIds.length === 0) return [];
 
-	// Fetch profiles for these users
 	const { data: profiles, error: profilesError } = await supabase
 		.from("profiles")
 		.select("id, username, nickname, avatar_url")

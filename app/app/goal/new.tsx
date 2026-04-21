@@ -73,7 +73,6 @@ export default function NewGoalScreen() {
 		let activeWeekly: number[] | null = null;
 		if (data.frequency_type === FREQUENCY_TYPES.WEEKLY) {
 			if (data.weekly_days.length > 0) {
-				// Convert 0-6 (Sun-Sat) to 1-7 (Mon-Sun) for database
 				activeWeekly = data.weekly_days.map((day) => (day === 0 ? 7 : day));
 				console.log(
 					"Original days:",

@@ -336,7 +336,6 @@ export const fetchRecentAttachments = async (
 	goalId: string,
 	limit = 5,
 ): Promise<AttachmentItem[]> => {
-	// First, fetch completions with attachment data
 	const { data: completionsData, error: completionsError } = await supabase
 		.from("goal_completions")
 		.select("id, goal_id, user_id, completed_at, attachment_data")
@@ -354,10 +353,8 @@ export const fetchRecentAttachments = async (
 		return [];
 	}
 
-	// Get unique user IDs from completions
 	const userIds = [...new Set(completionsData.map((c) => c.user_id))];
 
-	// Fetch profiles for those users
 	const { data: profilesData, error: profilesError } = await supabase
 		.from("profiles")
 		.select("id, username, nickname, avatar_url")
@@ -365,10 +362,8 @@ export const fetchRecentAttachments = async (
 
 	if (profilesError) {
 		console.error("fetchRecentAttachments Profiles Error:", profilesError);
-		// Continue with empty profiles - we'll show what we can
 	}
 
-	// Create a map of user_id to profile
 	const profileMap = new Map(
 		(profilesData ?? []).map((p) => [
 			p.id,
@@ -376,7 +371,6 @@ export const fetchRecentAttachments = async (
 		]),
 	);
 
-	// Transform the data
 	const transformed = completionsData.map((item) => {
 		const profile = profileMap.get(item.user_id);
 		return {

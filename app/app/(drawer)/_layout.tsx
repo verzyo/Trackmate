@@ -1,8 +1,8 @@
-import { CustomDrawerContent } from "@/components/layout/CustomDrawerContent";
-import { useThemeColors } from "@/hooks/common/useThemeColors";
 import { Drawer } from "expo-router/drawer";
 import { Platform, useWindowDimensions } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { CustomDrawerContent } from "@/components/layout/CustomDrawerContent";
+import { useThemeColors } from "@/hooks/common/useThemeColors";
 
 export default function DrawerLayout() {
 	const colors = useThemeColors();

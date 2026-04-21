@@ -23,11 +23,9 @@ export function PageHeader({ title, onBack, rightElement }: PageHeaderProps) {
 			return;
 		}
 
-		// Check if we can go back in the navigation state
 		if (navigation.canGoBack()) {
 			router.back();
 		} else {
-			// Fallback to home when no previous screen exists (direct navigation/refresh on web)
 			router.replace("/app");
 		}
 	};

@@ -45,10 +45,8 @@ export function GoalPointsChart({ data, loading }: GoalPointsChartProps) {
 	const { chartData, legend, maxValue } = useMemo(() => {
 		if (data.length === 0) return { chartData: [], legend: [], maxValue: 10 };
 
-		// Group by month
 		const months = Array.from(new Set(data.map((d) => d.month))).sort();
 
-		// Group by user
 		const userGroups = data.reduce(
 			(acc, item) => {
 				if (!acc[item.user_id]) {
@@ -75,7 +73,6 @@ export function GoalPointsChart({ data, loading }: GoalPointsChartProps) {
 			>,
 		);
 
-		// Build cumulative data for each user
 		const chartLines = Object.values(userGroups).map((user, index) => {
 			let cumulative = 0;
 			const style = CHART_STYLES[index % CHART_STYLES.length];
@@ -108,7 +105,6 @@ export function GoalPointsChart({ data, loading }: GoalPointsChartProps) {
 			line.data.map((d) => d.value),
 		);
 		const calculatedMax = Math.max(...allValues, 10);
-		// Round up to nearest 5 for cleaner axis
 		const roundedMax = Math.ceil(calculatedMax / 5) * 5;
 
 		return {

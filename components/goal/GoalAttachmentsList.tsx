@@ -20,7 +20,6 @@ interface GoalAttachmentsListProps {
 	loading?: boolean;
 }
 
-// Separate component for photo to properly use hooks
 function PhotoAttachment({ path }: { path: string }) {
 	const [imageUrl, setImageUrl] = React.useState<string | null>(null);
 	const [error, setError] = React.useState(false);
@@ -190,7 +189,6 @@ export function GoalAttachmentsList({
 	);
 }
 
-// Component to render different attachment types
 const AttachmentContent = React.memo(function AttachmentContent({
 	data,
 	colors,
@@ -265,7 +263,6 @@ const AttachmentContent = React.memo(function AttachmentContent({
 	}
 });
 
-// Format date to readable string
 function formatDate(dateString: string): string {
 	const date = new Date(dateString);
 	const now = new Date();
