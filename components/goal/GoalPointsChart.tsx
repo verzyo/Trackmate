@@ -35,9 +35,9 @@ const WEB_COMPACT_MONTHS = 5;
 
 export function GoalPointsChart({ data, loading }: GoalPointsChartProps) {
 	const colors = useThemeColors();
-	const [chartContainerWidth, setChartContainerWidth] = useState(0);
+	const [cardWidth, setCardWidth] = useState(0);
 	const { width } = useWindowDimensions();
-	const containerWidth = chartContainerWidth || width;
+	const containerWidth = cardWidth || width;
 	const visibleMonthCount =
 		Platform.OS !== "web"
 			? MOBILE_MONTHS
@@ -122,6 +122,13 @@ export function GoalPointsChart({ data, loading }: GoalPointsChartProps) {
 		};
 	}, [data, visibleMonthCount]);
 
+	const handleCardLayout = ({ nativeEvent }: LayoutChangeEvent) => {
+		const nextWidth = Math.round(nativeEvent.layout.width);
+		if (nextWidth > 0 && Math.abs(nextWidth - cardWidth) > 5) {
+			setCardWidth(nextWidth);
+		}
+	};
+
 	if (loading) {
 		return (
 			<View
@@ -131,6 +138,7 @@ export function GoalPointsChart({ data, loading }: GoalPointsChartProps) {
 					backgroundColor: colors.surfaceFg,
 					gap: 16,
 				}}
+				onLayout={handleCardLayout}
 			>
 				<Text
 					className="text-2xl font-bold"
@@ -149,27 +157,20 @@ export function GoalPointsChart({ data, loading }: GoalPointsChartProps) {
 		return null;
 	}
 
-	const availableWidth = Math.max(
-		containerWidth - (Platform.OS === "web" ? 72 : 48),
-		200,
-	);
-	const chartWidth =
-		Platform.OS === "web"
-			? Math.min(availableWidth, 520)
-			: Math.min(availableWidth, 560);
+	// cardWidth is the outer card width (includes padding).
+	// The card has padding: 20px (web) or 24px (native) on each side.
+	const cardPadding = Platform.OS === "web" ? 20 : 24;
+	const yAxisLabelWidth = 35;
+	// On web, wait for measured cardWidth; on native, use fallback immediately
+	const isReady = Platform.OS !== "web" || cardWidth > 0;
+	// Subtract card padding (both sides) and yAxisLabelWidth to get chart drawing area
+	const chartWidth = Math.max(containerWidth - cardPadding * 2 - yAxisLabelWidth, 200);
 	const pointCount = chartData[0]?.data.length || 0;
 	const edgeSpacing = Platform.OS === "web" ? 14 : 10;
 	const spacing =
 		pointCount > 1
 			? Math.max((chartWidth - edgeSpacing * 2) / (pointCount - 1), 40)
 			: 0;
-
-	const handleChartLayout = ({ nativeEvent }: LayoutChangeEvent) => {
-		const nextWidth = Math.round(nativeEvent.layout.width);
-		if (nextWidth > 0 && nextWidth !== chartContainerWidth) {
-			setChartContainerWidth(nextWidth);
-		}
-	};
 
 	return (
 		<View
@@ -179,93 +180,97 @@ export function GoalPointsChart({ data, loading }: GoalPointsChartProps) {
 				backgroundColor: colors.surfaceFg,
 				gap: Platform.OS === "web" ? 10 : 12,
 				minHeight: Platform.OS === "web" ? 300 : undefined,
-				padding: Platform.OS === "web" ? 20 : 24,
+				padding: cardPadding,
 			}}
+			onLayout={handleCardLayout}
 		>
 			<Text className="text-xl font-bold" style={{ color: colors.textStrong }}>
 				Points Progress
 			</Text>
 
 			<View
-				className="flex-1 items-center justify-start"
-				style={{ paddingBottom: Platform.OS === "web" ? 12 : 0 }}
-				onLayout={handleChartLayout}
+				className="flex-1 justify-start"
+				style={{
+					paddingBottom: Platform.OS === "web" ? 12 : 0,
+					minHeight: 220,
+				}}
 			>
-				<LineChart
-					key={chartContainerWidth}
-					data={chartData[0]?.data || []}
-					data2={chartData[1]?.data}
-					data3={chartData[2]?.data}
-					data4={chartData[3]?.data}
-					data5={chartData[4]?.data}
-					color={chartData[0]?.color}
-					color2={chartData[1]?.color}
-					color3={chartData[2]?.color}
-					color4={chartData[3]?.color}
-					color5={chartData[4]?.color}
-					startFillColor={chartData[0]?.fillColor}
-					startFillColor2={chartData[1]?.fillColor}
-					startFillColor3={chartData[2]?.fillColor}
-					startFillColor4={chartData[3]?.fillColor}
-					startFillColor5={chartData[4]?.fillColor}
-					endFillColor="transparent"
-					endFillColor2="transparent"
-					endFillColor3="transparent"
-					endFillColor4="transparent"
-					endFillColor5="transparent"
-					startOpacity={0.6}
-					startOpacity2={0.6}
-					startOpacity3={0.6}
-					startOpacity4={0.6}
-					startOpacity5={0.6}
-					endOpacity={0.0}
-					endOpacity2={0.0}
-					endOpacity3={0.0}
-					endOpacity4={0.0}
-					endOpacity5={0.0}
-					curved
-					isAnimated
-					curveType={1}
-					thickness={3}
-					thickness2={3}
-					thickness3={3}
-					thickness4={3}
-					thickness5={3}
-					hideDataPoints
-					disableScroll
-					spacing={spacing}
-					initialSpacing={edgeSpacing}
-					endSpacing={edgeSpacing}
-					backgroundColor={colors.surfaceFg}
-					rulesType="solid"
-					rulesColor={colors.border}
-					xAxisColor={colors.border}
-					yAxisColor={colors.border}
-					yAxisTextStyle={{
-						color: colors.textLight,
-						fontSize: 11,
-						fontWeight: "500",
-					}}
-					xAxisLabelTextStyle={{
-						color: colors.textLight,
-						fontSize: 10,
-					}}
-					noOfSections={5}
-					maxValue={maxValue}
-					stepValue={Math.ceil(maxValue / 5)}
-					yAxisLabelWidth={35}
-					width={chartWidth}
-					height={168}
-					xAxisLabelsHeight={30}
-					xAxisLabelsVerticalShift={10}
-					xAxisLabelsAtBottom
-					labelsExtraHeight={24}
-					xAxisTextNumberOfLines={1}
-					animateOnDataChange
-					animationDuration={800}
-					yAxisLabelPrefix=""
-					showVerticalLines={false}
-				/>
+				{isReady && (
+					<LineChart
+						data={chartData[0]?.data || []}
+						data2={chartData[1]?.data}
+						data3={chartData[2]?.data}
+						data4={chartData[3]?.data}
+						data5={chartData[4]?.data}
+						color={chartData[0]?.color}
+						color2={chartData[1]?.color}
+						color3={chartData[2]?.color}
+						color4={chartData[3]?.color}
+						color5={chartData[4]?.color}
+						startFillColor={chartData[0]?.fillColor}
+						startFillColor2={chartData[1]?.fillColor}
+						startFillColor3={chartData[2]?.fillColor}
+						startFillColor4={chartData[3]?.fillColor}
+						startFillColor5={chartData[4]?.fillColor}
+						endFillColor="transparent"
+						endFillColor2="transparent"
+						endFillColor3="transparent"
+						endFillColor4="transparent"
+						endFillColor5="transparent"
+						startOpacity={0.6}
+						startOpacity2={0.6}
+						startOpacity3={0.6}
+						startOpacity4={0.6}
+						startOpacity5={0.6}
+						endOpacity={0.0}
+						endOpacity2={0.0}
+						endOpacity3={0.0}
+						endOpacity4={0.0}
+						endOpacity5={0.0}
+						curved
+						isAnimated={Platform.OS !== "web"}
+						curveType={1}
+						thickness={3}
+						thickness2={3}
+						thickness3={3}
+						thickness4={3}
+						thickness5={3}
+						hideDataPoints
+						disableScroll
+						spacing={spacing}
+						initialSpacing={edgeSpacing}
+						endSpacing={edgeSpacing}
+						backgroundColor={colors.surfaceFg}
+						rulesType="solid"
+						rulesColor={colors.border}
+						xAxisColor={colors.border}
+						yAxisColor={colors.border}
+						yAxisTextStyle={{
+							color: colors.textLight,
+							fontSize: 11,
+							fontWeight: "500",
+						}}
+						xAxisLabelTextStyle={{
+							color: colors.textLight,
+							fontSize: 10,
+						}}
+						noOfSections={5}
+						maxValue={maxValue}
+						stepValue={Math.ceil(maxValue / 5)}
+						yAxisLabelWidth={yAxisLabelWidth}
+						width={chartWidth}
+						height={168}
+						xAxisLabelsHeight={30}
+						xAxisLabelsVerticalShift={10}
+						xAxisLabelsAtBottom
+						labelsExtraHeight={24}
+						xAxisTextNumberOfLines={1}
+						animateOnDataChange
+						animationDuration={800}
+						yAxisLabelPrefix=""
+						showVerticalLines={false}
+					/>
+				)}
 			</View>
 
 			<View
