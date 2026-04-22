@@ -195,8 +195,11 @@ export function GoalConsistencyHeatmap({
 
 	return (
 		<View
-			className="w-full rounded-[32px] border border-border bg-surface-fg p-6"
-			style={{ minHeight: Platform.OS === "web" ? 360 : undefined }}
+			className="w-full flex-1 rounded-[32px] border border-border bg-surface-fg p-6"
+			style={{
+				minHeight: Platform.OS === "web" ? 300 : undefined,
+				padding: Platform.OS === "web" ? 20 : 24,
+			}}
 		>
 			<View className="mb-4 flex-row items-center justify-between">
 				<Text

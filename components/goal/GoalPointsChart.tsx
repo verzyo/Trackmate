@@ -1,6 +1,9 @@
+import { useThemeColors } from "@/hooks/common/useThemeColors";
+import type { ParticipantMonthlyPoints } from "@/schemas/goal.schema";
 import { useMemo, useState } from "react";
 import {
 	ActivityIndicator,
+	type LayoutChangeEvent,
 	Platform,
 	StyleSheet,
 	Text,
@@ -8,22 +11,10 @@ import {
 	View,
 } from "react-native";
 import { LineChart } from "react-native-gifted-charts";
-import { useThemeColors } from "@/hooks/common/useThemeColors";
-import type { ParticipantMonthlyPoints } from "@/schemas/goal.schema";
 
 interface GoalPointsChartProps {
 	data: ParticipantMonthlyPoints[];
 	loading?: boolean;
-}
-
-interface ChartItem {
-	value: number;
-	color?: string;
-}
-
-interface PointerItem {
-	value: number;
-	color?: string;
 }
 
 const CHART_STYLES = [
@@ -37,15 +28,30 @@ const CHART_STYLES = [
 	{ color: "#ef4444", fill: "rgba(239, 68, 68, 0.15)" },
 ];
 
+const MOBILE_MONTHS = 6;
+const WEB_WIDE_MONTHS = 6;
+const WEB_MEDIUM_MONTHS = 5;
+const WEB_COMPACT_MONTHS = 5;
+
 export function GoalPointsChart({ data, loading }: GoalPointsChartProps) {
 	const colors = useThemeColors();
-	const [focusedIndex, _setFocusedIndex] = useState<number | null>(null);
+	const [chartContainerWidth, setChartContainerWidth] = useState(0);
 	const { width } = useWindowDimensions();
+	const containerWidth = chartContainerWidth || width;
+	const visibleMonthCount =
+		Platform.OS !== "web"
+			? MOBILE_MONTHS
+			: containerWidth >= 520
+				? WEB_WIDE_MONTHS
+				: containerWidth >= 420
+					? WEB_MEDIUM_MONTHS
+					: WEB_COMPACT_MONTHS;
 
 	const { chartData, legend, maxValue } = useMemo(() => {
 		if (data.length === 0) return { chartData: [], legend: [], maxValue: 10 };
 
-		const months = Array.from(new Set(data.map((d) => d.month))).sort();
+		const allMonths = Array.from(new Set(data.map((d) => d.month))).sort();
+		const months = allMonths.slice(-visibleMonthCount);
 
 		const userGroups = data.reduce(
 			(acc, item) => {
@@ -74,7 +80,9 @@ export function GoalPointsChart({ data, loading }: GoalPointsChartProps) {
 		);
 
 		const chartLines = Object.values(userGroups).map((user, index) => {
-			let cumulative = 0;
+			let cumulative = allMonths
+				.filter((month) => !months.includes(month))
+				.reduce((sum, month) => sum + (user.pointsByMonth[month] || 0), 0);
 			const style = CHART_STYLES[index % CHART_STYLES.length];
 
 			const lineData = months.map((month) => {
@@ -112,7 +120,7 @@ export function GoalPointsChart({ data, loading }: GoalPointsChartProps) {
 			legend: legendItems,
 			maxValue: roundedMax || 10,
 		};
-	}, [data]);
+	}, [data, visibleMonthCount]);
 
 	if (loading) {
 		return (
@@ -141,11 +149,27 @@ export function GoalPointsChart({ data, loading }: GoalPointsChartProps) {
 		return null;
 	}
 
-	const availableWidth = Math.max(width - 120, 200);
+	const availableWidth = Math.max(
+		containerWidth - (Platform.OS === "web" ? 72 : 48),
+		200,
+	);
 	const chartWidth =
 		Platform.OS === "web"
-			? Math.min(availableWidth, 480)
-			: Math.min(availableWidth, 520);
+			? Math.min(availableWidth, 520)
+			: Math.min(availableWidth, 560);
+	const pointCount = chartData[0]?.data.length || 0;
+	const edgeSpacing = Platform.OS === "web" ? 14 : 10;
+	const spacing =
+		pointCount > 1
+			? Math.max((chartWidth - edgeSpacing * 2) / (pointCount - 1), 40)
+			: 0;
+
+	const handleChartLayout = ({ nativeEvent }: LayoutChangeEvent) => {
+		const nextWidth = Math.round(nativeEvent.layout.width);
+		if (nextWidth > 0 && nextWidth !== chartContainerWidth) {
+			setChartContainerWidth(nextWidth);
+		}
+	};
 
 	return (
 		<View
@@ -153,54 +177,65 @@ export function GoalPointsChart({ data, loading }: GoalPointsChartProps) {
 			style={{
 				borderColor: colors.border,
 				backgroundColor: colors.surfaceFg,
-				gap: 16,
-				minHeight: Platform.OS === "web" ? 360 : undefined,
+				gap: Platform.OS === "web" ? 10 : 12,
+				minHeight: Platform.OS === "web" ? 300 : undefined,
+				padding: Platform.OS === "web" ? 20 : 24,
 			}}
 		>
 			<Text className="text-xl font-bold" style={{ color: colors.textStrong }}>
 				Points Progress
 			</Text>
 
-			<View className="flex-1 items-center justify-center overflow-hidden">
+			<View
+				className="flex-1 items-center justify-start"
+				style={{ paddingBottom: Platform.OS === "web" ? 12 : 0 }}
+				onLayout={handleChartLayout}
+			>
 				<LineChart
+					key={chartContainerWidth}
 					data={chartData[0]?.data || []}
 					data2={chartData[1]?.data}
 					data3={chartData[2]?.data}
 					data4={chartData[3]?.data}
 					data5={chartData[4]?.data}
-					color1={chartData[0]?.color}
+					color={chartData[0]?.color}
 					color2={chartData[1]?.color}
 					color3={chartData[2]?.color}
 					color4={chartData[3]?.color}
 					color5={chartData[4]?.color}
-					startFillColor1={chartData[0]?.fillColor}
+					startFillColor={chartData[0]?.fillColor}
 					startFillColor2={chartData[1]?.fillColor}
 					startFillColor3={chartData[2]?.fillColor}
 					startFillColor4={chartData[3]?.fillColor}
 					startFillColor5={chartData[4]?.fillColor}
-					endFillColor1="transparent"
+					endFillColor="transparent"
 					endFillColor2="transparent"
 					endFillColor3="transparent"
 					endFillColor4="transparent"
 					endFillColor5="transparent"
-					startOpacity1={0.6}
+					startOpacity={0.6}
 					startOpacity2={0.6}
 					startOpacity3={0.6}
 					startOpacity4={0.6}
 					startOpacity5={0.6}
-					endOpacity1={0.0}
+					endOpacity={0.0}
 					endOpacity2={0.0}
 					endOpacity3={0.0}
 					endOpacity4={0.0}
 					endOpacity5={0.0}
 					curved
+					isAnimated
 					curveType={1}
 					thickness={3}
-					focusEnabled
-					focusedDataPointColor="white"
-					focusedDataPointRadius={6}
+					thickness2={3}
+					thickness3={3}
+					thickness4={3}
+					thickness5={3}
 					hideDataPoints
-					spacing={chartWidth / (chartData[0]?.data.length || 6)}
+					disableScroll
+					spacing={spacing}
+					initialSpacing={edgeSpacing}
+					endSpacing={edgeSpacing}
 					backgroundColor={colors.surfaceFg}
 					rulesType="solid"
 					rulesColor={colors.border}
@@ -220,44 +255,16 @@ export function GoalPointsChart({ data, loading }: GoalPointsChartProps) {
 					stepValue={Math.ceil(maxValue / 5)}
 					yAxisLabelWidth={35}
 					width={chartWidth}
-					height={220}
+					height={168}
+					xAxisLabelsHeight={30}
+					xAxisLabelsVerticalShift={10}
+					xAxisLabelsAtBottom
+					labelsExtraHeight={24}
+					xAxisTextNumberOfLines={1}
 					animateOnDataChange
 					animationDuration={800}
 					yAxisLabelPrefix=""
 					showVerticalLines={false}
-					pointerConfig={{
-						pointerStripHeight: 220,
-						pointerStripColor: colors.border,
-						pointerStripWidth: 1,
-						pointerColor: colors.actionPrimary,
-						radius: 5,
-						pointerLabelWidth: 80,
-						pointerLabelComponent: (items: PointerItem[]) => (
-							<View
-								style={{
-									backgroundColor: colors.surfaceFg,
-									paddingHorizontal: 8,
-									paddingVertical: 4,
-									borderRadius: 8,
-									borderWidth: 1,
-									borderColor: colors.border,
-								}}
-							>
-								{items.map((item: ChartItem, idx: number) => (
-									<Text
-										key={item.color || idx}
-										style={{
-											color: item.color || colors.textStrong,
-											fontSize: 10,
-											fontWeight: "600",
-										}}
-									>
-										{item.value} pts
-									</Text>
-								))}
-							</View>
-						),
-					}}
 				/>
 			</View>
 
@@ -270,10 +277,7 @@ export function GoalPointsChart({ data, loading }: GoalPointsChartProps) {
 						key={item.userId}
 						className="flex-row items-center gap-2 rounded-full px-3 py-1.5"
 						style={{
-							backgroundColor:
-								focusedIndex === item.index
-									? `${item.color}20`
-									: `${colors.border}30`,
+							backgroundColor: `${colors.border}30`,
 						}}
 					>
 						<View
@@ -282,10 +286,7 @@ export function GoalPointsChart({ data, loading }: GoalPointsChartProps) {
 						/>
 						<Text
 							className="text-xs font-medium"
-							style={{
-								color:
-									focusedIndex === item.index ? item.color : colors.textLight,
-							}}
+							style={{ color: colors.textStrong }}
 						>
 							{item.name}
 						</Text>
