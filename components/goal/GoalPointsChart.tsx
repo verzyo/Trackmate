@@ -1,16 +1,15 @@
-import { useThemeColors } from "@/hooks/common/useThemeColors";
-import type { ParticipantMonthlyPoints } from "@/schemas/goal.schema";
 import { useMemo, useState } from "react";
 import {
 	ActivityIndicator,
 	type LayoutChangeEvent,
 	Platform,
-	StyleSheet,
 	Text,
 	useWindowDimensions,
 	View,
 } from "react-native";
 import { LineChart } from "react-native-gifted-charts";
+import { useThemeColors } from "@/hooks/common/useThemeColors";
+import type { ParticipantMonthlyPoints } from "@/schemas/goal.schema";
 
 interface GoalPointsChartProps {
 	data: ParticipantMonthlyPoints[];
@@ -157,14 +156,13 @@ export function GoalPointsChart({ data, loading }: GoalPointsChartProps) {
 		return null;
 	}
 
-	// cardWidth is the outer card width (includes padding).
-	// The card has padding: 20px (web) or 24px (native) on each side.
 	const cardPadding = Platform.OS === "web" ? 20 : 24;
 	const yAxisLabelWidth = 35;
-	// On web, wait for measured cardWidth; on native, use fallback immediately
 	const isReady = Platform.OS !== "web" || cardWidth > 0;
-	// Subtract card padding (both sides) and yAxisLabelWidth to get chart drawing area
-	const chartWidth = Math.max(containerWidth - cardPadding * 2 - yAxisLabelWidth, 200);
+	const chartWidth = Math.max(
+		containerWidth - cardPadding * 2 - yAxisLabelWidth,
+		200,
+	);
 	const pointCount = chartData[0]?.data.length || 0;
 	const edgeSpacing = Platform.OS === "web" ? 14 : 10;
 	const spacing =
@@ -174,28 +172,24 @@ export function GoalPointsChart({ data, loading }: GoalPointsChartProps) {
 
 	return (
 		<View
-			className="w-full flex-1 rounded-[32px] border p-6"
+			className="w-full rounded-[32px] border"
 			style={{
 				borderColor: colors.border,
 				backgroundColor: colors.surfaceFg,
-				gap: Platform.OS === "web" ? 10 : 12,
-				minHeight: Platform.OS === "web" ? 300 : undefined,
 				padding: cardPadding,
+				overflow: "hidden",
 			}}
 			onLayout={handleCardLayout}
 		>
-			<Text className="text-xl font-bold" style={{ color: colors.textStrong }}>
+			<Text
+				className="text-xl font-bold"
+				style={{ color: colors.textStrong, marginBottom: 8 }}
+			>
 				Points Progress
 			</Text>
 
-			<View
-				className="flex-1 justify-start"
-				style={{
-					paddingBottom: Platform.OS === "web" ? 12 : 0,
-					minHeight: 220,
-				}}
-			>
-				{isReady && (
+			{isReady && (
+				<View style={{ position: "relative" }}>
 					<LineChart
 						data={chartData[0]?.data || []}
 						data2={chartData[1]?.data}
@@ -270,34 +264,38 @@ export function GoalPointsChart({ data, loading }: GoalPointsChartProps) {
 						yAxisLabelPrefix=""
 						showVerticalLines={false}
 					/>
-				)}
-			</View>
-
-			<View
-				className="flex-row flex-wrap gap-2"
-				style={Platform.OS === "web" ? styles.legendContainer : undefined}
-			>
-				{legend.map((item) => (
 					<View
-						key={item.userId}
-						className="flex-row items-center gap-2 rounded-full px-3 py-1.5"
+						className="flex-row flex-wrap items-center justify-center gap-2"
 						style={{
-							backgroundColor: `${colors.border}30`,
+							position: "absolute",
+							bottom: 0,
+							left: 0,
+							right: 0,
 						}}
 					>
-						<View
-							className="h-2.5 w-2.5 rounded-full"
-							style={{ backgroundColor: item.color }}
-						/>
-						<Text
-							className="text-xs font-medium"
-							style={{ color: colors.textStrong }}
-						>
-							{item.name}
-						</Text>
+						{legend.map((item) => (
+							<View
+								key={item.userId}
+								className="flex-row items-center gap-2 rounded-full px-3 py-1.5"
+								style={{
+									backgroundColor: `${colors.border}30`,
+								}}
+							>
+								<View
+									className="h-2.5 w-2.5 rounded-full"
+									style={{ backgroundColor: item.color }}
+								/>
+								<Text
+									className="text-xs font-medium"
+									style={{ color: colors.textStrong }}
+								>
+									{item.name}
+								</Text>
+							</View>
+						))}
 					</View>
-				))}
-			</View>
+				</View>
+			)}
 		</View>
 	);
 }
@@ -306,9 +304,3 @@ function formatMonthLabel(monthStr: string): string {
 	const date = new Date(`${monthStr}-01`);
 	return date.toLocaleDateString("en-US", { month: "short" });
 }
-
-const styles = StyleSheet.create({
-	legendContainer: {
-		marginTop: "auto",
-	},
-});

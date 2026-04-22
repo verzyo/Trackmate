@@ -1,5 +1,10 @@
+import { useQueryClient } from "@tanstack/react-query";
+import { router, useLocalSearchParams } from "expo-router";
+import { useMemo, useRef } from "react";
+import { ScrollView, Text, useWindowDimensions, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AttachmentBottomSheet, {
-    type AttachmentBottomSheetRef,
+	type AttachmentBottomSheetRef,
 } from "@/components/AttachmentBottomSheet";
 import { GoalActionButtons } from "@/components/goal/GoalActionButtons";
 import { GoalAttachmentsList } from "@/components/goal/GoalAttachmentsList";
@@ -15,35 +20,30 @@ import { Screen } from "@/components/layout/Screen";
 import AppLoadingScreen from "@/components/ui/AppLoadingScreen";
 import { useThemeColors } from "@/hooks/common/useThemeColors";
 import {
-    useAcceptInvite,
-    useCompleteGoal,
-    useDeclineInvite,
-    useUncompleteGoal,
-    useUpdateCompletion,
+	useAcceptInvite,
+	useCompleteGoal,
+	useDeclineInvite,
+	useUncompleteGoal,
+	useUpdateCompletion,
 } from "@/hooks/goal/useGoalMutations";
 import {
-    goalKeys,
-    useGoal,
-    useGoalCompletions,
-    useGoalLeaderboard,
-    useGoalMonthlyPoints,
-    useGoalMonthlyPointsForAll,
-    useGoalPendingInvites,
-    useGoalStreak,
-    useRecentAttachments,
-    useTodayCompletion,
-    useTodaysCompletionsForGoals,
+	goalKeys,
+	useGoal,
+	useGoalCompletions,
+	useGoalLeaderboard,
+	useGoalMonthlyPoints,
+	useGoalMonthlyPointsForAll,
+	useGoalPendingInvites,
+	useGoalStreak,
+	useRecentAttachments,
+	useTodayCompletion,
+	useTodaysCompletionsForGoals,
 } from "@/hooks/goal/useGoalQueries";
 import { useProfilesByIds } from "@/hooks/profile/useProfileHooks";
 import type { AttachmentData } from "@/schemas/goal.schema";
 import { useAuthStore } from "@/store/auth.store";
 import { getNextDueDate, isTodayUTC } from "@/utils/date.utils";
 import { getErrorMessage, showAlert } from "@/utils/error.utils";
-import { useQueryClient } from "@tanstack/react-query";
-import { router, useLocalSearchParams } from "expo-router";
-import { useMemo, useRef } from "react";
-import { ScrollView, Text, useWindowDimensions, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function GoalDetailsModal() {
 	const { id, inviteId, participantId } = useLocalSearchParams<{
@@ -315,7 +315,7 @@ export default function GoalDetailsModal() {
 					{isWideScreen ? (
 						<View className="flex-row items-stretch gap-4">
 							{isParticipant && !isPersonalGoal && !isViewingOther && (
-								<View className="h-[300px] flex-1 self-stretch">
+								<View className="flex-1">
 									<GoalPointsChart
 										data={monthlyPointsAll}
 										loading={isMonthlyPointsAllLoading}
@@ -323,7 +323,7 @@ export default function GoalDetailsModal() {
 								</View>
 							)}
 							{isViewingOther && !isPersonalGoal && viewUserId && (
-								<View className="h-[300px] flex-1 self-stretch">
+								<View className="flex-1">
 									<GoalPointsChart
 										data={monthlyPointsAll.filter(
 											(p) => p.user_id === viewUserId,
@@ -333,7 +333,7 @@ export default function GoalDetailsModal() {
 								</View>
 							)}
 							{!isInviteState && (
-								<View className="h-[300px] flex-1 self-stretch">
+								<View className="flex-1">
 									<GoalConsistencyHeatmap
 										completedDates={completedDateKeys}
 										frequencyType={goal.frequency_type}
