@@ -15,9 +15,11 @@ export function useThemeColors() {
 		surfaceBg: isDark ? "#0f172a" : "#f8fafc",
 		surfaceFg: isDark ? "#1e293b" : "#ffffff",
 		border: isDark ? "#334155" : "#e2e8f0",
-		danger: isDark ? "#f87171" : "#ef4444",
+		danger: "#ef4444",
 		success: isDark ? "#4ade80" : "#22c55e",
 		mutedBg: isDark ? "rgba(148, 163, 184, 0.15)" : "rgba(100, 116, 139, 0.15)",
 		mutedFg: isDark ? "#94a3b8" : "#64748b",
+		labelBg: isDark ? "#334155" : "#e2e8f0",
+		labelFg: isDark ? "#cbd5e1" : "#475569",
 	};
 }
