@@ -1,8 +1,3 @@
-import { useQueryClient } from "@tanstack/react-query";
-import { router, useLocalSearchParams } from "expo-router";
-import { useMemo, useRef } from "react";
-import { ScrollView, Text, useWindowDimensions, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AttachmentBottomSheet, {
 	type AttachmentBottomSheetRef,
 } from "@/components/AttachmentBottomSheet";
@@ -44,6 +39,11 @@ import type { AttachmentData } from "@/schemas/goal.schema";
 import { useAuthStore } from "@/store/auth.store";
 import { getNextDueDate, isTodayUTC } from "@/utils/date.utils";
 import { getErrorMessage, showAlert } from "@/utils/error.utils";
+import { useQueryClient } from "@tanstack/react-query";
+import { router, useLocalSearchParams } from "expo-router";
+import { useMemo, useRef } from "react";
+import { ScrollView, Text, useWindowDimensions, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function GoalDetailsModal() {
 	const { id, inviteId, participantId } = useLocalSearchParams<{
@@ -131,10 +131,7 @@ export default function GoalDetailsModal() {
 	if (error || !goal) {
 		return (
 			<Screen className="items-center justify-center px-6 py-4">
-				<Text
-					className="text-base text-state-danger"
-					style={{ color: colors.danger }}
-				>
+				<Text className="text-base text-state-danger">
 					Failed to load goal details
 				</Text>
 			</Screen>
@@ -284,8 +281,6 @@ export default function GoalDetailsModal() {
 						}
 						iconName={iconName}
 						iconColor={iconColor}
-						textStrongColor={colors.textStrong}
-						textDefaultColor={colors.textDefault}
 					/>
 
 					<GoalFrequencyCard

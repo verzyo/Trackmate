@@ -1,23 +1,24 @@
+import { FilledButton } from "@/components/ui/FilledButton";
+import { useThemeColors } from "@/hooks/common/useThemeColors";
+import type {
+    AttachmentData,
+    GoalWithParticipant,
+} from "@/schemas/goal.schema";
+import { uploadAttachment } from "@/services/attachment.service";
+import { useAuthStore } from "@/store/auth.store";
+import { cn } from "@/utils/cn";
+import { showAlert } from "@/utils/error.utils";
 import * as ImagePicker from "expo-image-picker";
 import { X } from "phosphor-react-native";
 import { forwardRef, useImperativeHandle, useState } from "react";
 import {
-	ActivityIndicator,
-	Modal,
-	Pressable,
-	Text,
-	TextInput,
-	View,
+    ActivityIndicator,
+    Modal,
+    Pressable,
+    Text,
+    TextInput,
+    View,
 } from "react-native";
-import { FilledButton } from "@/components/ui/FilledButton";
-import { useThemeColors } from "@/hooks/common/useThemeColors";
-import type {
-	AttachmentData,
-	GoalWithParticipant,
-} from "@/schemas/goal.schema";
-import { uploadAttachment } from "@/services/attachment.service";
-import { useAuthStore } from "@/store/auth.store";
-import { showAlert } from "@/utils/error.utils";
 
 type Props = {
 	goal: GoalWithParticipant;
@@ -172,10 +173,7 @@ const AttachmentBottomSheet = forwardRef<AttachmentBottomSheetRef, Props>(
 						}}
 					>
 						<View className="mb-6 flex-row items-center justify-between">
-							<Text
-								className="text-xl font-bold"
-								style={{ color: colors.textStrong }}
-							>
+							<Text className="text-xl font-bold text-text-strong">
 								{getTitle()}
 							</Text>
 							<Pressable onPress={closeModal}>
@@ -186,7 +184,7 @@ const AttachmentBottomSheet = forwardRef<AttachmentBottomSheetRef, Props>(
 						{isSubmitting && (
 							<View className="items-center justify-center py-8">
 								<ActivityIndicator color={colors.actionPrimary} size="large" />
-								<Text style={{ color: colors.textDefault }} className="mt-4">
+								<Text className="mt-4 text-text-default">
 									Processing...
 								</Text>
 							</View>
@@ -209,21 +207,16 @@ const AttachmentBottomSheet = forwardRef<AttachmentBottomSheetRef, Props>(
 									placeholderTextColor={colors.textLight}
 									value={url}
 									onChangeText={handleUrlChange}
-									className="h-14 rounded-full border px-4"
-									style={{
-										backgroundColor: colors.surfaceBg,
-										borderColor: urlError ? colors.danger : colors.border,
-										color: colors.textStrong,
-									}}
+									className={cn(
+										"h-14 rounded-full border px-4 bg-surface-bg text-text-strong",
+										urlError ? "border-state-danger" : "border-border"
+									)}
 									autoCapitalize="none"
 									autoCorrect={false}
 									keyboardType="url"
 								/>
 								{urlError && (
-									<Text
-										style={{ color: colors.danger }}
-										className="text-sm font-medium"
-									>
+									<Text className="text-sm font-medium text-state-danger">
 										{urlError}
 									</Text>
 								)}
@@ -245,11 +238,8 @@ const AttachmentBottomSheet = forwardRef<AttachmentBottomSheetRef, Props>(
 									onChangeText={setText}
 									multiline
 									numberOfLines={4}
-									className="h-32 rounded-3xl border px-4 py-3"
+									className="h-32 rounded-3xl border border-border px-4 py-3 bg-surface-bg text-text-strong"
 									style={{
-										backgroundColor: colors.surfaceBg,
-										borderColor: colors.border,
-										color: colors.textStrong,
 										textAlignVertical: "top",
 									}}
 								/>

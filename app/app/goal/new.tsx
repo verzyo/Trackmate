@@ -14,21 +14,21 @@ import { GoalAppearancePicker } from "@/components/goal/GoalAppearancePicker";
 import { GoalFrequencyEditor } from "@/components/goal/GoalFrequencyEditor";
 import FilledButton from "@/components/ui/FilledButton";
 import { ATTACHMENT_TYPES } from "@/constants/attachmentTypes";
-import { FREQUENCY_TYPES } from "@/constants/frequencyTypes";
 import { useErrorHandler } from "@/hooks/common/useErrorHandler";
 import { useKeyboard } from "@/hooks/common/useKeyboard";
 import { useThemeColors } from "@/hooks/common/useThemeColors";
 import { useToday } from "@/hooks/common/useToday";
 import { useGoalForm } from "@/hooks/goal/useGoalForm";
 import {
-	useCreateGoal,
-	useCreateInvite,
-	useUpdateParticipant,
+    useCreateGoal,
+    useCreateInvite
 } from "@/hooks/goal/useGoalMutations";
 import { useInviteManagement } from "@/hooks/goal/useInviteManagement";
 import type { GoalForm } from "@/schemas/goal.schema";
 import { useAuthStore } from "@/store/auth.store";
 import { formatToISODate } from "@/utils/date.utils";
+
+import { transformGoalFormData } from "@/utils/goal.utils";
 
 export default function NewGoalScreen() {
 	const { user } = useAuthStore();
@@ -46,7 +46,6 @@ export default function NewGoalScreen() {
 
 	const createGoalMutation = useCreateGoal();
 	const createInviteMutation = useCreateInvite();
-	const updateParticipantMutation = useUpdateParticipant();
 
 	const {
 		control,
@@ -70,25 +69,7 @@ export default function NewGoalScreen() {
 	const onSubmit = async (data: GoalForm) => {
 		if (!userId) return;
 
-		let activeWeekly: number[] | null = null;
-		if (data.frequency_type === FREQUENCY_TYPES.WEEKLY) {
-			if (data.weekly_days.length > 0) {
-				activeWeekly = data.weekly_days.map((day) => (day === 0 ? 7 : day));
-				console.log(
-					"Original days:",
-					data.weekly_days,
-					"-> Converted:",
-					activeWeekly,
-				);
-			}
-		}
-
-		let frequencyValue = 1;
-		if (data.frequency_type === FREQUENCY_TYPES.INTERVAL) {
-			frequencyValue = parseInt(data.interval_days, 10);
-		} else if (data.frequency_type === FREQUENCY_TYPES.WEEKLY) {
-			frequencyValue = activeWeekly ? activeWeekly.length : 1;
-		}
+		const { frequencyValue, activeWeekly } = transformGoalFormData(data);
 
 		router.back();
 
@@ -107,13 +88,6 @@ export default function NewGoalScreen() {
 				userId,
 			});
 
-			await updateParticipantMutation.mutateAsync({
-				goalId: goalId as string,
-				userId,
-				icon: data.icon,
-				color: data.color,
-			});
-
 			if (invitees.length > 0) {
 				await Promise.all(
 					invitees.map((invitee) =>
@@ -126,7 +100,6 @@ export default function NewGoalScreen() {
 				);
 			}
 		} catch (error) {
-			console.error("Goal creation error:", error);
 			handleError(error, "Failed to create goal");
 		}
 	};
@@ -174,10 +147,6 @@ export default function NewGoalScreen() {
 					scheduledDays={scheduledDays}
 					onToggleDay={toggleDay}
 					weeklyDaysError={errors.weekly_days?.message}
-					textStrongColor={colors.textStrong}
-					textLightColor={colors.textLight}
-					textDefaultColor={colors.textDefault}
-					actionPrimaryColor={colors.actionPrimary}
 				/>
 			</FormSection>
 

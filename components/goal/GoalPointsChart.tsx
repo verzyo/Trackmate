@@ -1,15 +1,15 @@
-import { useMemo, useState } from "react";
-import {
-	ActivityIndicator,
-	type LayoutChangeEvent,
-	Platform,
-	Text,
-	useWindowDimensions,
-	View,
-} from "react-native";
-import { LineChart } from "react-native-gifted-charts";
 import { useThemeColors } from "@/hooks/common/useThemeColors";
 import type { ParticipantMonthlyPoints } from "@/schemas/goal.schema";
+import { useMemo, useState } from "react";
+import {
+    ActivityIndicator,
+    type LayoutChangeEvent,
+    Platform,
+    Text,
+    useWindowDimensions,
+    View,
+} from "react-native";
+import { LineChart } from "react-native-gifted-charts";
 
 interface GoalPointsChartProps {
 	data: ParticipantMonthlyPoints[];
@@ -131,18 +131,10 @@ export function GoalPointsChart({ data, loading }: GoalPointsChartProps) {
 	if (loading) {
 		return (
 			<View
-				className="w-full rounded-[32px] border p-6"
-				style={{
-					borderColor: colors.border,
-					backgroundColor: colors.surfaceFg,
-					gap: 16,
-				}}
+				className="w-full rounded-[32px] border border-border bg-surface-fg p-6 gap-4"
 				onLayout={handleCardLayout}
 			>
-				<Text
-					className="text-2xl font-bold"
-					style={{ color: colors.textStrong }}
-				>
+				<Text className="text-2xl font-bold text-text-strong">
 					Points Progress
 				</Text>
 				<View className="items-center justify-center py-12">
@@ -172,24 +164,18 @@ export function GoalPointsChart({ data, loading }: GoalPointsChartProps) {
 
 	return (
 		<View
-			className="w-full rounded-[32px] border"
+			className="w-full rounded-[32px] border border-border bg-surface-fg overflow-hidden"
 			style={{
-				borderColor: colors.border,
-				backgroundColor: colors.surfaceFg,
 				padding: cardPadding,
-				overflow: "hidden",
 			}}
 			onLayout={handleCardLayout}
 		>
-			<Text
-				className="text-xl font-bold"
-				style={{ color: colors.textStrong, marginBottom: 8 }}
-			>
+			<Text className="text-xl font-bold text-text-strong mb-2">
 				Points Progress
 			</Text>
 
 			{isReady && (
-				<View style={{ position: "relative" }}>
+				<View className="relative">
 					<LineChart
 						data={chartData[0]?.data || []}
 						data2={chartData[1]?.data}
@@ -264,15 +250,7 @@ export function GoalPointsChart({ data, loading }: GoalPointsChartProps) {
 						yAxisLabelPrefix=""
 						showVerticalLines={false}
 					/>
-					<View
-						className="flex-row flex-wrap items-center justify-center gap-2"
-						style={{
-							position: "absolute",
-							bottom: 0,
-							left: 0,
-							right: 0,
-						}}
-					>
+					<View className="flex-row flex-wrap items-center justify-center gap-2 absolute bottom-0 left-0 right-0">
 						{legend.map((item) => (
 							<View
 								key={item.userId}
@@ -285,10 +263,7 @@ export function GoalPointsChart({ data, loading }: GoalPointsChartProps) {
 									className="h-2.5 w-2.5 rounded-full"
 									style={{ backgroundColor: item.color }}
 								/>
-								<Text
-									className="text-xs font-medium"
-									style={{ color: colors.textStrong }}
-								>
+								<Text className="text-xs font-medium text-text-strong">
 									{item.name}
 								</Text>
 							</View>

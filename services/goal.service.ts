@@ -47,6 +47,8 @@ export const createGoal = async (params: CreateGoalParams) => {
 		p_start_date: params.start_date,
 		p_attachment_type: params.attachment_type,
 		p_require_attachment: params.require_attachment,
+		p_icon: params.icon,
+		p_color: params.color,
 	});
 
 	if (error) throw error;
@@ -289,14 +291,11 @@ export const fetchGoalLeaderboard = async (
 		p_goal_id: goalId,
 	});
 	if (error) {
-		console.error("fetchGoalLeaderboard RPC Error:", error);
 		throw error;
 	}
-	console.log("fetchGoalLeaderboard raw data:", data);
 	try {
 		return LeaderboardEntrySchema.array().parse(data ?? []);
 	} catch (parseError) {
-		console.error("fetchGoalLeaderboard Parse Error:", parseError);
 		return data as LeaderboardEntry[];
 	}
 };
@@ -308,13 +307,11 @@ export const fetchGoalMonthlyPointsForAll = async (
 		p_goal_id: goalId,
 	});
 	if (error) {
-		console.error("fetchGoalMonthlyPointsForAll RPC Error:", error);
 		throw error;
 	}
 	try {
 		return ParticipantMonthlyPointsSchema.array().parse(data ?? []);
 	} catch (parseError) {
-		console.error("fetchGoalMonthlyPointsForAll Parse Error:", parseError);
 		return data as ParticipantMonthlyPoints[];
 	}
 };
@@ -345,7 +342,6 @@ export const fetchRecentAttachments = async (
 		.limit(limit);
 
 	if (completionsError) {
-		console.error("fetchRecentAttachments Error:", completionsError);
 		throw completionsError;
 	}
 
@@ -361,7 +357,6 @@ export const fetchRecentAttachments = async (
 		.in("id", userIds);
 
 	if (profilesError) {
-		console.error("fetchRecentAttachments Profiles Error:", profilesError);
 	}
 
 	const profileMap = new Map(
@@ -393,7 +388,6 @@ export const fetchRecentAttachments = async (
 	try {
 		return AttachmentItemSchema.array().parse(transformed);
 	} catch (parseError) {
-		console.error("fetchRecentAttachments Parse Error:", parseError);
 		return transformed as AttachmentItem[];
 	}
 };

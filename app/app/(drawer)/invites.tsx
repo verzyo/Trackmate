@@ -17,11 +17,13 @@ import {
 	useDeclineInvite,
 } from "@/hooks/goal/useGoalMutations";
 import { goalKeys, useInvites } from "@/hooks/goal/useGoalQueries";
+import { useThemeColors } from "@/hooks/common/useThemeColors";
 import { useAuthStore } from "@/store/auth.store";
 import { getErrorMessage, showAlert } from "@/utils/error.utils";
 
 export default function InvitesScreen() {
 	const insets = useSafeAreaInsets();
+	const colors = useThemeColors();
 	const { user } = useAuthStore();
 	const userId = user?.id;
 
@@ -93,7 +95,7 @@ export default function InvitesScreen() {
 						<View className="rounded-3xl border border-border bg-surface-fg py-16 items-center justify-center">
 							<ActivityIndicator
 								size="large"
-								color="var(--color-action-primary)"
+								color={colors.actionPrimary}
 							/>
 							<Text className="text-text-light mt-4 font-medium text-base">
 								Loading invites...

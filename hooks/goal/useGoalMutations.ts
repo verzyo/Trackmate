@@ -73,11 +73,7 @@ export const useCreateGoal = () => {
 	const queryClient = useQueryClient();
 	return useMutation({
 		mutationFn: (
-			params: CreateGoalParams & {
-				icon?: string;
-				color?: string;
-				userId: string;
-			},
+			params: CreateGoalParams & { userId: string },
 		) => createGoal(params),
 		onMutate: async (newGoal) => {
 			await queryClient.cancelQueries({ queryKey: goalKeys.lists() });

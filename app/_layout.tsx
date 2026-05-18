@@ -7,6 +7,7 @@ import { Platform, Pressable, Text, useColorScheme, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import Toast from "react-native-toast-message";
 import { queryClient } from "@/lib/queryClient";
+import { useThemeColors } from "@/hooks/common/useThemeColors";
 import { useAuthStore } from "@/store/auth.store";
 import { toastConfig } from "@/utils/toast";
 
@@ -51,9 +52,9 @@ class RootErrorBoundary extends React.Component<
 
 export default function RootLayout() {
 	const { initialize, initialized, session } = useAuthStore();
+	const colors = useThemeColors();
 	const colorScheme = useColorScheme();
 	const isDark = colorScheme === "dark";
-	const stackBackgroundColor = isDark ? "#0f172a" : "#f8fafc";
 
 	useEffect(() => {
 		const unsubscribe = initialize();
@@ -72,7 +73,7 @@ export default function RootLayout() {
 							<Stack
 								screenOptions={{
 									headerShown: false,
-									contentStyle: { backgroundColor: stackBackgroundColor },
+									contentStyle: { backgroundColor: colors.surfaceBg },
 								}}
 							>
 								<Stack.Protected guard={!session}>

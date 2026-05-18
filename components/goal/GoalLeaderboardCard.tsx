@@ -4,6 +4,7 @@ import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { Avatar } from "@/components/ui/Avatar";
 import { useThemeColors } from "@/hooks/common/useThemeColors";
 import type { LeaderboardEntry } from "@/schemas/goal.schema";
+import { cn } from "@/utils/cn";
 
 interface GoalLeaderboardCardProps {
 	leaderboard: LeaderboardEntry[];
@@ -46,7 +47,7 @@ function RankBadge({ rank }: { rank: number }) {
 	}
 	return (
 		<View className="h-7 w-7 items-center justify-center rounded-full">
-			<Text className="text-xs font-bold" style={{ color: "#94a3b8" }}>
+			<Text className="text-xs font-bold text-text-light">
 				{rank}
 			</Text>
 		</View>
@@ -64,15 +65,12 @@ function LeaderboardRow({ entry, isCurrentUser }: LeaderboardRowProps) {
 
 	return (
 		<View
-			className="flex-row items-center gap-3 rounded-[24px] border px-4 py-3"
-			style={{
-				borderColor: isCurrentUser ? "#a5b4fc" : colors.border,
-				backgroundColor: isCurrentUser
-					? isDark
-						? "#1e1b4b"
-						: "#eef2ff"
-					: colors.surfaceFg,
-			}}
+			className={cn(
+				"flex-row items-center gap-3 rounded-[24px] border px-4 py-3",
+				isCurrentUser 
+					? isDark ? "border-indigo-900 bg-indigo-950/30" : "border-indigo-200 bg-indigo-50"
+					: "border-border bg-surface-fg"
+			)}
 		>
 			<RankBadge rank={entry.rank} />
 			<Avatar
@@ -80,22 +78,20 @@ function LeaderboardRow({ entry, isCurrentUser }: LeaderboardRowProps) {
 				imageUrl={entry.avatar_url ?? undefined}
 				size={40}
 			/>
-			<View className="flex-1 flex-col" style={{ gap: 2 }}>
+			<View className="flex-1 flex-col gap-0.5">
 				<Text
-					className="text-sm font-semibold"
-					style={{ color: colors.textStrong }}
+					className="text-sm font-semibold text-text-strong"
 					numberOfLines={1}
 				>
 					{displayName(entry)}
 					{isCurrentUser ? " (you)" : ""}
 				</Text>
-				<Text className="text-xs" style={{ color: colors.textLight }}>
+				<Text className="text-xs text-text-light">
 					@{entry.username}
 				</Text>
 			</View>
 			<Text
-				className="text-sm font-bold"
-				style={{ color: colors.actionPrimary }}
+				className="text-sm font-bold text-action-primary"
 			>
 				{entry.points} pts
 			</Text>
@@ -113,19 +109,9 @@ export function GoalLeaderboardCard({
 
 	if (loading) {
 		return (
-			<View
-				className="w-full rounded-[32px] border p-6"
-				style={{
-					borderColor: colors.border,
-					backgroundColor: colors.surfaceFg,
-					gap: 16,
-				}}
-			>
+			<View className="w-full rounded-[32px] border border-border bg-surface-fg p-6 gap-4">
 				<View className="flex-row items-center justify-between">
-					<Text
-						className="text-xl font-bold"
-						style={{ color: colors.textStrong }}
-					>
+					<Text className="text-xl font-bold text-text-strong">
 						Leaderboard
 					</Text>
 				</View>
@@ -138,21 +124,11 @@ export function GoalLeaderboardCard({
 
 	if (leaderboard.length === 0) {
 		return (
-			<View
-				className="w-full rounded-[32px] border p-6"
-				style={{
-					borderColor: colors.border,
-					backgroundColor: colors.surfaceFg,
-					gap: 16,
-				}}
-			>
-				<Text
-					className="text-xl font-bold"
-					style={{ color: colors.textStrong }}
-				>
+			<View className="w-full rounded-[32px] border border-border bg-surface-fg p-6 gap-4">
+				<Text className="text-xl font-bold text-text-strong">
 					Leaderboard
 				</Text>
-				<Text className="text-sm" style={{ color: colors.textLight }}>
+				<Text className="text-sm text-text-light">
 					No participants yet
 				</Text>
 			</View>
@@ -165,19 +141,12 @@ export function GoalLeaderboardCard({
 		: leaderboard.slice(0, PREVIEW_COUNT);
 
 	return (
-		<View
-			className="w-full rounded-[32px] border p-6"
-			style={{
-				borderColor: colors.border,
-				backgroundColor: colors.surfaceFg,
-				gap: 16,
-			}}
-		>
-			<Text className="text-xl font-bold" style={{ color: colors.textStrong }}>
+		<View className="w-full rounded-[32px] border border-border bg-surface-fg p-6 gap-4">
+			<Text className="text-xl font-bold text-text-strong">
 				Leaderboard
 			</Text>
 
-			<View style={{ gap: 8 }}>
+			<View className="gap-2">
 				{displayEntries.map((entry, index) => {
 					const prevEntry = index > 0 ? displayEntries[index - 1] : null;
 					const showSeparator = prevEntry && entry.rank - prevEntry.rank > 1;
@@ -187,7 +156,7 @@ export function GoalLeaderboardCard({
 						<View key={entry.user_id}>
 							{showSeparator && (
 								<View className="my-1 items-center">
-									<Text className="text-xs" style={{ color: colors.textLight }}>
+									<Text className="text-xs text-text-light">
 										• • •
 									</Text>
 								</View>

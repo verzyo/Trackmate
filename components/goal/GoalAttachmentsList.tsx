@@ -1,3 +1,7 @@
+import Avatar from "@/components/ui/Avatar";
+import { useThemeColors } from "@/hooks/common/useThemeColors";
+import { supabase } from "@/lib/supabase";
+import type { AttachmentItem } from "@/schemas/goal.schema";
 import { Image } from "expo-image";
 import { LinkSimple, Note, X } from "phosphor-react-native";
 import React from "react";
@@ -10,10 +14,6 @@ import {
 	useWindowDimensions,
 	View,
 } from "react-native";
-import Avatar from "@/components/ui/Avatar";
-import { useThemeColors } from "@/hooks/common/useThemeColors";
-import { supabase } from "@/lib/supabase";
-import type { AttachmentItem } from "@/schemas/goal.schema";
 
 interface GoalAttachmentsListProps {
 	attachments: AttachmentItem[];
@@ -28,18 +28,15 @@ function PhotoAttachment({ path }: { path: string }) {
 
 	React.useEffect(() => {
 		const getSignedUrl = async () => {
-			console.log("Fetching signed URL for:", path);
 			const { data, error } = await supabase.storage
 				.from("attachments")
 				.createSignedUrl(path, 60);
 
 			if (error) {
-				console.error("Signed URL error:", error);
 				setError(true);
 				return;
 			}
 
-			console.log("Signed URL:", data?.signedUrl);
 			setImageUrl(data?.signedUrl || null);
 		};
 
@@ -67,10 +64,7 @@ function PhotoAttachment({ path }: { path: string }) {
 					contentFit="cover"
 					transition={300}
 					cachePolicy="memory-disk"
-					onError={(e) => {
-						console.error("Image load error:", e);
-						setError(true);
-					}}
+					onError={() => setError(true)}
 				/>
 			</Pressable>
 
@@ -120,10 +114,7 @@ export function GoalAttachmentsList({
 	if (loading) {
 		return (
 			<View className="w-full gap-3">
-				<Text
-					className="text-xl font-medium text-text-default"
-					style={{ color: colors.textDefault }}
-				>
+				<Text className="text-xl font-medium text-text-default">
 					Recent Attachments
 				</Text>
 				<View className="items-center justify-center py-8">
@@ -139,10 +130,7 @@ export function GoalAttachmentsList({
 
 	return (
 		<View className="w-full gap-3">
-			<Text
-				className="text-xl font-medium text-text-default"
-				style={{ color: colors.textDefault }}
-			>
+			<Text className="text-xl font-medium text-text-default">
 				Recent Attachments
 			</Text>
 
@@ -152,7 +140,6 @@ export function GoalAttachmentsList({
 						key={attachment.id}
 						className="rounded-[24px] border border-border bg-surface-fg p-4"
 					>
-						{/* User header */}
 						<View className="mb-3 flex-row items-center gap-3">
 							<Avatar
 								name={attachment.nickname || attachment.username}
@@ -160,22 +147,15 @@ export function GoalAttachmentsList({
 								size={36}
 							/>
 							<View>
-								<Text
-									className="text-base font-semibold text-text-strong"
-									style={{ color: colors.textStrong }}
-								>
+								<Text className="text-base font-semibold text-text-strong">
 									{attachment.nickname || attachment.username}
 								</Text>
-								<Text
-									className="text-xs text-text-light"
-									style={{ color: colors.textLight }}
-								>
+								<Text className="text-xs text-text-light">
 									{formatDate(attachment.completed_at)}
 								</Text>
 							</View>
 						</View>
 
-						{/* Attachment content */}
 						{attachment.attachment_data && (
 							<AttachmentContent
 								data={attachment.attachment_data}
@@ -210,11 +190,8 @@ const AttachmentContent = React.memo(function AttachmentContent({
 						const supported = await Linking.canOpenURL(data.url as string);
 						if (supported) {
 							await Linking.openURL(data.url as string);
-						} else {
-							console.log("Cannot open URL:", data.url);
 						}
 					} catch (error) {
-						console.error("Error opening URL:", error);
 					}
 				};
 
@@ -226,7 +203,6 @@ const AttachmentContent = React.memo(function AttachmentContent({
 						<LinkSimple size={20} color={colors.actionPrimary} weight="bold" />
 						<Text
 							className="flex-1 text-base text-action-primary"
-							style={{ color: colors.actionPrimary }}
 							numberOfLines={1}
 							ellipsizeMode="middle"
 						>
@@ -247,10 +223,7 @@ const AttachmentContent = React.memo(function AttachmentContent({
 							weight="bold"
 							style={{ marginTop: 2 }}
 						/>
-						<Text
-							className="flex-1 text-base text-text-default"
-							style={{ color: colors.textDefault, lineHeight: 22 }}
-						>
+						<Text className="flex-1 text-base text-text-default leading-[22px]">
 							{data.content}
 						</Text>
 					</View>

@@ -1,8 +1,8 @@
+import { CustomDrawerContent } from "@/components/layout/CustomDrawerContent";
+import { useThemeColors } from "@/hooks/common/useThemeColors";
 import { Drawer } from "expo-router/drawer";
 import { Platform, useWindowDimensions } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { CustomDrawerContent } from "@/components/layout/CustomDrawerContent";
-import { useThemeColors } from "@/hooks/common/useThemeColors";
 
 export default function DrawerLayout() {
 	const colors = useThemeColors();
@@ -33,7 +33,7 @@ export default function DrawerLayout() {
 						position: "absolute",
 					},
 					overlayColor: "rgba(0,0,0,0.5)",
-					drawerActiveBackgroundColor: "transparent", // Remove highlighting
+					drawerActiveBackgroundColor: "transparent",
 					drawerActiveTintColor: colors.textStrong,
 					drawerInactiveTintColor: colors.textStrong,
 					drawerLabelStyle: {
@@ -45,7 +45,7 @@ export default function DrawerLayout() {
 				<Drawer.Screen
 					name="(tabs)"
 					options={{
-						drawerItemStyle: { display: "none" }, // Remove home from drawer
+						drawerItemStyle: { display: "none" },
 					}}
 				/>
 				<Drawer.Screen

@@ -1,3 +1,13 @@
+import { FilledButton } from "@/components/ui/FilledButton";
+import { useThemeColors } from "@/hooks/common/useThemeColors";
+import type {
+	AttachmentData,
+	GoalWithParticipant,
+} from "@/schemas/goal.schema";
+import { uploadAttachment } from "@/services/attachment.service";
+import { useAuthStore } from "@/store/auth.store";
+import { cn } from "@/utils/cn";
+import { showAlert } from "@/utils/error.utils";
 import {
 	BottomSheetBackdrop,
 	BottomSheetModal,
@@ -15,15 +25,6 @@ import {
 	TextInput,
 	View,
 } from "react-native";
-import { FilledButton } from "@/components/ui/FilledButton";
-import { useThemeColors } from "@/hooks/common/useThemeColors";
-import type {
-	AttachmentData,
-	GoalWithParticipant,
-} from "@/schemas/goal.schema";
-import { uploadAttachment } from "@/services/attachment.service";
-import { useAuthStore } from "@/store/auth.store";
-import { showAlert } from "@/utils/error.utils";
 
 type Props = {
 	goal: GoalWithParticipant;
@@ -206,12 +207,8 @@ const AttachmentBottomSheet = forwardRef<AttachmentBottomSheetRef, Props>(
 			>
 				<BottomSheetView>
 					<View className="p-6">
-						{/* Header with X button */}
 						<View className="flex-row items-center justify-between mb-6">
-							<Text
-								className="text-xl font-bold"
-								style={{ color: colors.textStrong }}
-							>
+							<Text className="text-xl font-bold text-text-strong">
 								{getTitle()}
 							</Text>
 							<Pressable onPress={() => bottomSheetRef.current?.dismiss()}>
@@ -222,7 +219,7 @@ const AttachmentBottomSheet = forwardRef<AttachmentBottomSheetRef, Props>(
 						{isSubmitting && (
 							<View className="items-center justify-center py-8">
 								<ActivityIndicator color={colors.actionPrimary} size="large" />
-								<Text style={{ color: colors.textDefault }} className="mt-4">
+								<Text className="mt-4 text-text-default">
 									Processing...
 								</Text>
 							</View>
@@ -257,12 +254,10 @@ const AttachmentBottomSheet = forwardRef<AttachmentBottomSheetRef, Props>(
 										placeholderTextColor={colors.textLight}
 										value={url}
 										onChangeText={handleUrlChange}
-										className="h-14 px-4 rounded-full border"
-										style={{
-											backgroundColor: colors.surfaceBg,
-											borderColor: urlError ? colors.danger : colors.border,
-											color: colors.textStrong,
-										}}
+										className={cn(
+											"h-14 px-4 rounded-full border bg-surface-bg text-text-strong",
+											urlError ? "border-state-danger" : "border-border"
+										)}
 										autoCapitalize="none"
 										autoCorrect={false}
 										keyboardType="url"
@@ -273,22 +268,17 @@ const AttachmentBottomSheet = forwardRef<AttachmentBottomSheetRef, Props>(
 										placeholderTextColor={colors.textLight}
 										value={url}
 										onChangeText={handleUrlChange}
-										className="h-14 px-4 rounded-full border"
-										style={{
-											backgroundColor: colors.surfaceBg,
-											borderColor: urlError ? colors.danger : colors.border,
-											color: colors.textStrong,
-										}}
+										className={cn(
+											"h-14 px-4 rounded-full border bg-surface-bg text-text-strong",
+											urlError ? "border-state-danger" : "border-border"
+										)}
 										autoCapitalize="none"
 										autoCorrect={false}
 										keyboardType="url"
 									/>
 								)}
 								{urlError && (
-									<Text
-										style={{ color: colors.danger }}
-										className="text-sm font-medium"
-									>
+									<Text className="text-sm font-medium text-state-danger">
 										{urlError}
 									</Text>
 								)}

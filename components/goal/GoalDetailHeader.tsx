@@ -1,11 +1,12 @@
-import { type Href, router } from "expo-router";
-import { PencilSimple } from "phosphor-react-native";
-import { Text, View } from "react-native";
 import CircleIconButton from "@/components/ui/CircleIconButton";
 import PageHeader from "@/components/ui/PageHeader";
+import { useThemeColors } from "@/hooks/common/useThemeColors";
 import type { GoalWithParticipant } from "@/schemas/goal.schema";
 import { hexToRgba } from "@/utils/color.utils";
 import { DynamicIcon } from "@/utils/icons";
+import { type Href, router } from "expo-router";
+import { PencilSimple } from "phosphor-react-native";
+import { Text, View } from "react-native";
 
 type GoalDetailHeaderProps = {
 	goal: GoalWithParticipant;
@@ -15,8 +16,6 @@ type GoalDetailHeaderProps = {
 	viewUserName?: string;
 	iconName: string;
 	iconColor: string;
-	textStrongColor: string;
-	textDefaultColor: string;
 };
 
 export function GoalDetailHeader({
@@ -27,9 +26,8 @@ export function GoalDetailHeader({
 	viewUserName,
 	iconName,
 	iconColor,
-	textStrongColor,
-	textDefaultColor,
 }: GoalDetailHeaderProps) {
+	const colors = useThemeColors();
 	const title =
 		isViewingOther && viewUserName
 			? `${viewUserName}'s Details`
@@ -44,7 +42,7 @@ export function GoalDetailHeader({
 						<CircleIconButton
 							onPress={() => router.push(`/app/goal/edit/${goalId}` as Href)}
 						>
-							<PencilSimple size={20} color={textStrongColor} weight="bold" />
+							<PencilSimple size={20} color={colors.textStrong} weight="bold" />
 						</CircleIconButton>
 					) : undefined
 				}
@@ -69,7 +67,6 @@ export function GoalDetailHeader({
 								? "text-2xl font-bold leading-8 text-text-strong"
 								: "text-3xl font-bold leading-9 text-text-strong"
 						}
-						style={{ color: textStrongColor }}
 					>
 						{goal.title}
 					</Text>
@@ -77,7 +74,6 @@ export function GoalDetailHeader({
 					{goal.description ? (
 						<Text
 							className="text-base leading-6 text-text-default"
-							style={{ color: textDefaultColor }}
 						>
 							{goal.description}
 						</Text>

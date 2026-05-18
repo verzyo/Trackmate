@@ -15,6 +15,8 @@ import {
 } from "@/constants/frequencyTypes";
 import { cn } from "@/utils/cn";
 
+import { useThemeColors } from "@/hooks/common/useThemeColors";
+
 type GoalFrequencyEditorProps = {
 	frequencyType: FrequencyType;
 	onFrequencyTypeChange: (val: FrequencyType) => void;
@@ -28,10 +30,6 @@ type GoalFrequencyEditorProps = {
 	onToggleDay: (day: number) => void;
 	weeklyDaysError?: string;
 	disabled?: boolean;
-	textStrongColor: string;
-	textLightColor: string;
-	textDefaultColor: string;
-	actionPrimaryColor: string;
 };
 
 export function GoalFrequencyEditor({
@@ -47,11 +45,8 @@ export function GoalFrequencyEditor({
 	onToggleDay,
 	weeklyDaysError,
 	disabled,
-	textStrongColor,
-	textLightColor,
-	textDefaultColor,
-	actionPrimaryColor,
 }: GoalFrequencyEditorProps) {
+	const colors = useThemeColors();
 	const { width } = useWindowDimensions();
 	const useCompactIntervalLayout = Platform.OS === "web" && width < 560;
 
@@ -89,7 +84,6 @@ export function GoalFrequencyEditor({
 						>
 							<Text
 								className="font-bold text-text-strong text-base"
-								style={{ color: textStrongColor }}
 							>
 								{intervalValue === 1
 									? "Every day"
@@ -99,7 +93,6 @@ export function GoalFrequencyEditor({
 							</Text>
 							<Text
 								className="text-text-light text-xs"
-								style={{ color: textLightColor }}
 							>
 								Recurring gap between logs
 							</Text>
@@ -119,8 +112,8 @@ export function GoalFrequencyEditor({
 									size={16}
 									color={
 										intervalValue <= 1 || disabled
-											? textLightColor
-											: actionPrimaryColor
+											? colors.textLight
+											: colors.actionPrimary
 									}
 									weight="bold"
 								/>
@@ -138,7 +131,6 @@ export function GoalFrequencyEditor({
 									useCompactIntervalLayout ? "min-w-0 flex-1" : "w-14",
 								)}
 								style={{
-									color: textStrongColor,
 									paddingVertical: 0,
 									minWidth: useCompactIntervalLayout ? 0 : undefined,
 									lineHeight: 24,
@@ -151,7 +143,7 @@ export function GoalFrequencyEditor({
 							>
 								<PhosphorIcons.Plus
 									size={16}
-									color={disabled ? textLightColor : actionPrimaryColor}
+									color={disabled ? colors.textLight : colors.actionPrimary}
 									weight="bold"
 								/>
 							</Pressable>
@@ -163,7 +155,6 @@ export function GoalFrequencyEditor({
 							selectedDays={scheduledDays}
 							onToggleDay={onToggleDay}
 							disabled={disabled}
-							textColor={textDefaultColor}
 						/>
 					</View>
 				)}

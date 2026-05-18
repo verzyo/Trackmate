@@ -1,5 +1,6 @@
 import { Pressable, Text, View } from "react-native";
 import Avatar from "@/components/ui/Avatar";
+import { useThemeColors } from "@/hooks/common/useThemeColors";
 
 type GreetingHeaderProps = {
 	greeting: string;
@@ -18,13 +19,15 @@ export function GreetingHeader({
 	inviteCount,
 	onAvatarPress,
 }: GreetingHeaderProps) {
+	const colors = useThemeColors();
+
 	return (
 		<View className="h-16 w-full flex-row items-center justify-between">
 			<View className="flex-col items-start justify-center gap-[5px]">
 				<Text className="font-bold text-3xl leading-10 tracking-tight text-text-strong">
 					{greeting}
 				</Text>
-				<Text className="font-medium text-lg leading-7 text-text">
+				<Text className="font-medium text-lg leading-7 text-text-light">
 					{dayString}
 				</Text>
 			</View>
@@ -35,7 +38,7 @@ export function GreetingHeader({
 					{inviteCount > 0 && (
 						<View
 							className="absolute -top-1 -right-1 z-10 h-[22px] min-w-[22px] items-center justify-center rounded-full bg-state-danger px-1 shadow-sm"
-							style={{ borderWidth: 3, borderColor: "var(--color-surface-bg)" }}
+							style={{ borderWidth: 3, borderColor: colors.surfaceBg }}
 						>
 							<Text className="font-bold text-[10px] text-white">
 								{inviteCount}

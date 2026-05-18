@@ -94,14 +94,17 @@ export const fetchAssociatedPeople = async (
 	userId: string,
 	excludeUserIds: string[] = [],
 ): Promise<PublicProfile[]> => {
-	const { data: userGoals, error: userGoalsError } = await supabase
-		.from("goal_participants")
-		.select("goal_id")
-		.eq("user_id", userId);
+	const [userGoalsRes, invitedRes, invitersRes] = await Promise.all([
+		supabase.from("goal_participants").select("goal_id").eq("user_id", userId),
+		supabase.from("goal_invites").select("invitee_id").eq("inviter_id", userId),
+		supabase.from("goal_invites").select("inviter_id").eq("invitee_id", userId),
+	]);
 
-	if (userGoalsError) throw userGoalsError;
+	if (userGoalsRes.error) throw userGoalsRes.error;
+	if (invitedRes.error) throw invitedRes.error;
+	if (invitersRes.error) throw invitersRes.error;
 
-	const goalIds = userGoals?.map((g) => g.goal_id) ?? [];
+	const goalIds = userGoalsRes.data?.map((g) => g.goal_id) ?? [];
 
 	let goalMates: { user_id: string }[] = [];
 	if (goalIds.length > 0) {
@@ -114,24 +117,10 @@ export const fetchAssociatedPeople = async (
 		goalMates = data ?? [];
 	}
 
-	const { data: invited, error: invitedError } = await supabase
-		.from("goal_invites")
-		.select("invitee_id")
-		.eq("inviter_id", userId);
-
-	if (invitedError) throw invitedError;
-
-	const { data: inviters, error: invitersError } = await supabase
-		.from("goal_invites")
-		.select("inviter_id")
-		.eq("invitee_id", userId);
-
-	if (invitersError) throw invitersError;
-
 	const allUserIds = [
 		...goalMates.map((g) => g.user_id),
-		...(invited?.map((i) => i.invitee_id) ?? []),
-		...(inviters?.map((i) => i.inviter_id) ?? []),
+		...(invitedRes.data?.map((i) => i.invitee_id) ?? []),
+		...(invitersRes.data?.map((i) => i.inviter_id) ?? []),
 	];
 	const uniqueUserIds = [...new Set(allUserIds)].filter(
 		(id) => !excludeUserIds.includes(id),

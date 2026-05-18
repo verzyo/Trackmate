@@ -1,11 +1,11 @@
-import {
-	Platform,
-	Pressable,
-	Text,
-	useWindowDimensions,
-	View,
-} from "react-native";
 import { cn } from "@/utils/cn";
+import {
+    Platform,
+    Pressable,
+    Text,
+    useWindowDimensions,
+    View,
+} from "react-native";
 
 const WEEK_DAYS = [
 	{ label: "M", value: 1 },
@@ -17,19 +17,20 @@ const WEEK_DAYS = [
 	{ label: "S", value: 0 },
 ];
 
+import { useThemeColors } from "@/hooks/common/useThemeColors";
+
 type WeekDaySelectorProps = {
 	selectedDays: number[];
 	onToggleDay: (day: number) => void;
 	disabled?: boolean;
-	textColor: string;
 };
 
 export function WeekDaySelector({
 	selectedDays,
 	onToggleDay,
 	disabled,
-	textColor,
 }: WeekDaySelectorProps) {
+	const colors = useThemeColors();
 	const { width } = useWindowDimensions();
 	const compactWebLayout = Platform.OS === "web" && width < 560;
 	const dayGap = Platform.OS === "web" && width < 460 ? 6 : 12;
@@ -61,8 +62,10 @@ export function WeekDaySelector({
 						style={{ width: daySize, height: daySize }}
 					>
 						<Text
-							className="font-bold text-sm"
-							style={{ color: isSelected ? "white" : textColor }}
+							className={cn(
+								"font-bold text-sm",
+								isSelected ? "text-white" : "text-text-default",
+							)}
 						>
 							{day.label}
 						</Text>

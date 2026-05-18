@@ -17,25 +17,13 @@ interface StatItemProps {
 }
 
 function StatItem({ icon, value, label }: StatItemProps) {
-	const colors = useThemeColors();
-
 	return (
-		<View
-			className="flex-1 items-center justify-center rounded-[32px] border p-6"
-			style={{
-				borderColor: colors.border,
-				backgroundColor: colors.surfaceFg,
-				gap: 4,
-			}}
-		>
+		<View className="flex-1 items-center justify-center rounded-[32px] border border-border bg-surface-fg p-6 gap-1">
 			{icon}
-			<Text className="text-xl font-bold" style={{ color: colors.textStrong }}>
+			<Text className="text-xl font-bold text-text-strong">
 				{value}
 			</Text>
-			<Text
-				className="text-xs font-semibold tracking-wider"
-				style={{ color: colors.textLight }}
-			>
+			<Text className="text-xs font-semibold tracking-wider text-text-light">
 				{label}
 			</Text>
 		</View>
@@ -53,40 +41,16 @@ export function GoalStatsCard({
 
 	if (loading) {
 		return (
-			<View
-				className="w-full flex-row gap-3"
-				style={{
-					borderColor: colors.border,
-					backgroundColor: colors.surfaceFg,
-				}}
-			>
-				<View
-					className="flex-1 items-center justify-center rounded-[32px] border p-6"
-					style={{
-						borderColor: colors.border,
-						backgroundColor: colors.surfaceFg,
-					}}
-				>
+			<View className="w-full flex-row gap-3">
+				<View className="flex-1 items-center justify-center rounded-[32px] border border-border bg-surface-fg p-6">
 					<ActivityIndicator color={colors.actionPrimary} />
 				</View>
 				{showRank && (
-					<View
-						className="flex-1 items-center justify-center rounded-[32px] border p-6"
-						style={{
-							borderColor: colors.border,
-							backgroundColor: colors.surfaceFg,
-						}}
-					>
+					<View className="flex-1 items-center justify-center rounded-[32px] border border-border bg-surface-fg p-6">
 						<ActivityIndicator color={colors.actionPrimary} />
 					</View>
 				)}
-				<View
-					className="flex-1 items-center justify-center rounded-[32px] border p-6"
-					style={{
-						borderColor: colors.border,
-						backgroundColor: colors.surfaceFg,
-					}}
-				>
+				<View className="flex-1 items-center justify-center rounded-[32px] border border-border bg-surface-fg p-6">
 					<ActivityIndicator color={colors.actionPrimary} />
 				</View>
 			</View>

@@ -1,8 +1,3 @@
-import { router, useLocalSearchParams } from "expo-router";
-import { useColorScheme } from "nativewind";
-import { useEffect, useRef, useState } from "react";
-import type { ScrollView } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FormSection } from "@/components/forms/FormSection";
 import { GoalBasicInfoFields } from "@/components/forms/GoalBasicInfoFields";
 import { GoalFormShell } from "@/components/forms/GoalFormShell";
@@ -27,6 +22,11 @@ import { useGoal } from "@/hooks/goal/useGoalQueries";
 import { useInviteManagement } from "@/hooks/goal/useInviteManagement";
 import type { GoalForm, UpdateGoalMetadataParams } from "@/schemas/goal.schema";
 import { useAuthStore } from "@/store/auth.store";
+import { router, useLocalSearchParams } from "expo-router";
+import { useColorScheme } from "nativewind";
+import { useEffect, useRef, useState } from "react";
+import type { ScrollView } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function EditGoalScreen() {
 	const { id } = useLocalSearchParams<{ id: string }>();
@@ -93,10 +93,7 @@ export default function EditGoalScreen() {
 	}, [goal, reset, userId]);
 
 	const onSave = async (data: GoalForm) => {
-		console.log("onSave called with data:", data);
-		console.log("goal:", goal, "isOwner:", isOwner, "userId:", userId);
 		if (!goal) {
-			console.log("No goal, returning");
 			return;
 		}
 		try {
@@ -104,29 +101,18 @@ export default function EditGoalScreen() {
 			let hasMetadataChanges = false;
 
 			if (isOwner) {
-				console.log("Checking metadata changes...");
-				console.log("data.title:", data.title, "goal.title:", goal.title);
-				console.log(
-					"data.description:",
-					data.description,
-					"goal.description:",
-					goal.description,
-				);
 				if (data.title !== goal.title) {
 					metadataParams.title = data.title;
 					hasMetadataChanges = true;
-					console.log("Title changed");
 				}
 				if (data.description !== (goal.description || "")) {
 					metadataParams.description = data.description;
 					hasMetadataChanges = true;
-					console.log("Description changed");
 				}
 			}
 
 			const invitePromises: Promise<unknown>[] = [];
 			if (isOwner && invitees.length > 0 && userId) {
-				console.log("Processing invites:", invitees);
 				invitePromises.push(
 					...invitees.map((invitee) =>
 						createInviteMutation.mutateAsync({
@@ -140,25 +126,12 @@ export default function EditGoalScreen() {
 
 			const participantChanges =
 				selectedIcon !== initialIcon || selectedColor !== initialColor;
-			console.log(
-				"participantChanges:",
-				participantChanges,
-				"selectedIcon:",
-				selectedIcon,
-				"initialIcon:",
-				initialIcon,
-				"selectedColor:",
-				selectedColor,
-				"initialColor:",
-				initialColor,
-			);
 
 			if (
 				!hasMetadataChanges &&
 				invitePromises.length === 0 &&
 				!participantChanges
 			) {
-				console.log("No changes detected, going back");
 				router.back();
 				return;
 			}
@@ -166,7 +139,6 @@ export default function EditGoalScreen() {
 			const promises = [...invitePromises];
 
 			if (participantChanges && userId) {
-				console.log("Adding participant update");
 				promises.push(
 					updateParticipantMutation.mutateAsync({
 						goalId: id as string,
@@ -178,7 +150,6 @@ export default function EditGoalScreen() {
 			}
 
 			if (hasMetadataChanges) {
-				console.log("Adding metadata update:", metadataParams);
 				promises.push(
 					updateMetadataMutation.mutateAsync(
 						metadataParams as UpdateGoalMetadataParams,
@@ -186,12 +157,9 @@ export default function EditGoalScreen() {
 				);
 			}
 
-			console.log("Executing promises:", promises.length);
 			await Promise.all(promises);
-			console.log("Save successful");
 			router.back();
 		} catch (error) {
-			console.error("Save error:", error);
 			handleError(error, "Failed to update goal");
 		}
 	};
@@ -251,11 +219,7 @@ export default function EditGoalScreen() {
 			)}
 
 			<FilledButton
-				onPress={() => {
-					console.log("Save button pressed, calling handleSubmit");
-					console.log("Form errors:", errors);
-					handleSubmit(onSave)();
-				}}
+				onPress={handleSubmit(onSave)}
 				disabled={isLoading}
 				className="mt-4"
 				label={isLoading ? "Saving..." : "Save Goal"}

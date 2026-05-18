@@ -117,69 +117,26 @@ export default function LandingScreen() {
 	const _router = useRouter();
 
 	return (
-		<Screen
-			style={{
-				backgroundColor: "#ffffff",
-			}}
-		>
+		<Screen className="bg-white">
 			<ScrollView
-				style={{ flex: 1 }}
-				contentContainerStyle={{ alignItems: "center" }}
+				className="flex-1"
+				contentContainerClassName="items-center"
 				showsVerticalScrollIndicator={false}
 			>
-				{/* Hero Section */}
-				<View
-					style={{
-						alignItems: "center",
-						paddingVertical: 80,
-						paddingHorizontal: 24,
-						maxWidth: 768,
-					}}
-				>
+				<View className="items-center py-20 px-6 max-w-[768px]">
 					<Logo />
-					<Text
-						style={{
-							fontSize: 48,
-							fontWeight: "700",
-							color: "#0f172a",
-							textAlign: "center",
-							marginTop: 24,
-						}}
-					>
+					<Text className="text-5xl font-bold text-text-strong text-center mt-6">
 						Trackmate
 					</Text>
-					<Text
-						style={{
-							fontSize: 20,
-							color: "#64748b",
-							textAlign: "center",
-							marginTop: 12,
-						}}
-					>
+					<Text className="text-xl text-text-light text-center mt-3">
 						Goal tracking, socialized.
 					</Text>
-					<Text
-						style={{
-							fontSize: 16,
-							color: "#94a3b8",
-							textAlign: "center",
-							marginTop: 16,
-							maxWidth: 448,
-						}}
-					>
+					<Text className="text-base text-text-light/80 text-center mt-4 max-w-[448px]">
 						Set goals, track progress, and achieve more together with friends.
 						Compete on leaderboards and stay accountable.
 					</Text>
 
-					<View
-						style={{
-							flexDirection: "row",
-							gap: 16,
-							marginTop: 40,
-							flexWrap: "wrap",
-							justifyContent: "center",
-						}}
-					>
+					<View className="flex-row gap-4 mt-10 flex-wrap justify-center">
 						<Button
 							onPress={() => {
 								window.location.href = "/app";
@@ -201,15 +158,9 @@ export default function LandingScreen() {
 					</View>
 				</View>
 
-				<View
-					style={{
-						width: "100%",
-						height: 1,
-						backgroundColor: "#f1f5f9",
-					}}
-				/>
+				<View className="w-full h-[1px] bg-border" />
 
-				<View style={{ width: "100%", maxWidth: 1152 }}>
+				<View className="w-full max-w-[1152px]">
 					<FeatureSection
 						image={require("@/assets/images/home_screen.png")}
 						title="Track Together"
@@ -230,14 +181,8 @@ export default function LandingScreen() {
 					/>
 				</View>
 
-				<View style={{ paddingVertical: 48, paddingHorizontal: 16 }}>
-					<Text
-						style={{
-							fontSize: 14,
-							color: "#94a3b8",
-							textAlign: "center",
-						}}
-					>
+				<View className="py-12 px-4">
+					<Text className="text-sm text-text-light text-center">
 						Trackmate — Goals are better together.
 					</Text>
 				</View>

@@ -177,15 +177,8 @@ export default function ProfileScreen() {
 		const executeDeleteAccount = async () => {
 			try {
 				await deleteMyAccount();
-				const { error: signOutError } = await supabase.auth.signOut();
-				if (signOutError) {
-					console.warn(
-						"Delete account succeeded but sign out failed",
-						signOutError,
-					);
-				}
+				await supabase.auth.signOut();
 			} catch (error) {
-				console.error("Failed to delete account", error);
 				handleError(error, "Failed to delete account", "Profile Update");
 			}
 		};

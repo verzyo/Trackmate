@@ -1,8 +1,3 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import type { RefObject } from "react";
-import { useCallback, useMemo } from "react";
-import { useForm } from "react-hook-form";
-import type { ScrollView, TextInput } from "react-native";
 import { GOAL_APPEARANCE_COLORS } from "@/components/goal/GoalAppearancePicker";
 import {
 	ATTACHMENT_TYPES,
@@ -13,6 +8,11 @@ import {
 	type FrequencyType,
 } from "@/constants/frequencyTypes";
 import { type GoalForm, GoalFormSchema } from "@/schemas/goal.schema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import type { RefObject } from "react";
+import { useCallback, useMemo } from "react";
+import { useForm } from "react-hook-form";
+import type { ScrollView, TextInput } from "react-native";
 
 export interface UseGoalFormOptions {
 	scrollViewRef: RefObject<ScrollView | null>;
@@ -23,6 +23,7 @@ export interface UseGoalFormReturn {
 	control: ReturnType<typeof useForm<GoalForm>>["control"];
 	handleSubmit: ReturnType<typeof useForm<GoalForm>>["handleSubmit"];
 	setValue: ReturnType<typeof useForm<GoalForm>>["setValue"];
+	getValues: ReturnType<typeof useForm<GoalForm>>["getValues"];
 	watch: ReturnType<typeof useForm<GoalForm>>["watch"];
 	reset: ReturnType<typeof useForm<GoalForm>>["reset"];
 	formState: {
@@ -70,6 +71,7 @@ export function useGoalForm(options: UseGoalFormOptions): UseGoalFormReturn {
 		control,
 		handleSubmit,
 		setValue,
+		getValues,
 		watch,
 		reset,
 		formState: { errors },
@@ -91,13 +93,16 @@ export function useGoalForm(options: UseGoalFormOptions): UseGoalFormReturn {
 
 	const toggleDay = useCallback(
 		(val: number) => {
-			const current = watch("weekly_days") || [];
+			const current = getValues("weekly_days") || [];
 			const next = current.includes(val)
 				? current.filter((d) => d !== val)
 				: [...current, val];
-			setValue("weekly_days", next, { shouldValidate: true });
+			setValue("weekly_days", next, {
+				shouldValidate: true,
+				shouldDirty: true,
+			});
 		},
-		[setValue, watch],
+		[setValue, getValues],
 	);
 
 	const handleInviteInputFocus = useCallback(
@@ -115,29 +120,41 @@ export function useGoalForm(options: UseGoalFormOptions): UseGoalFormReturn {
 			setValue(
 				"interval_days",
 				sanitized === "" ? "" : String(Math.max(1, Number(sanitized))),
+				{ shouldValidate: true, shouldDirty: true },
 			);
 		},
 		[setValue],
 	);
 
 	const onIntervalBlur = useCallback(() => {
-		if (!intervalInputValue || intervalValue < 1) {
-			setValue("interval_days", "1");
+		const currentInputValue = getValues("interval_days");
+		const currentValue = parseInt(currentInputValue || "1", 10);
+		if (!currentInputValue || currentValue < 1) {
+			setValue("interval_days", "1", { shouldValidate: true, shouldDirty: true });
 		}
-	}, [intervalInputValue, intervalValue, setValue]);
+	}, [getValues, setValue]);
 
 	const onIncrementInterval = useCallback(() => {
-		setValue("interval_days", (intervalValue + 1).toString());
-	}, [intervalValue, setValue]);
+		const currentValue = parseInt(getValues("interval_days") || "1", 10);
+		setValue("interval_days", (currentValue + 1).toString(), {
+			shouldValidate: true,
+			shouldDirty: true,
+		});
+	}, [getValues, setValue]);
 
 	const onDecrementInterval = useCallback(() => {
-		setValue("interval_days", Math.max(1, intervalValue - 1).toString());
-	}, [intervalValue, setValue]);
+		const currentValue = parseInt(getValues("interval_days") || "1", 10);
+		setValue("interval_days", Math.max(1, currentValue - 1).toString(), {
+			shouldValidate: true,
+			shouldDirty: true,
+		});
+	}, [getValues, setValue]);
 
 	return {
 		control,
 		handleSubmit,
 		setValue,
+		getValues,
 		watch,
 		reset,
 		formState: { errors },

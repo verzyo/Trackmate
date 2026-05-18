@@ -54,6 +54,8 @@ export const CreateGoalBackendSchema = z.object({
 	start_date: z.string().nullable(),
 	attachment_type: z.enum(["none", "photo", "url", "text"]),
 	require_attachment: z.boolean(),
+	icon: z.string().optional(),
+	color: z.string().optional(),
 });
 export type CreateGoalParams = z.infer<typeof CreateGoalBackendSchema>;
 
