@@ -12,12 +12,12 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { InviteCard } from "@/components/goal/InviteCard";
 import { Screen } from "@/components/layout/Screen";
 import PageHeader from "@/components/ui/PageHeader";
+import { useThemeColors } from "@/hooks/common/useThemeColors";
 import {
 	useAcceptInvite,
 	useDeclineInvite,
 } from "@/hooks/goal/useGoalMutations";
 import { goalKeys, useInvites } from "@/hooks/goal/useGoalQueries";
-import { useThemeColors } from "@/hooks/common/useThemeColors";
 import { useAuthStore } from "@/store/auth.store";
 import { getErrorMessage, showAlert } from "@/utils/error.utils";
 
@@ -93,10 +93,7 @@ export default function InvitesScreen() {
 
 					{isLoading && (
 						<View className="rounded-3xl border border-border bg-surface-fg py-16 items-center justify-center">
-							<ActivityIndicator
-								size="large"
-								color={colors.actionPrimary}
-							/>
+							<ActivityIndicator size="large" color={colors.actionPrimary} />
 							<Text className="text-text-light mt-4 font-medium text-base">
 								Loading invites...
 							</Text>

@@ -1,7 +1,3 @@
-import Avatar from "@/components/ui/Avatar";
-import { useThemeColors } from "@/hooks/common/useThemeColors";
-import { supabase } from "@/lib/supabase";
-import type { AttachmentItem } from "@/schemas/goal.schema";
 import { Image } from "expo-image";
 import { LinkSimple, Note, X } from "phosphor-react-native";
 import React from "react";
@@ -14,6 +10,10 @@ import {
 	useWindowDimensions,
 	View,
 } from "react-native";
+import Avatar from "@/components/ui/Avatar";
+import { useThemeColors } from "@/hooks/common/useThemeColors";
+import { supabase } from "@/lib/supabase";
+import type { AttachmentItem } from "@/schemas/goal.schema";
 
 interface GoalAttachmentsListProps {
 	attachments: AttachmentItem[];
@@ -191,8 +191,7 @@ const AttachmentContent = React.memo(function AttachmentContent({
 						if (supported) {
 							await Linking.openURL(data.url as string);
 						}
-					} catch (error) {
-					}
+					} catch (_error) {}
 				};
 
 				return (

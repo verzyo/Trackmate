@@ -1,6 +1,6 @@
 import {
-    useCompleteGoal,
-    useUncompleteGoal,
+	useCompleteGoal,
+	useUncompleteGoal,
 } from "@/hooks/goal/useGoalMutations";
 import type { AttachmentData } from "@/schemas/goal.schema";
 

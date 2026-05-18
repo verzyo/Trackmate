@@ -1,3 +1,8 @@
+import { router, useLocalSearchParams } from "expo-router";
+import { useColorScheme } from "nativewind";
+import { useEffect, useRef, useState } from "react";
+import type { ScrollView } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FormSection } from "@/components/forms/FormSection";
 import { GoalBasicInfoFields } from "@/components/forms/GoalBasicInfoFields";
 import { GoalFormShell } from "@/components/forms/GoalFormShell";
@@ -22,11 +27,6 @@ import { useGoal } from "@/hooks/goal/useGoalQueries";
 import { useInviteManagement } from "@/hooks/goal/useInviteManagement";
 import type { GoalForm, UpdateGoalMetadataParams } from "@/schemas/goal.schema";
 import { useAuthStore } from "@/store/auth.store";
-import { router, useLocalSearchParams } from "expo-router";
-import { useColorScheme } from "nativewind";
-import { useEffect, useRef, useState } from "react";
-import type { ScrollView } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function EditGoalScreen() {
 	const { id } = useLocalSearchParams<{ id: string }>();

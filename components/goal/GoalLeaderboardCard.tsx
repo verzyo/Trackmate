@@ -47,9 +47,7 @@ function RankBadge({ rank }: { rank: number }) {
 	}
 	return (
 		<View className="h-7 w-7 items-center justify-center rounded-full">
-			<Text className="text-xs font-bold text-text-light">
-				{rank}
-			</Text>
+			<Text className="text-xs font-bold text-text-light">{rank}</Text>
 		</View>
 	);
 }
@@ -67,9 +65,11 @@ function LeaderboardRow({ entry, isCurrentUser }: LeaderboardRowProps) {
 		<View
 			className={cn(
 				"flex-row items-center gap-3 rounded-[24px] border px-4 py-3",
-				isCurrentUser 
-					? isDark ? "border-indigo-900 bg-indigo-950/30" : "border-indigo-200 bg-indigo-50"
-					: "border-border bg-surface-fg"
+				isCurrentUser
+					? isDark
+						? "border-indigo-900 bg-indigo-950/30"
+						: "border-indigo-200 bg-indigo-50"
+					: "border-border bg-surface-fg",
 			)}
 		>
 			<RankBadge rank={entry.rank} />
@@ -86,13 +86,9 @@ function LeaderboardRow({ entry, isCurrentUser }: LeaderboardRowProps) {
 					{displayName(entry)}
 					{isCurrentUser ? " (you)" : ""}
 				</Text>
-				<Text className="text-xs text-text-light">
-					@{entry.username}
-				</Text>
+				<Text className="text-xs text-text-light">@{entry.username}</Text>
 			</View>
-			<Text
-				className="text-sm font-bold text-action-primary"
-			>
+			<Text className="text-sm font-bold text-action-primary">
 				{entry.points} pts
 			</Text>
 		</View>
@@ -125,12 +121,8 @@ export function GoalLeaderboardCard({
 	if (leaderboard.length === 0) {
 		return (
 			<View className="w-full rounded-[32px] border border-border bg-surface-fg p-6 gap-4">
-				<Text className="text-xl font-bold text-text-strong">
-					Leaderboard
-				</Text>
-				<Text className="text-sm text-text-light">
-					No participants yet
-				</Text>
+				<Text className="text-xl font-bold text-text-strong">Leaderboard</Text>
+				<Text className="text-sm text-text-light">No participants yet</Text>
 			</View>
 		);
 	}
@@ -142,9 +134,7 @@ export function GoalLeaderboardCard({
 
 	return (
 		<View className="w-full rounded-[32px] border border-border bg-surface-fg p-6 gap-4">
-			<Text className="text-xl font-bold text-text-strong">
-				Leaderboard
-			</Text>
+			<Text className="text-xl font-bold text-text-strong">Leaderboard</Text>
 
 			<View className="gap-2">
 				{displayEntries.map((entry, index) => {
@@ -156,9 +146,7 @@ export function GoalLeaderboardCard({
 						<View key={entry.user_id}>
 							{showSeparator && (
 								<View className="my-1 items-center">
-									<Text className="text-xs text-text-light">
-										• • •
-									</Text>
+									<Text className="text-xs text-text-light">• • •</Text>
 								</View>
 							)}
 							<LeaderboardRow entry={entry} isCurrentUser={isMe} />

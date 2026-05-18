@@ -1,11 +1,11 @@
-import { cn } from "@/utils/cn";
 import {
-    Platform,
-    Pressable,
-    Text,
-    useWindowDimensions,
-    View,
+	Platform,
+	Pressable,
+	Text,
+	useWindowDimensions,
+	View,
 } from "react-native";
+import { cn } from "@/utils/cn";
 
 const WEEK_DAYS = [
 	{ label: "M", value: 1 },
@@ -30,7 +30,7 @@ export function WeekDaySelector({
 	onToggleDay,
 	disabled,
 }: WeekDaySelectorProps) {
-	const colors = useThemeColors();
+	const _colors = useThemeColors();
 	const { width } = useWindowDimensions();
 	const compactWebLayout = Platform.OS === "web" && width < 560;
 	const dayGap = Platform.OS === "web" && width < 460 ? 6 : 12;

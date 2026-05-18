@@ -295,7 +295,7 @@ export const fetchGoalLeaderboard = async (
 	}
 	try {
 		return LeaderboardEntrySchema.array().parse(data ?? []);
-	} catch (parseError) {
+	} catch (_parseError) {
 		return data as LeaderboardEntry[];
 	}
 };
@@ -311,7 +311,7 @@ export const fetchGoalMonthlyPointsForAll = async (
 	}
 	try {
 		return ParticipantMonthlyPointsSchema.array().parse(data ?? []);
-	} catch (parseError) {
+	} catch (_parseError) {
 		return data as ParticipantMonthlyPoints[];
 	}
 };
@@ -387,7 +387,7 @@ export const fetchRecentAttachments = async (
 
 	try {
 		return AttachmentItemSchema.array().parse(transformed);
-	} catch (parseError) {
+	} catch (_parseError) {
 		return transformed as AttachmentItem[];
 	}
 };

@@ -1,15 +1,15 @@
-import { useThemeColors } from "@/hooks/common/useThemeColors";
-import type { ParticipantMonthlyPoints } from "@/schemas/goal.schema";
 import { useMemo, useState } from "react";
 import {
-    ActivityIndicator,
-    type LayoutChangeEvent,
-    Platform,
-    Text,
-    useWindowDimensions,
-    View,
+	ActivityIndicator,
+	type LayoutChangeEvent,
+	Platform,
+	Text,
+	useWindowDimensions,
+	View,
 } from "react-native";
 import { LineChart } from "react-native-gifted-charts";
+import { useThemeColors } from "@/hooks/common/useThemeColors";
+import type { ParticipantMonthlyPoints } from "@/schemas/goal.schema";
 
 interface GoalPointsChartProps {
 	data: ParticipantMonthlyPoints[];

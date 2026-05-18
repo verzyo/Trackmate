@@ -1,12 +1,12 @@
+import { type Href, router } from "expo-router";
+import { PencilSimple } from "phosphor-react-native";
+import { Text, View } from "react-native";
 import CircleIconButton from "@/components/ui/CircleIconButton";
 import PageHeader from "@/components/ui/PageHeader";
 import { useThemeColors } from "@/hooks/common/useThemeColors";
 import type { GoalWithParticipant } from "@/schemas/goal.schema";
 import { hexToRgba } from "@/utils/color.utils";
 import { DynamicIcon } from "@/utils/icons";
-import { type Href, router } from "expo-router";
-import { PencilSimple } from "phosphor-react-native";
-import { Text, View } from "react-native";
 
 type GoalDetailHeaderProps = {
 	goal: GoalWithParticipant;
@@ -72,9 +72,7 @@ export function GoalDetailHeader({
 					</Text>
 
 					{goal.description ? (
-						<Text
-							className="text-base leading-6 text-text-default"
-						>
+						<Text className="text-base leading-6 text-text-default">
 							{goal.description}
 						</Text>
 					) : null}

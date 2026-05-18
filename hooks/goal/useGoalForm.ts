@@ -1,3 +1,8 @@
+import { zodResolver } from "@hookform/resolvers/zod";
+import type { RefObject } from "react";
+import { useCallback, useMemo } from "react";
+import { useForm } from "react-hook-form";
+import type { ScrollView, TextInput } from "react-native";
 import { GOAL_APPEARANCE_COLORS } from "@/components/goal/GoalAppearancePicker";
 import {
 	ATTACHMENT_TYPES,
@@ -8,11 +13,6 @@ import {
 	type FrequencyType,
 } from "@/constants/frequencyTypes";
 import { type GoalForm, GoalFormSchema } from "@/schemas/goal.schema";
-import { zodResolver } from "@hookform/resolvers/zod";
-import type { RefObject } from "react";
-import { useCallback, useMemo } from "react";
-import { useForm } from "react-hook-form";
-import type { ScrollView, TextInput } from "react-native";
 
 export interface UseGoalFormOptions {
 	scrollViewRef: RefObject<ScrollView | null>;
@@ -130,7 +130,10 @@ export function useGoalForm(options: UseGoalFormOptions): UseGoalFormReturn {
 		const currentInputValue = getValues("interval_days");
 		const currentValue = parseInt(currentInputValue || "1", 10);
 		if (!currentInputValue || currentValue < 1) {
-			setValue("interval_days", "1", { shouldValidate: true, shouldDirty: true });
+			setValue("interval_days", "1", {
+				shouldValidate: true,
+				shouldDirty: true,
+			});
 		}
 	}, [getValues, setValue]);
 

@@ -19,10 +19,7 @@ import { useKeyboard } from "@/hooks/common/useKeyboard";
 import { useThemeColors } from "@/hooks/common/useThemeColors";
 import { useToday } from "@/hooks/common/useToday";
 import { useGoalForm } from "@/hooks/goal/useGoalForm";
-import {
-    useCreateGoal,
-    useCreateInvite
-} from "@/hooks/goal/useGoalMutations";
+import { useCreateGoal, useCreateInvite } from "@/hooks/goal/useGoalMutations";
 import { useInviteManagement } from "@/hooks/goal/useInviteManagement";
 import type { GoalForm } from "@/schemas/goal.schema";
 import { useAuthStore } from "@/store/auth.store";

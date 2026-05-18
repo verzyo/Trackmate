@@ -1,13 +1,3 @@
-import { FilledButton } from "@/components/ui/FilledButton";
-import { useThemeColors } from "@/hooks/common/useThemeColors";
-import type {
-	AttachmentData,
-	GoalWithParticipant,
-} from "@/schemas/goal.schema";
-import { uploadAttachment } from "@/services/attachment.service";
-import { useAuthStore } from "@/store/auth.store";
-import { cn } from "@/utils/cn";
-import { showAlert } from "@/utils/error.utils";
 import {
 	BottomSheetBackdrop,
 	BottomSheetModal,
@@ -25,6 +15,16 @@ import {
 	TextInput,
 	View,
 } from "react-native";
+import { FilledButton } from "@/components/ui/FilledButton";
+import { useThemeColors } from "@/hooks/common/useThemeColors";
+import type {
+	AttachmentData,
+	GoalWithParticipant,
+} from "@/schemas/goal.schema";
+import { uploadAttachment } from "@/services/attachment.service";
+import { useAuthStore } from "@/store/auth.store";
+import { cn } from "@/utils/cn";
+import { showAlert } from "@/utils/error.utils";
 
 type Props = {
 	goal: GoalWithParticipant;
@@ -219,9 +219,7 @@ const AttachmentBottomSheet = forwardRef<AttachmentBottomSheetRef, Props>(
 						{isSubmitting && (
 							<View className="items-center justify-center py-8">
 								<ActivityIndicator color={colors.actionPrimary} size="large" />
-								<Text className="mt-4 text-text-default">
-									Processing...
-								</Text>
+								<Text className="mt-4 text-text-default">Processing...</Text>
 							</View>
 						)}
 
@@ -256,7 +254,7 @@ const AttachmentBottomSheet = forwardRef<AttachmentBottomSheetRef, Props>(
 										onChangeText={handleUrlChange}
 										className={cn(
 											"h-14 px-4 rounded-full border bg-surface-bg text-text-strong",
-											urlError ? "border-state-danger" : "border-border"
+											urlError ? "border-state-danger" : "border-border",
 										)}
 										autoCapitalize="none"
 										autoCorrect={false}
@@ -270,7 +268,7 @@ const AttachmentBottomSheet = forwardRef<AttachmentBottomSheetRef, Props>(
 										onChangeText={handleUrlChange}
 										className={cn(
 											"h-14 px-4 rounded-full border bg-surface-bg text-text-strong",
-											urlError ? "border-state-danger" : "border-border"
+											urlError ? "border-state-danger" : "border-border",
 										)}
 										autoCapitalize="none"
 										autoCorrect={false}

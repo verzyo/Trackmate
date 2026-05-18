@@ -1,3 +1,8 @@
+import { useQueryClient } from "@tanstack/react-query";
+import { router, useLocalSearchParams } from "expo-router";
+import { useMemo, useRef } from "react";
+import { ScrollView, Text, useWindowDimensions, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AttachmentBottomSheet, {
 	type AttachmentBottomSheetRef,
 } from "@/components/AttachmentBottomSheet";
@@ -39,11 +44,6 @@ import type { AttachmentData } from "@/schemas/goal.schema";
 import { useAuthStore } from "@/store/auth.store";
 import { getNextDueDate, isTodayUTC } from "@/utils/date.utils";
 import { getErrorMessage, showAlert } from "@/utils/error.utils";
-import { useQueryClient } from "@tanstack/react-query";
-import { router, useLocalSearchParams } from "expo-router";
-import { useMemo, useRef } from "react";
-import { ScrollView, Text, useWindowDimensions, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function GoalDetailsModal() {
 	const { id, inviteId, participantId } = useLocalSearchParams<{

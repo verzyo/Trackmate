@@ -13,9 +13,8 @@ import {
 	FREQUENCY_TYPES,
 	type FrequencyType,
 } from "@/constants/frequencyTypes";
-import { cn } from "@/utils/cn";
-
 import { useThemeColors } from "@/hooks/common/useThemeColors";
+import { cn } from "@/utils/cn";
 
 type GoalFrequencyEditorProps = {
 	frequencyType: FrequencyType;
@@ -82,18 +81,14 @@ export function GoalFrequencyEditor({
 						<View
 							className={cn("gap-1", !useCompactIntervalLayout && "flex-1")}
 						>
-							<Text
-								className="font-bold text-text-strong text-base"
-							>
+							<Text className="font-bold text-text-strong text-base">
 								{intervalValue === 1
 									? "Every day"
 									: intervalValue === 2
 										? "Every other day"
 										: `Every ${intervalValue} days`}
 							</Text>
-							<Text
-								className="text-text-light text-xs"
-							>
+							<Text className="text-text-light text-xs">
 								Recurring gap between logs
 							</Text>
 						</View>
