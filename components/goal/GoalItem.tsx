@@ -1,17 +1,18 @@
-import { CheckIcon, FireIcon } from "phosphor-react-native";
-import {
-	cloneElement,
-	isValidElement,
-	memo,
-	type ReactElement,
-	type ReactNode,
-	useMemo,
-} from "react";
-import { Pressable, Text, View } from "react-native";
 import AvatarStack from "@/components/ui/AvatarStack";
 import PersonalTag from "@/components/ui/PersonalTag";
 import type { GoalWithParticipant } from "@/schemas/goal.schema";
+import { cn } from "@/utils/cn";
 import { hexToRgba } from "@/utils/color.utils";
+import { CheckIcon, FireIcon } from "phosphor-react-native";
+import {
+    cloneElement,
+    isValidElement,
+    memo,
+    type ReactElement,
+    type ReactNode,
+    useMemo,
+} from "react";
+import { Pressable, Text, View } from "react-native";
 
 function filledIcon(icon: ReactNode, color: string, size = 28): ReactNode {
 	if (!isValidElement(icon)) return icon;
@@ -105,11 +106,12 @@ export const GoalItem = memo(function GoalItem({
 
 					<View className="flex-1 flex-col justify-center gap-1">
 						<Text
-							className={
+							className={cn(
+								"font-bold text-text-strong",
 								goal.title.length > 16
-									? "font-bold text-xl leading-8 text-text-strong"
-									: "font-bold text-2xl leading-9 text-text-strong"
-							}
+									? "text-xl leading-8"
+									: "text-2xl leading-9",
+							)}
 							numberOfLines={1}
 						>
 							{goal.title}
@@ -143,11 +145,12 @@ export const GoalItem = memo(function GoalItem({
 					<Pressable
 						onPress={onToggle}
 						hitSlop={12}
-						className={`h-10 w-10 shrink-0 items-center justify-center rounded-xl border-[3px] ${
+						className={cn(
+							"h-10 w-10 shrink-0 items-center justify-center rounded-xl border-[3px]",
 							isCompletedToday
 								? "border-action-primary bg-action-primary"
-								: "border-border bg-transparent"
-						}`}
+								: "border-border bg-transparent",
+						)}
 					>
 						{isCompletedToday && (
 							<CheckIcon size={20} color="white" weight="bold" />
@@ -170,7 +173,10 @@ export const GoalItem = memo(function GoalItem({
 						{sortedParticipants.map((pa) => (
 							<View
 								key={pa.user_id}
-								className={`flex-1 self-stretch rounded-full ${pa.completed ? "bg-action-primary" : "bg-border"}`}
+								className={cn(
+									"flex-1 self-stretch rounded-full",
+									pa.completed ? "bg-action-primary" : "bg-border",
+								)}
 							/>
 						))}
 					</View>

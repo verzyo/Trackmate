@@ -1,21 +1,22 @@
+import { FilledButton } from "@/components/ui/FilledButton";
+import { useThemeColors } from "@/hooks/common/useThemeColors";
+import { cn } from "@/utils/cn";
+import { showAlert } from "@/utils/error.utils";
 import {
-	BottomSheetBackdrop,
-	BottomSheetModal,
-	BottomSheetView,
+    BottomSheetBackdrop,
+    BottomSheetModal,
+    BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import * as ImagePicker from "expo-image-picker";
 import { X } from "phosphor-react-native";
 import { forwardRef, useImperativeHandle, useRef, useState } from "react";
 import {
-	ActivityIndicator,
-	Platform,
-	Pressable,
-	Text,
-	View,
+    ActivityIndicator,
+    Platform,
+    Pressable,
+    Text,
+    View,
 } from "react-native";
-import { FilledButton } from "@/components/ui/FilledButton";
-import { useThemeColors } from "@/hooks/common/useThemeColors";
-import { showAlert } from "@/utils/error.utils";
 
 type ImagePickerMode = "photo" | "avatar";
 
@@ -139,7 +140,7 @@ const ImagePickerBottomSheet = forwardRef<ImagePickerBottomSheetRef, Props>(
 									onPress={pickImage}
 									disabled={isSubmitting}
 									variant="primary"
-									className={showCameraAction ? "flex-1" : "w-full"}
+									className={cn(showCameraAction ? "flex-1" : "w-full")}
 								/>
 								{showCameraAction && (
 									<FilledButton

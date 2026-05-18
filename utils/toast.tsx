@@ -2,6 +2,7 @@ import { X } from "phosphor-react-native";
 import { Pressable, Text, View } from "react-native";
 import type { ToastConfig as RNToastConfig } from "react-native-toast-message";
 import Toast from "react-native-toast-message";
+import { cn } from "./cn";
 
 type ToastKind = "success" | "error" | "info";
 
@@ -15,7 +16,7 @@ const ToastCard = ({
 	accentClassName: string;
 }) => (
 	<View className="mx-4 w-[90%] flex-row items-center rounded-2xl border border-border bg-surface-fg p-4 shadow-xl">
-		<View className={`mr-3 h-10 w-1.5 rounded-full ${accentClassName}`} />
+		<View className={cn("mr-3 h-10 w-1.5 rounded-full", accentClassName)} />
 		<View className="flex-1">
 			{text1 && (
 				<Text className="font-bold text-text-strong text-base">{text1}</Text>

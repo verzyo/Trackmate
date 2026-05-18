@@ -230,7 +230,7 @@ const AttachmentBottomSheet = forwardRef<AttachmentBottomSheetRef, Props>(
 									onPress={pickImage}
 									disabled={isSubmitting}
 									variant="primary"
-									className={showCameraAction ? "flex-1" : "w-full"}
+									className={cn(showCameraAction ? "flex-1" : "w-full")}
 								/>
 								{showCameraAction && (
 									<FilledButton

@@ -37,7 +37,7 @@ export function FormShell({
 
 	return (
 		<Screen className="bg-surface-bg">
-			<View className={cn("flex-1", isDark ? "dark" : "")}>
+			<View className={cn("flex-1", isDark && "dark")}>
 				<KeyboardAvoidingView
 					behavior="height"
 					keyboardVerticalOffset={0}
@@ -49,11 +49,10 @@ export function FormShell({
 						automaticallyAdjustKeyboardInsets
 						keyboardDismissMode="on-drag"
 						keyboardShouldPersistTaps="handled"
-						contentContainerClassName={
-							isAuth
-								? "flex-grow items-center justify-center px-6 py-10"
-								: "flex-grow px-6 py-4 items-center"
-						}
+						contentContainerClassName={cn(
+							"flex-grow items-center",
+							isAuth ? "justify-center px-6 py-10" : "px-6 py-4",
+						)}
 						contentContainerStyle={{
 							paddingBottom:
 								Math.max(insetsBottom + 24, 32) +

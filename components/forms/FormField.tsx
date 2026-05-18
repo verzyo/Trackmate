@@ -1,11 +1,12 @@
+import { useThemeColors } from "@/hooks/common/useThemeColors";
+import { cn } from "@/utils/cn";
 import {
-	type Control,
-	Controller,
-	type FieldValues,
-	type Path,
+    type Control,
+    Controller,
+    type FieldValues,
+    type Path,
 } from "react-hook-form";
 import { Text, TextInput, type TextInputProps, View } from "react-native";
-import { useThemeColors } from "@/hooks/common/useThemeColors";
 
 type FormFieldProps<T extends FieldValues> = TextInputProps & {
 	control: Control<T>;
@@ -39,9 +40,12 @@ export function FormField<T extends FieldValues>({
 						value={value as string}
 						onChangeText={onChange}
 						onBlur={onBlur}
-						className={`w-full h-14 border border-border bg-surface-fg px-5 text-base text-text-strong ${
-							props.multiline ? "rounded-3xl" : "rounded-full"
-						} ${error ? "border-state-danger" : ""} ${className}`}
+						className={cn(
+							"w-full h-14 border border-border bg-surface-fg px-5 text-base text-text-strong",
+							props.multiline ? "rounded-3xl" : "rounded-full",
+							error && "border-state-danger",
+							className,
+						)}
 						style={{ color: colors.textStrong }}
 						placeholderTextColor={colors.textLight}
 						{...props}
