@@ -1,26 +1,17 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import { router } from "expo-router";
-import { useRef } from "react";
-import { useForm } from "react-hook-form";
-import { type ScrollView, Text, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import AuthFormShell from "@/components/auth/AuthFormShell";
-import AuthSwitchPrompt from "@/components/auth/AuthSwitchPrompt";
 import { FormField } from "@/components/forms/FormField";
+import { AuthScreen } from "@/components/layout/AuthScreen";
 import FilledButton from "@/components/ui/FilledButton";
-import { useKeyboard } from "@/hooks/common/useKeyboard";
 import { supabase } from "@/lib/supabase";
 import {
 	type RegisterForm,
 	RegisterFormSchema,
 } from "@/schemas/profile.schema";
 import { showAlert } from "@/utils/error.utils";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { router } from "expo-router";
+import { useForm } from "react-hook-form";
 
 export default function RegisterScreen() {
-	const insets = useSafeAreaInsets();
-	const scrollViewRef = useRef<ScrollView>(null);
-	const { keyboardHeight } = useKeyboard();
-
 	const {
 		control,
 		handleSubmit,
@@ -37,12 +28,6 @@ export default function RegisterScreen() {
 		},
 	});
 
-	const handlePasswordFocus = () => {
-		requestAnimationFrame(() => {
-			scrollViewRef.current?.scrollToEnd({ animated: true });
-		});
-	};
-
 	const onSubmit = async (data: RegisterForm) => {
 		clearErrors(["email", "username"]);
 
@@ -56,7 +41,7 @@ export default function RegisterScreen() {
 				await supabase.rpc("is_username_available", { p_username: username });
 			if (usernameCheckError) throw usernameCheckError;
 
-			if (isUsernameAvailable === false) {
+			if (!isUsernameAvailable) {
 				setError("username", {
 					type: "manual",
 					message: "Username is already taken",
@@ -112,73 +97,56 @@ export default function RegisterScreen() {
 	};
 
 	return (
-		<AuthFormShell
-			scrollViewRef={scrollViewRef}
-			insetsBottom={insets.bottom}
-			keyboardHeight={keyboardHeight}
-			contentClassName="gap-8"
+		<AuthScreen
+			title="New to Trackmate?"
+			description="Register and start achieving goals with your friends"
+			redirectPrompt="Already have an account?"
+			redirectAction="Log in"
+			onRedirectPress={() => router.push("/login")}
 		>
-			<View className="items-center">
-				<Text className="text-4xl font-bold tracking-tight text-text-strong">
-					New to Trackmate?
-				</Text>
-				<Text className="text-lg font-medium text-text-light mt-2 text-center">
-					Register and start achieving goals with your friends
-				</Text>
-			</View>
-
-			<View className="gap-2">
-				<FormField
-					control={control}
-					name="email"
-					label="Email Address*"
-					placeholder="email@address.com"
-					keyboardType="email-address"
-					autoCapitalize="none"
-					error={errors.email?.message}
-				/>
-
-				<FormField
-					control={control}
-					name="username"
-					label="Username*"
-					placeholder="username"
-					autoCapitalize="none"
-					error={errors.username?.message}
-				/>
-
-				<FormField
-					control={control}
-					name="nickname"
-					label="Nickname"
-					placeholder="nickname"
-					error={errors.nickname?.message}
-				/>
-
-				<FormField
-					control={control}
-					name="password"
-					label="Password*"
-					placeholder="••••••••"
-					secureTextEntry
-					autoCapitalize="none"
-					error={errors.password?.message}
-					onFocus={handlePasswordFocus}
-				/>
-
-				<FilledButton
-					onPress={handleSubmit(onSubmit)}
-					disabled={isSubmitting}
-					className="mt-4"
-					label={isSubmitting ? "Creating Account..." : "Register"}
-				/>
-			</View>
-
-			<AuthSwitchPrompt
-				promptText="Already have an account?"
-				actionText="Log in"
-				onPress={() => router.replace("/login")}
+			<FormField
+				control={control}
+				name="email"
+				label="Email Address*"
+				placeholder="email@address.com"
+				keyboardType="email-address"
+				autoCapitalize="none"
+				error={errors.email?.message}
 			/>
-		</AuthFormShell>
+
+			<FormField
+				control={control}
+				name="username"
+				label="Username*"
+				placeholder="username"
+				autoCapitalize="none"
+				error={errors.username?.message}
+			/>
+
+			<FormField
+				control={control}
+				name="nickname"
+				label="Nickname"
+				placeholder="nickname"
+				error={errors.nickname?.message}
+			/>
+
+			<FormField
+				control={control}
+				name="password"
+				label="Password*"
+				placeholder="••••••••"
+				secureTextEntry
+				autoCapitalize="none"
+				error={errors.password?.message}
+			/>
+
+			<FilledButton
+				onPress={handleSubmit(onSubmit)}
+				disabled={isSubmitting}
+				className="mt-4"
+				label={isSubmitting ? "Registering..." : "Register"}
+			/>
+		</AuthScreen>
 	);
 }

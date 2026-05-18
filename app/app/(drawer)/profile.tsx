@@ -1,9 +1,3 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as ImagePicker from "expo-image-picker";
-import { useEffect, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
-import { Alert, Platform, ScrollView, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FormField } from "@/components/forms/FormField";
 import { Screen } from "@/components/layout/Screen";
 import { AvatarPicker } from "@/components/profile/AvatarPicker";
@@ -27,6 +21,12 @@ import {
 } from "@/schemas/profile.schema";
 import { removeAvatar, uploadAvatar } from "@/services/profile.service";
 import { useAuthStore } from "@/store/auth.store";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as ImagePicker from "expo-image-picker";
+import { useEffect, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
+import { Alert, Platform, ScrollView, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function ProfileScreen() {
 	const insets = useSafeAreaInsets();
@@ -241,7 +241,7 @@ export default function ProfileScreen() {
 							onRemove={handleRemoveAvatar}
 						/>
 
-						<View className="gap-2">
+						<View className="gap-4">
 							<FormField
 								control={control}
 								name="username"

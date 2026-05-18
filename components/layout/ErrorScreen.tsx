@@ -37,7 +37,7 @@ function ErrorUI({ onReset }: { onReset: () => void }) {
 	);
 }
 
-export class RootErrorBoundary extends React.Component<Props, State> {
+export class ErrorScreen extends React.Component<Props, State> {
 	state: State = { hasError: false };
 
 	static getDerivedStateFromError() {

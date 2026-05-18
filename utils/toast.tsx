@@ -1,10 +1,13 @@
-import { X } from "phosphor-react-native";
+import { X, XIcon } from "phosphor-react-native";
 import { Pressable, Text, View } from "react-native";
 import type { ToastConfig as RNToastConfig } from "react-native-toast-message";
 import Toast from "react-native-toast-message";
 import { cn } from "./cn";
+import { useColorScheme } from "react-native";
 
 type ToastKind = "success" | "error" | "info";
+
+const isDark = useColorScheme() === "dark";
 
 const ToastCard = ({
 	text1,
@@ -15,17 +18,23 @@ const ToastCard = ({
 	text2?: string;
 	accentClassName: string;
 }) => (
-	<View className="mx-4 w-[90%] flex-row items-center rounded-2xl border border-border bg-surface-fg p-4 shadow-xl">
-		<View className={cn("mr-3 h-10 w-1.5 rounded-full", accentClassName)} />
-		<View className="flex-1">
-			{text1 && (
-				<Text className="font-bold text-text-strong text-base">{text1}</Text>
+	<View className="w-full px-6">
+		<View
+			className={cn(
+				"flex-row items-center rounded-2xl border border-border bg-surface-fg p-4 shadow-xl",
 			)}
-			{text2 && <Text className="text-text-light text-sm">{text2}</Text>}
+		>
+			<View className={cn("mr-3 h-10 w-1.5 rounded-full", accentClassName)} />
+			<View className="flex-1">
+				{text1 && (
+					<Text className="font-bold text-text-strong text-base">{text1}</Text>
+				)}
+				{text2 && <Text className="text-text-light text-sm">{text2}</Text>}
+			</View>
+			<Pressable onPress={() => Toast.hide()} className="ml-3 p-1">
+				<XIcon size={20} color={isDark ? "white" : "black"} />
+			</Pressable>
 		</View>
-		<Pressable onPress={() => Toast.hide()} className="ml-3 p-1">
-			<X size={20} color="gray" />
-		</Pressable>
 	</View>
 );
 

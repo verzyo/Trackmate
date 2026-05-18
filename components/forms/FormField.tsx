@@ -1,10 +1,10 @@
 import { useThemeColors } from "@/hooks/common/useThemeColors";
 import { cn } from "@/utils/cn";
 import {
-    type Control,
-    Controller,
-    type FieldValues,
-    type Path,
+	type Control,
+	Controller,
+	type FieldValues,
+	type Path,
 } from "react-hook-form";
 import { Text, TextInput, type TextInputProps, View } from "react-native";
 
@@ -26,7 +26,7 @@ export function FormField<T extends FieldValues>({
 	const colors = useThemeColors();
 
 	return (
-		<View className="mb-4 w-full gap-2">
+		<View className="w-full gap-2">
 			{label && (
 				<Text className="font-semibold text-base text-text-strong">
 					{label}
@@ -46,7 +46,6 @@ export function FormField<T extends FieldValues>({
 							error && "border-state-danger",
 							className,
 						)}
-						style={{ color: colors.textStrong }}
 						placeholderTextColor={colors.textLight}
 						{...props}
 					/>

@@ -1,4 +1,4 @@
-import { RootErrorBoundary } from "@/components/layout/RootErrorBoundary";
+import { ErrorScreen } from "@/components/layout/ErrorScreen";
 import { useThemeColors } from "@/hooks/common/useThemeColors";
 import { queryClient } from "@/lib/queryClient";
 import { useAuthStore } from "@/store/auth.store";
@@ -32,7 +32,7 @@ export default function RootLayout() {
 		<GestureHandlerRootView style={{ flex: 1 }}>
 			<BottomSheetModalProvider>
 				<QueryClientProvider client={queryClient}>
-					<RootErrorBoundary>
+					<ErrorScreen>
 						<View className={cn("flex-1 bg-surface-bg", isDark && "dark")}>
 							{Platform.OS === "web" && <Analytics />}
 							<Stack
@@ -56,7 +56,7 @@ export default function RootLayout() {
 							</Stack>
 							<Toast config={toastConfig} />
 						</View>
-					</RootErrorBoundary>
+					</ErrorScreen>
 				</QueryClientProvider>
 			</BottomSheetModalProvider>
 		</GestureHandlerRootView>

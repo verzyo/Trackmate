@@ -1,6 +1,6 @@
+import type { GoalForm } from "@/schemas/goal.schema";
 import type { Control } from "react-hook-form";
 import { View } from "react-native";
-import type { GoalForm } from "@/schemas/goal.schema";
 import { FormField } from "./FormField";
 
 type GoalBasicInfoFieldsProps = {
@@ -17,7 +17,7 @@ export function GoalBasicInfoFields({
 	editable = true,
 }: GoalBasicInfoFieldsProps) {
 	return (
-		<View className="gap-2">
+		<View className="gap-4">
 			<FormField
 				control={control}
 				name="title"
