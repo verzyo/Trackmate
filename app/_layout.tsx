@@ -3,52 +3,16 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Analytics } from "@vercel/analytics/react";
 import { Stack } from "expo-router";
 import React, { useEffect } from "react";
-import { Platform, Pressable, Text, useColorScheme, View } from "react-native";
+import { Platform, useColorScheme, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import Toast from "react-native-toast-message";
 import { useThemeColors } from "@/hooks/common/useThemeColors";
+import { RootErrorBoundary } from "@/components/layout/RootErrorBoundary";
 import { queryClient } from "@/lib/queryClient";
 import { useAuthStore } from "@/store/auth.store";
 import { toastConfig } from "@/utils/toast";
 
 import "@/global.css";
-
-class RootErrorBoundary extends React.Component<
-	{ children: React.ReactNode },
-	{ hasError: boolean }
-> {
-	state = { hasError: false };
-
-	static getDerivedStateFromError() {
-		return { hasError: true };
-	}
-
-	render() {
-		if (this.state.hasError) {
-			return (
-				<View
-					style={{ flex: 1 }}
-					className="items-center justify-center bg-surface-bg px-6"
-				>
-					<Text className="text-text-strong font-bold text-xl text-center">
-						Something went wrong
-					</Text>
-					<Text className="text-text-light text-base text-center mt-2">
-						Please restart the app.
-					</Text>
-					<Pressable
-						onPress={() => this.setState({ hasError: false })}
-						className="mt-6 h-12 px-5 rounded-xl bg-action-primary items-center justify-center"
-					>
-						<Text className="text-white font-bold">Try again</Text>
-					</Pressable>
-				</View>
-			);
-		}
-
-		return this.props.children;
-	}
-}
 
 export default function RootLayout() {
 	const { initialize, initialized, session } = useAuthStore();
