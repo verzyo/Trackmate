@@ -3,6 +3,7 @@ import { z } from "zod";
 export const ProfileUpdatesSchema = z.object({
 	username: z
 		.string()
+		.trim()
 		.min(3, "Username must be at least 3 characters")
 		.max(15, "Username cannot exceed 15 characters")
 		.regex(/^[a-zA-Z]/, "Username must start with a letter")
@@ -12,6 +13,7 @@ export const ProfileUpdatesSchema = z.object({
 		.optional(),
 	nickname: z
 		.string()
+		.trim()
 		.max(30, "Nickname cannot exceed 30 characters")
 		.nullable()
 		.optional(),
@@ -38,6 +40,7 @@ export type PublicProfile = z.infer<typeof PublicProfileSchema>;
 export const LoginFormSchema = z.object({
 	email: z
 		.string()
+		.trim()
 		.min(1, "Email is required")
 		.email("Enter a valid email address"),
 	password: z
@@ -50,6 +53,7 @@ export type LoginForm = z.infer<typeof LoginFormSchema>;
 export const RegisterFormSchema = z.object({
 	email: z
 		.string()
+		.trim()
 		.min(1, "Email is required")
 		.email("Enter a valid email address"),
 	password: z
@@ -58,6 +62,7 @@ export const RegisterFormSchema = z.object({
 		.min(6, "Password must be at least 6 characters"),
 	username: z
 		.string()
+		.trim()
 		.min(1, "Username is required")
 		.min(3, "Username must be at least 3 characters")
 		.max(15, "Username cannot exceed 15 characters")
@@ -67,6 +72,7 @@ export const RegisterFormSchema = z.object({
 		.regex(/[^_]$/, "Cannot end with an underscore"),
 	nickname: z
 		.string()
+		.trim()
 		.max(30, "Nickname cannot exceed 30 characters")
 		.optional(),
 });
@@ -102,5 +108,6 @@ export const ProfileSettingsFormSchema = z.object({
 				.max(72, "Password cannot exceed 72 characters"),
 		])
 		.optional(),
+	currentPassword: z.string().optional(),
 });
 export type ProfileSettingsForm = z.infer<typeof ProfileSettingsFormSchema>;

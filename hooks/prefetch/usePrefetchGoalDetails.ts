@@ -11,9 +11,9 @@ import {
 	fetchRecentAttachments,
 	fetchTodayCompletion,
 } from "@/services/goal.service";
-import { goalKeys } from "./useGoalQueries";
+import { goalKeys } from "@/hooks/goal/useGoalQueries";
 
-export function usePrefetchGoals(
+export function usePrefetchGoalDetails(
 	goals: GoalWithParticipant[] | undefined,
 	userId: string | undefined,
 ) {

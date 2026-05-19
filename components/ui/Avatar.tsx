@@ -1,12 +1,21 @@
+import { useThemeColors } from "@/hooks/common/useThemeColors";
+import { cn } from "@/utils/cn";
 import { Image } from "expo-image";
+import { PencilSimple, Plus } from "phosphor-react-native";
 import { useEffect, useState } from "react";
-import { Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 
 interface AvatarProps {
 	name?: string;
-	imageUrl?: string;
+	imageUrl?: string | null;
 	completed?: boolean;
 	size?: number;
+	onPress?: () => void;
+	badgeCount?: number;
+	showPickerIcon?: boolean;
+	pickerIconType?: "plus" | "edit";
+	containerClassName?: string;
+	borderWidth?: number;
 }
 
 export function Avatar({
@@ -14,12 +23,19 @@ export function Avatar({
 	imageUrl,
 	completed = false,
 	size = 32,
+	onPress,
+	badgeCount,
+	showPickerIcon = false,
+	pickerIconType = "edit",
+	containerClassName,
+	borderWidth = 2,
 }: AvatarProps) {
+	const colors = useThemeColors();
 	const [imageFailed, setImageFailed] = useState(false);
 
 	useEffect(() => {
 		setImageFailed(false);
-	}, []);
+	}, [imageUrl]);
 
 	const normalizedImageUrl =
 		typeof imageUrl === "string" ? imageUrl.trim() : "";
@@ -30,46 +46,87 @@ export function Avatar({
 		return name.charAt(0).toUpperCase();
 	};
 
-	return (
-		<View
-			className="items-center justify-center overflow-hidden border-2 border-surface-fg bg-label-bg"
-			style={{
-				width: size,
-				height: size,
-				borderRadius: size / 2,
-			}}
-		>
-			{showImage ? (
-				<Image
-					source={{ uri: normalizedImageUrl }}
-					style={{ width: size, height: size }}
-					contentFit="cover"
-					onError={() => setImageFailed(true)}
-				/>
-			) : (
-				<Text
-					className="font-bold text-label-fg"
-					style={{ fontSize: size * 0.38 }}
+	const content = (
+		<View className="relative">
+			<View
+				className={cn(
+					"items-center justify-center overflow-hidden bg-label-bg",
+					containerClassName,
+				)}
+				style={{
+					width: size,
+					height: size,
+					borderRadius: size / 2,
+					borderWidth: borderWidth,
+					borderColor: colors.surfaceFg,
+				}}
+			>
+				{showImage ? (
+					<Image
+						source={{ uri: normalizedImageUrl }}
+						style={{ width: size, height: size }}
+						contentFit="cover"
+						onError={() => setImageFailed(true)}
+					/>
+				) : (
+					<Text
+						className="font-bold text-label-fg"
+						style={{ fontSize: size * 0.38 }}
+					>
+						{getInitial()}
+					</Text>
+				)}
+
+				{completed && (
+					<View
+						pointerEvents="none"
+						className="absolute border-2 border-state-success"
+						style={{
+							top: 0,
+							right: 0,
+							bottom: 0,
+							left: 0,
+							borderRadius: size / 2,
+						}}
+					/>
+				)}
+			</View>
+
+			{badgeCount !== undefined && badgeCount > 0 && (
+				<View
+					className="absolute -top-1 -right-1 z-10 h-[22px] min-w-[22px] items-center justify-center rounded-full bg-state-danger px-1 shadow-sm"
+					style={{ borderWidth: 3, borderColor: colors.surfaceBg }}
 				>
-					{getInitial()}
-				</Text>
+					<Text className="font-bold text-[10px] text-white">{badgeCount}</Text>
+				</View>
 			)}
 
-			{completed && (
+			{showPickerIcon && (
 				<View
-					pointerEvents="none"
-					className="absolute border-2 border-state-success"
+					className="absolute items-center justify-center rounded-full bg-action-primary border-surface-bg"
 					style={{
-						top: 0,
-						right: 0,
-						bottom: 0,
-						left: 0,
-						borderRadius: size / 2,
+						bottom: -size * 0.05,
+						right: -size * 0.05,
+						width: size * 0.32,
+						height: size * 0.32,
+						borderWidth: size * 0.03,
 					}}
-				/>
+				>
+					{pickerIconType === "edit" ? (
+						<PencilSimple size={size * 0.14} color="white" weight="bold" />
+					) : (
+						<Plus size={size * 0.16} color="white" weight="bold" />
+					)}
+				</View>
 			)}
 		</View>
 	);
+
+	if (onPress) {
+		return <Pressable onPress={onPress}>{content}</Pressable>;
+	}
+
+	return content;
 }
 
 export default Avatar;

@@ -1,8 +1,7 @@
-import { Text, View } from "react-native";
 import Avatar from "@/components/ui/Avatar";
-import FilledButton from "@/components/ui/FilledButton";
-import MutedBorderButton from "@/components/ui/MutedBorderButton";
+import { FilledButton } from "@/components/ui/FilledButton";
 import type { GoalInviteWithDetails } from "@/schemas/goal.schema";
+import { Text, View } from "react-native";
 
 type InviteCardProps = {
 	invite: GoalInviteWithDetails;
@@ -66,9 +65,11 @@ export function InviteCard({
 					labelClassName="text-base"
 				/>
 
-				<MutedBorderButton
+				<FilledButton
 					onPress={onViewDetails}
 					disabled={disabled}
+					variant="muted"
+					withShadow={false}
 					label="Preview"
 					className="h-12 flex-1 rounded-2xl"
 					labelClassName="text-base"

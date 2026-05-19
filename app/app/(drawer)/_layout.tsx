@@ -1,7 +1,7 @@
 import { Drawer } from "expo-router/drawer";
 import { Platform, useWindowDimensions } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { CustomDrawerContent } from "@/components/layout/CustomDrawerContent";
+import { DrawerContent } from "@/components/layout/DrawerContent";
 import { useThemeColors } from "@/hooks/common/useThemeColors";
 
 export default function DrawerLayout() {
@@ -19,7 +19,7 @@ export default function DrawerLayout() {
 			}}
 		>
 			<Drawer
-				drawerContent={(props) => <CustomDrawerContent {...props} />}
+				drawerContent={(props) => <DrawerContent {...props} />}
 				screenOptions={{
 					headerShown: false,
 					drawerType: "front",

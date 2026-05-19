@@ -1,12 +1,12 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import { router } from "expo-router";
-import { useForm } from "react-hook-form";
-import { FormField } from "@/components/forms/FormField";
 import { AuthScreen } from "@/components/layout/AuthScreen";
 import FilledButton from "@/components/ui/FilledButton";
+import { FormField } from "@/components/ui/FormField";
 import { supabase } from "@/lib/supabase";
 import { type LoginForm, LoginFormSchema } from "@/schemas/profile.schema";
 import { showAlert } from "@/utils/toast.utils";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { router } from "expo-router";
+import { useForm } from "react-hook-form";
 
 export default function LoginScreen() {
 	const {

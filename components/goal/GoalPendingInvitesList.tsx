@@ -1,5 +1,6 @@
 import { Text, View } from "react-native";
-import Avatar from "@/components/ui/Avatar";
+import { Avatar } from "@/components/ui/Avatar";
+import { Tag } from "@/components/ui/Tag";
 import { useThemeColors } from "@/hooks/common/useThemeColors";
 
 interface PendingInvite {
@@ -60,14 +61,7 @@ export function GoalPendingInvitesList({
 							</View>
 						</View>
 
-						<View className="rounded-full bg-state-muted-bg px-3 py-1.5">
-							<Text
-								className="text-xs font-medium uppercase"
-								style={{ color: colors.textDefault }}
-							>
-								PENDING
-							</Text>
-						</View>
+						<Tag label="PENDING" variant="default" className="px-2 py-1" labelClassName="text-[10px]" />
 					</View>
 				))}
 			</View>

@@ -1,12 +1,11 @@
-import { type Href, router } from "expo-router";
-import { PencilSimple } from "phosphor-react-native";
-import { Text, View } from "react-native";
 import CircleIconButton from "@/components/ui/CircleIconButton";
+import { GoalIcon } from "@/components/ui/GoalIcon";
 import PageHeader from "@/components/ui/PageHeader";
 import { useThemeColors } from "@/hooks/common/useThemeColors";
 import type { GoalWithParticipant } from "@/schemas/goal.schema";
-import { hexToRgba } from "@/utils/color.utils";
-import { DynamicIcon } from "@/utils/icons";
+import { type Href, router } from "expo-router";
+import { PencilSimple } from "phosphor-react-native";
+import { Text, View } from "react-native";
 
 type GoalDetailHeaderProps = {
 	goal: GoalWithParticipant;
@@ -48,17 +47,7 @@ export function GoalDetailHeader({
 				}
 			/>
 			<View className="flex-row items-center gap-4">
-				<View
-					className="h-32 w-32 items-center justify-center rounded-[32px]"
-					style={{ backgroundColor: hexToRgba(iconColor, 0.15) }}
-				>
-					<DynamicIcon
-						name={iconName}
-						size={64}
-						color={iconColor}
-						weight="fill"
-					/>
-				</View>
+				<GoalIcon icon={iconName} color={iconColor} size={64} containerClassName="rounded-[32px]" />
 
 				<View className="flex-1 gap-1.5">
 					<Text

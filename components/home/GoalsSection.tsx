@@ -1,15 +1,14 @@
-import { Text, View } from "react-native";
-import { GoalItem } from "@/components/goal/GoalItem";
-import { GoalLoading } from "@/components/goal/GoalLoading";
+import { GoalCard } from "@/components/home/GoalCard";
 import type { GoalWithParticipant } from "@/schemas/goal.schema";
-import { getIconComponent } from "@/utils/icons";
+import { Text, View } from "react-native";
 
-type TodaySectionProps = {
-	goals: (GoalWithParticipant & { isCompleted: boolean })[];
+type GoalsSectionProps = {
+	title: string;
+	goals: (GoalWithParticipant & { isCompleted?: boolean; daysUntil?: number })[];
 	userId: string | undefined;
-	error: Error | null;
-	isLoading: boolean;
-	showNoGoalsDueToday: boolean;
+	isLoading?: boolean;
+	error?: Error | null;
+	emptyMessage?: string;
 	participantAvatars: Record<
 		string,
 		Array<{
@@ -19,49 +18,53 @@ type TodaySectionProps = {
 			completed: boolean;
 		}>
 	>;
-	onToggle: (goal: GoalWithParticipant, isCompleted: boolean) => void;
+	onToggle?: (goal: GoalWithParticipant, isCompleted: boolean) => void;
 	onPress: (goalId: string) => void;
 };
 
-export function TodaySection({
+export function GoalsSection({
+	title,
 	goals,
 	userId,
-	error,
 	isLoading,
-	showNoGoalsDueToday,
+	error,
+	emptyMessage,
 	participantAvatars,
 	onToggle,
 	onPress,
-}: TodaySectionProps) {
+}: GoalsSectionProps) {
+	if (!isLoading && !error && goals.length === 0 && !emptyMessage) return null;
+
 	return (
 		<View className="flex-col items-start justify-start gap-3">
 			<Text className="font-semibold text-lg leading-7 text-text-strong">
-				Today
+				{title}
 			</Text>
 			<View className="w-full flex-col items-start justify-start gap-3">
-				{isLoading ? (
-					<GoalLoading />
-				) : error ? (
+				{error ? (
 					<Text className="text-base text-state-danger">
 						Failed to load goals
 					</Text>
-				) : showNoGoalsDueToday ? (
-					<Text className="text-base text-text-light">No goals due today</Text>
+				) : goals.length === 0 && emptyMessage ? (
+					<Text className="text-base text-text-light">{emptyMessage}</Text>
 				) : (
 					goals.map((goal) => {
 						const participant = goal.goal_participants?.find(
 							(p) => p.user_id === userId,
 						);
+						const isUpcoming = goal.daysUntil !== undefined;
+
 						return (
-							<GoalItem
+							<GoalCard
 								key={goal.id}
 								goal={goal}
-								variant="today"
+								variant={isUpcoming ? "upcoming" : "today"}
 								userId={userId}
 								isCompleted={goal.isCompleted}
-								icon={getIconComponent(participant?.icon || "Target")}
+								daysDue={goal.daysUntil}
+								iconName={participant?.icon || "Target"}
 								color={participant?.color || "#4f46e5"}
-								onToggle={() => onToggle(goal, goal.isCompleted)}
+								onToggle={onToggle ? () => onToggle(goal, !!goal.isCompleted) : undefined}
 								onPress={() => onPress(goal.id)}
 								participantAvatars={participantAvatars[goal.id] || []}
 							/>

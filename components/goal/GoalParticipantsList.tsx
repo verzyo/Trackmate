@@ -1,6 +1,7 @@
 import { router } from "expo-router";
 import { Pressable, Text, View } from "react-native";
-import Avatar from "@/components/ui/Avatar";
+import { Avatar } from "@/components/ui/Avatar";
+import { Tag } from "@/components/ui/Tag";
 import { useThemeColors } from "@/hooks/common/useThemeColors";
 
 type ParticipantItem = {
@@ -74,14 +75,12 @@ export function GoalParticipantsList({
 							</View>
 						</View>
 
-						<View className="rounded-full bg-state-muted-bg px-3 py-1.5">
-							<Text
-								className="text-xs font-medium uppercase"
-								style={{ color: colors.textDefault }}
-							>
-								{participant.role}
-							</Text>
-						</View>
+						<Tag
+							label={participant.role}
+							variant="default"
+							className="px-3 py-1.5"
+							labelClassName="text-xs font-medium uppercase"
+						/>
 					</Pressable>
 				))}
 			</View>

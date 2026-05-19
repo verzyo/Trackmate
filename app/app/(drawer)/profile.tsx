@@ -1,18 +1,10 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as ImagePicker from "expo-image-picker";
-import { useEffect, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
-import { Alert, Platform, ScrollView, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { FormField } from "@/components/forms/FormField";
-import { Screen } from "@/components/layout/Screen";
-import { AvatarPicker } from "@/components/profile/AvatarPicker";
-import FilledButton from "@/components/ui/FilledButton";
+import { ModalScreen } from "@/components/layout/ModalScreen";
 import ImagePickerBottomSheet, {
 	type ImagePickerBottomSheetRef,
-} from "@/components/ui/ImagePickerBottomSheet";
-import MutedBorderButton from "@/components/ui/MutedBorderButton";
-import PageHeader from "@/components/ui/PageHeader";
+} from "@/components/overlays/ImagePickerBottomSheet";
+import { Avatar } from "@/components/ui/Avatar";
+import { FilledButton } from "@/components/ui/FilledButton";
+import { FormField } from "@/components/ui/FormField";
 import { useErrorHandler } from "@/hooks/common/useErrorHandler";
 import {
 	useDeleteMyAccount,
@@ -27,9 +19,13 @@ import {
 } from "@/schemas/profile.schema";
 import { removeAvatar, uploadAvatar } from "@/services/profile.service";
 import { useAuthStore } from "@/store/auth.store";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as ImagePicker from "expo-image-picker";
+import { useEffect, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
+import { Alert, Platform, Pressable, Text, View } from "react-native";
 
 export default function ProfileScreen() {
-	const insets = useSafeAreaInsets();
 	const { user } = useAuthStore();
 	const userId = user?.id ?? "";
 	const { data: profile, isLoading } = useProfile(userId);
@@ -53,6 +49,7 @@ export default function ProfileScreen() {
 		clearErrors,
 		reset,
 		setError,
+		setValue,
 		formState: { errors, isSubmitting },
 	} = useForm<ProfileSettingsForm>({
 		resolver: zodResolver(ProfileSettingsFormSchema),
@@ -61,6 +58,7 @@ export default function ProfileScreen() {
 			nickname: "",
 			email: "",
 			password: "",
+			currentPassword: "",
 		},
 	});
 
@@ -109,6 +107,35 @@ export default function ProfileScreen() {
 
 	const onSubmit = async (data: ProfileSettingsForm) => {
 		try {
+			const currentEmail = user?.email ?? "";
+			const newEmail = data.email.trim().toLowerCase();
+			const isEmailChanged = newEmail !== currentEmail.toLowerCase();
+			const isPasswordChanged = !!data.password;
+
+			if (isEmailChanged || isPasswordChanged) {
+				if (!data.currentPassword) {
+					setError("currentPassword", {
+						type: "manual",
+						message: "Current password is required to change email or password",
+					});
+					return;
+				}
+
+				const { error: signInError } = await supabase.auth.signInWithPassword({
+					email: currentEmail,
+					password: data.currentPassword,
+				});
+
+				if (signInError) {
+					setError("currentPassword", {
+						type: "manual",
+						message: "Invalid current password",
+					});
+					return;
+				}
+			}
+			clearErrors("currentPassword");
+
 			const normalizedUsername = data.username.trim();
 			const currentUsername = (profile?.username ?? "").trim();
 
@@ -144,28 +171,30 @@ export default function ProfileScreen() {
 				nickname: data.nickname?.trim() || null,
 			});
 
-			if (data.email !== user?.email) {
-				const { error: emailError } = await supabase.auth.updateUser({
-					email: data.email,
-				});
-				if (emailError) throw emailError;
-				showSuccess(
-					"Profile updated. Please check your email to confirm the change.",
-					"Profile Update",
-				);
+			if (isEmailChanged || isPasswordChanged) {
+				const updateData: any = {};
+				if (isEmailChanged) updateData.email = newEmail;
+				if (isPasswordChanged) updateData.password = data.password;
+
+				const { error: authError } = await supabase.auth.updateUser(updateData);
+				if (authError) throw authError;
+
+				if (isEmailChanged) {
+					showSuccess(
+						"Profile updated. Please check your new email to confirm the change.",
+						"Profile Update",
+					);
+				} else {
+					showSuccess("Password updated successfully!", "Profile Update");
+				}
 			} else {
 				showSuccess("Profile updated successfully!", "Profile Update");
 			}
 
-			if (data.password) {
-				const { error: passwordError } = await supabase.auth.updateUser({
-					password: data.password,
-				});
-				if (passwordError) throw passwordError;
-			}
-
 			setPendingAvatarUri(null);
 			setRemoveAvatarFlag(false);
+			setValue("currentPassword", "");
+			setValue("password", "");
 			queryClient.invalidateQueries({ queryKey: ["profile", userId] });
 			queryClient.invalidateQueries({ queryKey: ["profiles", "byIds"] });
 		} catch (error) {
@@ -219,100 +248,111 @@ export default function ProfileScreen() {
 		}
 	};
 
-	if (isLoading) return null;
+	if (isLoading && !profile) return null;
 
 	return (
-		<Screen className="bg-surface-bg">
-			<ScrollView
-				showsVerticalScrollIndicator={false}
-				contentContainerClassName="flex-grow px-6 py-8"
-				contentContainerStyle={{
-					paddingBottom: Math.max(insets.bottom + 16, 24),
-				}}
-			>
-				<View className="flex-1 w-full max-w-3xl self-center gap-8">
-					<View className="flex-col gap-8">
-						<PageHeader title="Profile Settings" />
+		<ModalScreen
+			title="Profile Settings"
+			fixedChildren={
+				<ImagePickerBottomSheet
+					ref={imagePickerRef}
+					title="Select Profile Photo"
+					mode="avatar"
+					onImageSelected={handleImageSelected}
+					enablePanDownToClose={true}
+				/>
+			}
+		>
+			<View className="items-center gap-4">
+				<Avatar
+					name={avatarDisplayName}
+					imageUrl={displayedAvatar}
+					size={128}
+					showPickerIcon
+					pickerIconType={displayedAvatar ? "edit" : "plus"}
+					onPress={handlePickAvatar}
+				/>
 
-						<AvatarPicker
-							displayedAvatar={displayedAvatar}
-							avatarDisplayName={avatarDisplayName}
-							onPick={handlePickAvatar}
-							onRemove={handleRemoveAvatar}
-						/>
+				{displayedAvatar && (
+					<Pressable onPress={handleRemoveAvatar}>
+						<Text className="text-state-danger font-bold text-base">
+							Remove Photo
+						</Text>
+					</Pressable>
+				)}
+			</View>
 
-						<View className="gap-4">
-							<FormField
-								control={control}
-								name="username"
-								label="Username*"
-								placeholder="username"
-								autoCapitalize="none"
-								error={errors.username?.message}
-							/>
+			<View className="gap-4">
+				<FormField
+					control={control}
+					name="username"
+					label="Username*"
+					placeholder="username"
+					autoCapitalize="none"
+					error={errors.username?.message}
+				/>
 
-							<FormField
-								control={control}
-								name="nickname"
-								label="Nickname"
-								placeholder="nickname"
-								error={errors.nickname?.message}
-							/>
+				<FormField
+					control={control}
+					name="nickname"
+					label="Nickname"
+					placeholder="nickname"
+					error={errors.nickname?.message}
+				/>
 
-							<FormField
-								control={control}
-								name="email"
-								label="Email Address*"
-								placeholder="email@address.com"
-								keyboardType="email-address"
-								autoCapitalize="none"
-								error={errors.email?.message}
-							/>
+				<FormField
+					control={control}
+					name="email"
+					label="Email Address*"
+					placeholder="email@address.com"
+					keyboardType="email-address"
+					autoCapitalize="none"
+					error={errors.email?.message}
+				/>
 
-							<FormField
-								control={control}
-								name="password"
-								label="New Password"
-								placeholder="Leave empty to keep current"
-								secureTextEntry
-								autoCapitalize="none"
-								error={errors.password?.message}
-							/>
-						</View>
-					</View>
+				<FormField
+					control={control}
+					name="password"
+					label="New Password"
+					placeholder="Leave empty to keep current"
+					secureTextEntry
+					autoCapitalize="none"
+					error={errors.password?.message}
+				/>
 
-					<View className="mt-auto gap-2 pt-4">
-						<FilledButton
-							onPress={handleSubmit(onSubmit)}
-							disabled={isSubmitting || isUpdating}
-							label={isSubmitting || isUpdating ? "Saving..." : "Save Profile"}
-						/>
+				<FormField
+					control={control}
+					name="currentPassword"
+					label="Current Password"
+					placeholder="Required to change email or password"
+					secureTextEntry
+					autoCapitalize="none"
+					error={errors.currentPassword?.message}
+				/>
+			</View>
 
-						<MutedBorderButton
-							onPress={handleLogout}
-							disabled={isLoggingOut}
-							label={isLoggingOut ? "Logging out..." : "Log out"}
-						/>
+			<View className="gap-4 pt-4">
+				<FilledButton
+					onPress={handleSubmit(onSubmit)}
+					disabled={isSubmitting || isUpdating}
+					label={isSubmitting || isUpdating ? "Saving..." : "Save Profile"}
+				/>
 
-						<FilledButton
-							onPress={handleDeleteAccount}
-							disabled={isDeletingAccount}
-							variant="danger"
-							label={
-								isDeletingAccount ? "Deleting account..." : "Delete Account"
-							}
-						/>
-					</View>
-				</View>
-			</ScrollView>
+				<FilledButton
+					onPress={handleLogout}
+					disabled={isLoggingOut}
+					variant="muted"
+					withShadow={false}
+					label={isLoggingOut ? "Logging out..." : "Log Out"}
+				/>
 
-			<ImagePickerBottomSheet
-				ref={imagePickerRef}
-				title="Select Profile Photo"
-				mode="avatar"
-				onImageSelected={handleImageSelected}
-				enablePanDownToClose={true}
-			/>
-		</Screen>
+				<FilledButton
+					onPress={handleDeleteAccount}
+					disabled={isDeletingAccount}
+					variant="danger"
+					label={isDeletingAccount ? "Deleting account..." : "Delete Account"}
+				/>
+			</View>
+		</ModalScreen>
 	);
 }

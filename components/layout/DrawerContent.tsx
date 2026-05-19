@@ -1,32 +1,39 @@
 import {
-	type DrawerContentComponentProps,
 	DrawerContentScrollView,
+	type DrawerContentComponentProps,
 } from "@react-navigation/drawer";
-import { type Href, useRouter } from "expo-router";
+import { useRouter, type Href } from "expo-router";
 import { EnvelopeSimple, User } from "phosphor-react-native";
+import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
 import Avatar from "@/components/ui/Avatar";
-import MutedBorderButton from "@/components/ui/MutedBorderButton";
+import { FilledButton } from "@/components/ui/FilledButton";
+import { useErrorHandler } from "@/hooks/common/useErrorHandler";
 import { useThemeColors } from "@/hooks/common/useThemeColors";
+import { useInvites } from "@/hooks/goal/useGoalQueries";
 import { useProfile } from "@/hooks/profile/useProfileHooks";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/auth.store";
-import { cn } from "@/utils/cn";
 
-export function CustomDrawerContent(props: DrawerContentComponentProps) {
+export function DrawerContent(props: DrawerContentComponentProps) {
 	const { user } = useAuthStore();
 	const { data: profile } = useProfile(user?.id);
+	const { data: invites } = useInvites(user?.id);
 	const router = useRouter();
 	const colors = useThemeColors();
+	const { handleError } = useErrorHandler();
+	const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-	const activeRouteName = props.state.routes[props.state.index]?.name;
 	const drawerDisplayName = profile?.nickname || profile?.username || "User";
+
+	const pendingInvitesCount = invites?.length ?? 0;
 
 	const menuItems = [
 		{
 			name: "invites",
-			label: "Pending Invites",
+			label: `Pending Invites${pendingInvitesCount > 0 ? ` (${pendingInvitesCount})` : ""}`,
 			icon: EnvelopeSimple,
 			route: "/app/invites" as Href,
 		},
@@ -37,6 +44,19 @@ export function CustomDrawerContent(props: DrawerContentComponentProps) {
 			route: "/app/profile" as Href,
 		},
 	];
+
+	const handleLogout = async () => {
+		if (isLoggingOut) return;
+		setIsLoggingOut(true);
+		try {
+			const { error } = await supabase.auth.signOut();
+			if (error) throw error;
+		} catch (error) {
+			handleError(error, "Failed to log out", "Profile Update");
+		} finally {
+			setIsLoggingOut(false);
+		}
+	};
 
 	return (
 		<SafeAreaView edges={["top", "bottom"]} className="bg-surface-bg flex-1">
@@ -74,27 +94,21 @@ export function CustomDrawerContent(props: DrawerContentComponentProps) {
 			>
 				<View className="gap-2 flex-1">
 					{menuItems.map((item) => {
-						const isActive = activeRouteName === item.name;
 						const Icon = item.icon;
 						return (
 							<Pressable
 								key={item.name}
 								onPress={() => router.push(item.route)}
-								className={cn(
-									"flex-row items-center gap-4 px-4 py-4 rounded-2xl",
-									isActive ? "bg-action-secondary" : "bg-transparent",
-								)}
+								className="flex-row items-center gap-4 px-4 py-4 rounded-2xl bg-transparent"
 							>
 								<Icon
 									size={22}
-									weight={isActive ? "bold" : "regular"}
-									color={isActive ? colors.actionPrimary : colors.textDefault}
+									weight="regular"
+									color={colors.textDefault}
 								/>
 								<Text
 									className="text-base font-semibold"
-									style={{
-										color: isActive ? colors.actionPrimary : colors.textDefault,
-									}}
+									style={{ color: colors.textDefault }}
 								>
 									{item.label}
 								</Text>
@@ -105,9 +119,12 @@ export function CustomDrawerContent(props: DrawerContentComponentProps) {
 			</DrawerContentScrollView>
 
 			<View className="p-6">
-				<MutedBorderButton
-					label="Log out"
-					onPress={() => supabase.auth.signOut()}
+				<FilledButton
+					label={isLoggingOut ? "Logging out..." : "Log Out"}
+					disabled={isLoggingOut}
+					variant="muted"
+					withShadow={false}
+					onPress={handleLogout}
 				/>
 			</View>
 		</SafeAreaView>

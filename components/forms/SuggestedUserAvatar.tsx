@@ -22,22 +22,15 @@ export function SuggestedUserAvatar({
 	const displayName = nickname || username;
 
 	return (
-		<Pressable
-			onPress={() => onPress(userId, username)}
-			className="items-center gap-1"
-		>
-			<View className="relative">
-				<Avatar name={displayName} imageUrl={avatarUrl} size={56} />
-				<View
-					className="absolute -right-1 -bottom-1 h-6 w-6 items-center justify-center rounded-full border-2"
-					style={{
-						backgroundColor: colors.actionPrimary,
-						borderColor: colors.surfaceBg,
-					}}
-				>
-					<Plus size={14} color="white" weight="bold" />
-				</View>
-			</View>
+		<View className="items-center gap-1">
+			<Avatar
+				name={displayName}
+				imageUrl={avatarUrl}
+				size={56}
+				showPickerIcon
+				pickerIconType="plus"
+				onPress={() => onPress(userId, username)}
+			/>
 			<Text
 				className="text-xs font-medium text-text-strong text-center max-w-[64px]"
 				style={{ color: colors.textStrong }}
@@ -45,6 +38,6 @@ export function SuggestedUserAvatar({
 			>
 				{displayName}
 			</Text>
-		</Pressable>
+		</View>
 	);
 }

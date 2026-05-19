@@ -1,4 +1,3 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import type {
 	AttachmentData,
@@ -18,6 +17,7 @@ import {
 	updateCompletionWithAttachment,
 	updateGoalMetadata,
 } from "@/services/goal.service";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { goalKeys } from "./useGoalQueries";
 
 type CompletionVariables = {
@@ -75,6 +75,7 @@ const updateOptimisticCompletions = (
 	isAdding: boolean,
 ) => {
 	const today = new Date().toISOString().split("T")[0];
+	const currentMonth = new Date().toISOString().slice(0, 7);
 
 	queryClient.setQueryData<string[]>(
 		goalKeys.todaysCompletions(variables.userId),
@@ -137,6 +138,75 @@ const updateOptimisticCompletions = (
 			null,
 		);
 	}
+
+	const currentStreak =
+		queryClient.getQueryData<number>(
+			goalKeys.streak(variables.goalId, variables.userId),
+		) ?? 0;
+
+	const pointsDelta = isAdding
+		? Math.min(1 + currentStreak, 10)
+		: -Math.min(1 + (currentStreak - 1), 10);
+
+	queryClient.setQueryData<number>(
+		goalKeys.streak(variables.goalId, variables.userId),
+		(old) => {
+			const current = old ?? 0;
+			return isAdding ? current + 1 : Math.max(0, current - 1);
+		},
+	);
+
+	queryClient.setQueryData<number>(
+		goalKeys.monthlyPoints(variables.goalId, variables.userId),
+		(old) => (old ?? 0) + pointsDelta,
+	);
+
+	queryClient.setQueryData<any[]>(
+		goalKeys.leaderboard(variables.goalId),
+		(old) => {
+			if (!old) return old;
+			return old
+				.map((entry) => {
+					if (entry.user_id === variables.userId) {
+						const currentPoints = Number(entry.points) || 0;
+						const newPoints = Math.max(0, currentPoints + pointsDelta);
+						return {
+							...entry,
+							points: newPoints,
+							streak: isAdding
+								? (Number(entry.streak) || 0) + 1
+								: Math.max(0, (Number(entry.streak) || 0) - 1),
+						};
+					}
+					return entry;
+				})
+				.sort((a, b) => (Number(b.points) || 0) - (Number(a.points) || 0))
+				.map((entry, index) => ({ ...entry, rank: index + 1 }));
+		},
+	);
+
+	queryClient.setQueryData<any[]>(
+		goalKeys.monthlyPointsAll(variables.goalId),
+		(old) => {
+			if (!old) return old;
+			const monthToMatch = currentMonth;
+			return old.map((entry) => {
+				const isUserMatch = entry.user_id === variables.userId;
+				const isMonthMatch =
+					entry.month === monthToMatch ||
+					(typeof entry.month === "string" &&
+						entry.month.startsWith(monthToMatch));
+
+				if (isUserMatch && isMonthMatch) {
+					return {
+						...entry,
+						points: Math.max(0, (Number(entry.points) || 0) + pointsDelta),
+					};
+				}
+				return entry;
+			});
+		},
+	);
 };
 
 export const useCreateGoal = () => {
@@ -276,14 +346,32 @@ export const useCompleteGoal = () => {
 			const previousCompletions = queryClient.getQueryData<string[]>(
 				goalKeys.todaysCompletions(variables.userId),
 			);
-
 			const previousGoalCompletions = queryClient.getQueryData<
 				{ completed_date: string }[]
 			>(goalKeys.completions(variables.goalId, variables.userId));
+			const previousStreak = queryClient.getQueryData<number>(
+				goalKeys.streak(variables.goalId, variables.userId),
+			);
+			const previousPoints = queryClient.getQueryData<number>(
+				goalKeys.monthlyPoints(variables.goalId, variables.userId),
+			);
+			const previousLeaderboard = queryClient.getQueryData<any[]>(
+				goalKeys.leaderboard(variables.goalId),
+			);
+			const previousMonthlyPointsAll = queryClient.getQueryData<any[]>(
+				goalKeys.monthlyPointsAll(variables.goalId),
+			);
 
 			updateOptimisticCompletions(queryClient, variables, true);
 
-			return { previousCompletions, previousGoalCompletions };
+			return {
+				previousCompletions,
+				previousGoalCompletions,
+				previousStreak,
+				previousPoints,
+				previousLeaderboard,
+				previousMonthlyPointsAll,
+			};
 		},
 		onError: (_err, variables, context) => {
 			if (context?.previousCompletions) {
@@ -296,6 +384,30 @@ export const useCompleteGoal = () => {
 				queryClient.setQueryData(
 					goalKeys.completions(variables.goalId, variables.userId),
 					context.previousGoalCompletions,
+				);
+			}
+			if (context?.previousStreak !== undefined) {
+				queryClient.setQueryData(
+					goalKeys.streak(variables.goalId, variables.userId),
+					context.previousStreak,
+				);
+			}
+			if (context?.previousPoints !== undefined) {
+				queryClient.setQueryData(
+					goalKeys.monthlyPoints(variables.goalId, variables.userId),
+					context.previousPoints,
+				);
+			}
+			if (context?.previousLeaderboard) {
+				queryClient.setQueryData(
+					goalKeys.leaderboard(variables.goalId),
+					context.previousLeaderboard,
+				);
+			}
+			if (context?.previousMonthlyPointsAll) {
+				queryClient.setQueryData(
+					goalKeys.monthlyPointsAll(variables.goalId),
+					context.previousMonthlyPointsAll,
 				);
 			}
 		},
@@ -318,14 +430,32 @@ export const useUncompleteGoal = () => {
 			const previousCompletions = queryClient.getQueryData<string[]>(
 				goalKeys.todaysCompletions(variables.userId),
 			);
-
 			const previousGoalCompletions = queryClient.getQueryData<
 				{ completed_date: string }[]
 			>(goalKeys.completions(variables.goalId, variables.userId));
+			const previousStreak = queryClient.getQueryData<number>(
+				goalKeys.streak(variables.goalId, variables.userId),
+			);
+			const previousPoints = queryClient.getQueryData<number>(
+				goalKeys.monthlyPoints(variables.goalId, variables.userId),
+			);
+			const previousLeaderboard = queryClient.getQueryData<any[]>(
+				goalKeys.leaderboard(variables.goalId),
+			);
+			const previousMonthlyPointsAll = queryClient.getQueryData<any[]>(
+				goalKeys.monthlyPointsAll(variables.goalId),
+			);
 
 			updateOptimisticCompletions(queryClient, variables, false);
 
-			return { previousCompletions, previousGoalCompletions };
+			return {
+				previousCompletions,
+				previousGoalCompletions,
+				previousStreak,
+				previousPoints,
+				previousLeaderboard,
+				previousMonthlyPointsAll,
+			};
 		},
 		onError: (_err, variables, context) => {
 			if (context?.previousCompletions) {
@@ -338,6 +468,30 @@ export const useUncompleteGoal = () => {
 				queryClient.setQueryData(
 					goalKeys.completions(variables.goalId, variables.userId),
 					context.previousGoalCompletions,
+				);
+			}
+			if (context?.previousStreak !== undefined) {
+				queryClient.setQueryData(
+					goalKeys.streak(variables.goalId, variables.userId),
+					context.previousStreak,
+				);
+			}
+			if (context?.previousPoints !== undefined) {
+				queryClient.setQueryData(
+					goalKeys.monthlyPoints(variables.goalId, variables.userId),
+					context.previousPoints,
+				);
+			}
+			if (context?.previousLeaderboard) {
+				queryClient.setQueryData(
+					goalKeys.leaderboard(variables.goalId),
+					context.previousLeaderboard,
+				);
+			}
+			if (context?.previousMonthlyPointsAll) {
+				queryClient.setQueryData(
+					goalKeys.monthlyPointsAll(variables.goalId),
+					context.previousMonthlyPointsAll,
 				);
 			}
 		},

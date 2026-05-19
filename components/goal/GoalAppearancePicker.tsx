@@ -1,10 +1,8 @@
 import type { BottomSheetModal } from "@gorhom/bottom-sheet";
-import { PencilSimple } from "phosphor-react-native";
 import { useRef, useState } from "react";
 import { Platform, Pressable, View } from "react-native";
-import { IconPickerBottomSheet } from "@/components/goal/IconPickerBottomSheet";
-import { hexToRgba } from "@/utils/color.utils";
-import { DynamicIcon } from "@/utils/icons";
+import { IconPickerBottomSheet } from "@/components/overlays/IconPickerBottomSheet";
+import { GoalIcon } from "@/components/ui/GoalIcon";
 
 export const GOAL_APPEARANCE_COLORS = [
 	"#ef4444",
@@ -56,24 +54,14 @@ export function GoalAppearancePicker({
 						: "flex-row items-center justify-between"
 				}
 			>
-				<Pressable
+				<GoalIcon
+					icon={selectedIcon}
+					color={selectedColor}
+					size={64}
+					variant="dashed"
 					onPress={openIconPicker}
-					className="relative h-32 w-32 items-center justify-center rounded-[32px] border-2 border-dashed"
-					style={{
-						backgroundColor: hexToRgba(selectedColor, 0.15),
-						borderColor: selectedColor,
-					}}
-				>
-					<DynamicIcon
-						name={selectedIcon}
-						size={64}
-						color={selectedColor}
-						weight="fill"
-					/>
-					<View className="absolute -right-1 -bottom-1 h-11 w-11 items-center justify-center rounded-full bg-action-primary border-4 border-surface-bg">
-						<PencilSimple size={20} color="white" weight="bold" />
-					</View>
-				</Pressable>
+					containerClassName="rounded-[32px]"
+				/>
 
 				<View
 					className={

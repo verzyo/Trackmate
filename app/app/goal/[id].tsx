@@ -1,15 +1,6 @@
-import { useQueryClient } from "@tanstack/react-query";
-import { router, useLocalSearchParams } from "expo-router";
-import { useMemo, useRef } from "react";
-import { ScrollView, Text, useWindowDimensions, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import AttachmentBottomSheet, {
-	type AttachmentBottomSheetRef,
-} from "@/components/AttachmentBottomSheet";
 import { GoalActionButtons } from "@/components/goal/GoalActionButtons";
 import { GoalAttachmentsList } from "@/components/goal/GoalAttachmentsList";
 import { GoalConsistencyHeatmap } from "@/components/goal/GoalConsistencyHeatmap";
-import { GoalDetailHeader } from "@/components/goal/GoalDetailHeader";
 import { GoalFrequencyCard } from "@/components/goal/GoalFrequencyCard";
 import { GoalLeaderboardCard } from "@/components/goal/GoalLeaderboardCard";
 import { GoalParticipantsList } from "@/components/goal/GoalParticipantsList";
@@ -17,7 +8,11 @@ import { GoalPendingInvitesList } from "@/components/goal/GoalPendingInvitesList
 import { GoalPointsChart } from "@/components/goal/GoalPointsChart";
 import { GoalStatsCard } from "@/components/goal/GoalStatsCard";
 import AppLoadingScreen from "@/components/layout/LoadingScreen";
-import { Screen } from "@/components/layout/Screen";
+import { ModalScreen } from "@/components/layout/ModalScreen";
+import AttachmentBottomSheet, {
+	type AttachmentBottomSheetRef,
+} from "@/components/overlays/AttachmentBottomSheet";
+import { GoalIcon } from "@/components/ui/GoalIcon";
 import { useThemeColors } from "@/hooks/common/useThemeColors";
 import {
 	useAcceptInvite,
@@ -42,8 +37,14 @@ import {
 import { useProfilesByIds } from "@/hooks/profile/useProfileHooks";
 import type { AttachmentData } from "@/schemas/goal.schema";
 import { useAuthStore } from "@/store/auth.store";
+import { cn } from "@/utils/cn";
 import { getNextDueDate, isTodayUTC } from "@/utils/date.utils";
 import { getErrorMessage, showAlert } from "@/utils/toast.utils";
+import { useQueryClient } from "@tanstack/react-query";
+import { type Href, router, useLocalSearchParams } from "expo-router";
+import { useMemo, useRef } from "react";
+import { Text, useWindowDimensions, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function GoalDetailsModal() {
 	const { id, inviteId, participantId } = useLocalSearchParams<{
@@ -130,11 +131,13 @@ export default function GoalDetailsModal() {
 
 	if (error || !goal) {
 		return (
-			<Screen className="items-center justify-center px-6 py-4">
-				<Text className="text-base text-state-danger">
-					Failed to load goal details
-				</Text>
-			</Screen>
+			<ModalScreen title="Error">
+				<View className="items-center justify-center py-20">
+					<Text className="text-base text-state-danger font-bold">
+						Failed to load goal details
+					</Text>
+				</View>
+			</ModalScreen>
 		);
 	}
 
@@ -256,186 +259,202 @@ export default function GoalDetailsModal() {
 		? "Declining..."
 		: "Decline Invite";
 
+	const title =
+		isViewingOther && viewUserId
+			? `${
+					profileMap.get(viewUserId)?.nickname ||
+					profileMap.get(viewUserId)?.username ||
+					"User"
+			  }'s Details`
+			: "Goal Details";
+
 	return (
-		<Screen className="bg-surface-bg">
-			<ScrollView
-				showsVerticalScrollIndicator={false}
-				contentContainerClassName="px-6 py-4"
-				contentContainerStyle={{
-					paddingBottom: showPrimaryAction
-						? Math.max(insets.bottom + 120, 144)
-						: Math.max(insets.bottom + 32, 40),
-				}}
-			>
-				<View className="w-full max-w-4xl self-center gap-6">
-					<GoalDetailHeader
-						goal={goal}
-						goalId={goalId as string}
-						isParticipant={isParticipant}
-						isViewingOther={isViewingOther}
-						viewUserName={
-							viewUserId
-								? profileMap.get(viewUserId)?.nickname ||
-									profileMap.get(viewUserId)?.username
-								: undefined
+		<ModalScreen
+			title={title}
+			variant={isParticipant && !isViewingOther ? "edit" : "default"}
+			onEdit={() => router.push(`/app/goal/edit/${goalId}` as Href)}
+			contentContainerStyle={{
+				paddingBottom: showPrimaryAction
+					? Math.max(insets.bottom + 120, 144)
+					: Math.max(insets.bottom + 32, 40),
+			}}
+			fixedChildren={
+				<>
+					<GoalActionButtons
+						showPrimaryAction={showPrimaryAction}
+						isInviteState={isInviteState}
+						isCompletedToday={isCompletedToday}
+						isPending={
+							completeMutation.isPending ||
+							uncompleteMutation.isPending ||
+							acceptInviteMutation.isPending ||
+							declineInviteMutation.isPending
 						}
-						iconName={iconName}
-						iconColor={iconColor}
+						insetsBottom={insets.bottom}
+						primaryButtonLabel={primaryButtonLabel}
+						secondaryButtonLabel={secondaryButtonLabel}
+						onAcceptInvite={handleAcceptInvite}
+						onCompleteGoal={() => handleComplete()}
+						onUndoComplete={handleUncomplete}
+						onDeclineInvite={handleDeclineInvite}
 					/>
 
-					<GoalFrequencyCard
-						frequencyType={goal.frequency_type}
-						frequencyValue={goal.frequency_value}
-						weeklyDays={goal.weekly_days}
-					/>
-
-					{isParticipant ? (
-						<GoalStatsCard
-							streak={streak}
-							points={monthlyPoints}
-							rank={rank}
-							loading={statsLoading}
-							showRank={!isPersonalGoal}
+					{goal && !isViewingOther && (
+						<AttachmentBottomSheet
+							ref={attachmentSheetRef}
+							goal={goal}
+							onComplete={async (attachmentData) => {
+								if (!currentUserId) return;
+								try {
+									if (goal.require_attachment) {
+										await completeMutation.mutateAsync({
+											goalId: goal.id,
+											userId: currentUserId,
+											attachmentData,
+										});
+									} else if (attachmentData) {
+										await updateAttachmentMutation.mutateAsync({
+											goalId: goal.id,
+											userId: currentUserId,
+											attachmentData,
+										});
+									}
+									refetchToday();
+								} catch (e) {
+									showAlert(getErrorMessage(e, "Failed to update completion"));
+								}
+							}}
 						/>
+					)}
+				</>
+			}
+		>
+			<View className="flex-row items-center gap-4 mb-2">
+				<GoalIcon
+					icon={iconName}
+					color={iconColor}
+					size={64}
+					containerClassName="rounded-[32px]"
+				/>
+
+				<View className="flex-1 gap-1.5">
+					<Text
+						className={cn(
+							"font-bold text-text-strong",
+							goal.title.length > 16 ? "text-2xl leading-8" : "text-3xl leading-9",
+						)}
+					>
+						{goal.title}
+					</Text>
+
+					{goal.description ? (
+						<Text className="text-base leading-6 text-text-default">
+							{goal.description}
+						</Text>
 					) : null}
-
-					{isParticipant && !isPersonalGoal && !isViewingOther ? (
-						<GoalLeaderboardCard
-							leaderboard={leaderboard}
-							currentUserId={currentUserId}
-							loading={isLeaderboardLoading}
-						/>
-					) : null}
-
-					{isWideScreen ? (
-						<View className="flex-row items-stretch gap-4">
-							{isParticipant && !isPersonalGoal && !isViewingOther && (
-								<View className="flex-1">
-									<GoalPointsChart
-										data={monthlyPointsAll}
-										loading={isMonthlyPointsAllLoading}
-									/>
-								</View>
-							)}
-							{isViewingOther && !isPersonalGoal && viewUserId && (
-								<View className="flex-1">
-									<GoalPointsChart
-										data={monthlyPointsAll.filter(
-											(p) => p.user_id === viewUserId,
-										)}
-										loading={isMonthlyPointsAllLoading}
-									/>
-								</View>
-							)}
-							{!isInviteState && (
-								<View className="flex-1">
-									<GoalConsistencyHeatmap
-										completedDates={completedDateKeys}
-										frequencyType={goal.frequency_type}
-										frequencyValue={goal.frequency_value}
-										startDate={goal.start_date}
-										weeklyDays={goal.weekly_days}
-									/>
-								</View>
-							)}
-						</View>
-					) : (
-						<>
-							{isParticipant && !isPersonalGoal && !isViewingOther ? (
-								<GoalPointsChart
-									data={monthlyPointsAll}
-									loading={isMonthlyPointsAllLoading}
-								/>
-							) : null}
-
-							{isViewingOther && !isPersonalGoal && viewUserId && (
-								<GoalPointsChart
-									data={monthlyPointsAll.filter(
-										(p) => p.user_id === viewUserId,
-									)}
-									loading={isMonthlyPointsAllLoading}
-								/>
-							)}
-
-							{!isInviteState && (
-								<GoalConsistencyHeatmap
-									completedDates={completedDateKeys}
-									frequencyType={goal.frequency_type}
-									frequencyValue={goal.frequency_value}
-									startDate={goal.start_date}
-									weeklyDays={goal.weekly_days}
-								/>
-							)}
-						</>
-					)}
-
-					{(isParticipant || isInviteState) && (
-						<GoalParticipantsList
-							participants={participantItems}
-							goalId={goalId as string}
-							currentUserId={currentUserId}
-						/>
-					)}
-
-					{!isViewingOther && (
-						<GoalAttachmentsList
-							attachments={filteredAttachments}
-							loading={isAttachmentsLoading}
-						/>
-					)}
-
-					{!isViewingOther && isOwner && pendingInvites.length > 0 && (
-						<GoalPendingInvitesList invites={pendingInvites} />
-					)}
 				</View>
-			</ScrollView>
+			</View>
 
-			<GoalActionButtons
-				showPrimaryAction={showPrimaryAction}
-				isInviteState={isInviteState}
-				isCompletedToday={isCompletedToday}
-				isPending={
-					completeMutation.isPending ||
-					uncompleteMutation.isPending ||
-					acceptInviteMutation.isPending ||
-					declineInviteMutation.isPending
-				}
-				insetsBottom={insets.bottom}
-				primaryButtonLabel={primaryButtonLabel}
-				secondaryButtonLabel={secondaryButtonLabel}
-				onAcceptInvite={handleAcceptInvite}
-				onCompleteGoal={() => handleComplete()}
-				onUndoComplete={handleUncomplete}
-				onDeclineInvite={handleDeclineInvite}
+			<GoalFrequencyCard
+				frequencyType={goal.frequency_type}
+				frequencyValue={goal.frequency_value}
+				weeklyDays={goal.weekly_days}
 			/>
 
-			{goal && !isViewingOther && (
-				<AttachmentBottomSheet
-					ref={attachmentSheetRef}
-					goal={goal}
-					onComplete={async (attachmentData) => {
-						if (!currentUserId) return;
-						try {
-							if (goal.require_attachment) {
-								await completeMutation.mutateAsync({
-									goalId: goal.id,
-									userId: currentUserId,
-									attachmentData,
-								});
-							} else if (attachmentData) {
-								await updateAttachmentMutation.mutateAsync({
-									goalId: goal.id,
-									userId: currentUserId,
-									attachmentData,
-								});
-							}
-							refetchToday();
-						} catch (e) {
-							showAlert(getErrorMessage(e, "Failed to update completion"));
-						}
-					}}
+			{isParticipant ? (
+				<GoalStatsCard
+					streak={streak}
+					points={monthlyPoints}
+					rank={rank}
+					loading={statsLoading}
+					showRank={!isPersonalGoal}
+				/>
+			) : null}
+
+			{isParticipant && !isPersonalGoal && !isViewingOther ? (
+				<GoalLeaderboardCard
+					leaderboard={leaderboard}
+					currentUserId={currentUserId}
+					loading={isLeaderboardLoading}
+				/>
+			) : null}
+
+			{isWideScreen ? (
+				<View className="flex-row items-stretch gap-4">
+					{isParticipant && !isPersonalGoal && !isViewingOther && (
+						<View className="flex-1">
+							<GoalPointsChart
+								data={monthlyPointsAll}
+								loading={isMonthlyPointsAllLoading}
+							/>
+						</View>
+					)}
+					{isViewingOther && !isPersonalGoal && viewUserId && (
+						<View className="flex-1">
+							<GoalPointsChart
+								data={monthlyPointsAll.filter((p) => p.user_id === viewUserId)}
+								loading={isMonthlyPointsAllLoading}
+							/>
+						</View>
+					)}
+					{!isInviteState && (
+						<View className="flex-1">
+							<GoalConsistencyHeatmap
+								completedDates={completedDateKeys}
+								frequencyType={goal.frequency_type}
+								frequencyValue={goal.frequency_value}
+								startDate={goal.start_date}
+								weeklyDays={goal.weekly_days}
+							/>
+						</View>
+					)}
+				</View>
+			) : (
+				<>
+					{isParticipant && !isPersonalGoal && !isViewingOther ? (
+						<GoalPointsChart
+							data={monthlyPointsAll}
+							loading={isMonthlyPointsAllLoading}
+						/>
+					) : null}
+
+					{isViewingOther && !isPersonalGoal && viewUserId && (
+						<GoalPointsChart
+							data={monthlyPointsAll.filter((p) => p.user_id === viewUserId)}
+							loading={isMonthlyPointsAllLoading}
+						/>
+					)}
+
+					{!isInviteState && (
+						<GoalConsistencyHeatmap
+							completedDates={completedDateKeys}
+							frequencyType={goal.frequency_type}
+							frequencyValue={goal.frequency_value}
+							startDate={goal.start_date}
+							weeklyDays={goal.weekly_days}
+						/>
+					)}
+				</>
+			)}
+
+			{(isParticipant || isInviteState) && (
+				<GoalParticipantsList
+					participants={participantItems}
+					goalId={goalId as string}
+					currentUserId={currentUserId}
 				/>
 			)}
-		</Screen>
+
+			{!isViewingOther && (
+				<GoalAttachmentsList
+					attachments={filteredAttachments}
+					loading={isAttachmentsLoading}
+				/>
+			)}
+
+			{!isViewingOther && isOwner && pendingInvites.length > 0 && (
+				<GoalPendingInvitesList invites={pendingInvites} />
+			)}
+		</ModalScreen>
 	);
 }

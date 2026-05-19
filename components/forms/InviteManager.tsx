@@ -1,3 +1,7 @@
+import { Avatar } from "@/components/ui/Avatar";
+import { Tag } from "@/components/ui/Tag";
+import { useThemeColors } from "@/hooks/common/useThemeColors";
+import { useAssociatedPeople } from "@/hooks/profile/useAssociatedPeople";
 import { X } from "phosphor-react-native";
 import { useCallback, useRef, useState } from "react";
 import {
@@ -8,9 +12,6 @@ import {
 	TextInput,
 	View,
 } from "react-native";
-import Avatar from "@/components/ui/Avatar";
-import { useThemeColors } from "@/hooks/common/useThemeColors";
-import { useAssociatedPeople } from "@/hooks/profile/useAssociatedPeople";
 import { SuggestedUserAvatar } from "./SuggestedUserAvatar";
 
 export type Invitee = {
@@ -158,14 +159,7 @@ export function InviteManager({
 								</View>
 							</View>
 							<View className="flex-row items-center gap-3">
-								<View className="bg-state-muted-bg px-3 py-1.5 rounded-full">
-									<Text
-										className="text-state-muted-fg font-bold text-[10px] tracking-widest"
-										style={{ color: colors.textLight }}
-									>
-										PENDING
-									</Text>
-								</View>
+								<Tag label="PENDING" variant="default" />
 								<Pressable
 									onPress={() => onRemove(invitee.id)}
 									hitSlop={8}

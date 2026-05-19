@@ -10,7 +10,7 @@ import {
 } from "@/services/goal.service";
 import { fetchProfile, fetchProfilesByIds } from "@/services/profile.service";
 
-export function useLoadHomeScreen(userId: string | undefined) {
+export function usePrefetchHome(userId: string | undefined) {
 	const queryClient = useQueryClient();
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<Error | null>(null);

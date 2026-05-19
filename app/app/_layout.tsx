@@ -1,12 +1,12 @@
 import { Stack } from "expo-router";
 import { LoadingScreen } from "@/components/layout/LoadingScreen";
-import { useLoadHomeScreen } from "@/hooks/common/useLoadHomeScreen";
+import { usePrefetchHome } from "@/hooks/prefetch/usePrefetchHome";
 import { useThemeColors } from "@/hooks/common/useThemeColors";
 import { useAuthStore } from "@/store/auth.store";
 
 export default function AppLayout() {
 	const { user } = useAuthStore();
-	const { isLoading } = useLoadHomeScreen(user?.id);
+	const { isLoading } = usePrefetchHome(user?.id);
 	const colors = useThemeColors();
 
 	if (isLoading) {

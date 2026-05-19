@@ -1,26 +1,29 @@
+import FloatingActionButton from "@/components/home/FloatingActionButton";
+import { GoalsSection } from "@/components/home/GoalsSection";
+import { Screen } from "@/components/layout/Screen";
+import AttachmentBottomSheet, {
+	type AttachmentBottomSheetRef,
+} from "@/components/overlays/AttachmentBottomSheet";
+import { Avatar } from "@/components/ui/Avatar";
+import CircleIconButton from "@/components/ui/CircleIconButton";
+import { ATTACHMENT_TYPES } from "@/constants/attachmentTypes";
+import { UI_SIZES } from "@/constants/ui";
+import { useErrorHandler } from "@/hooks/common/useErrorHandler";
+import { useThemeColors } from "@/hooks/common/useThemeColors";
+import { goalKeys } from "@/hooks/goal/useGoalQueries";
+import { useGoalToggle } from "@/hooks/goal/useGoalToggle";
+import { useHomeData } from "@/hooks/goal/useHomeData";
+import { usePrefetchGoalDetails } from "@/hooks/prefetch/usePrefetchGoalDetails";
+import type { GoalWithParticipant } from "@/schemas/goal.schema";
+import { useAuthStore } from "@/store/auth.store";
+import { getCurrentDayString } from "@/utils/date.utils";
 import type { DrawerNavigationProp } from "@react-navigation/drawer";
 import { useNavigation } from "@react-navigation/native";
 import { useQueryClient } from "@tanstack/react-query";
 import { type Href, router } from "expo-router";
+import { ArrowsClockwise } from "phosphor-react-native";
 import { useCallback, useRef, useState } from "react";
-import { RefreshControl, ScrollView, View } from "react-native";
-import AttachmentBottomSheet, {
-	type AttachmentBottomSheetRef,
-} from "@/components/AttachmentBottomSheet";
-import GreetingHeader from "@/components/GreetingHeader";
-import { TodaySection } from "@/components/goal/TodaySection";
-import { UpcomingSection } from "@/components/goal/UpcomingSection";
-import { Screen } from "@/components/layout/Screen";
-import FloatingActionButton from "@/components/ui/FloatingActionButton";
-import { ATTACHMENT_TYPES } from "@/constants/attachmentTypes";
-import { useErrorHandler } from "@/hooks/common/useErrorHandler";
-import { goalKeys } from "@/hooks/goal/useGoalQueries";
-import { useGoalToggle } from "@/hooks/goal/useGoalToggle";
-import { useHomeData } from "@/hooks/goal/useHomeData";
-import { usePrefetchGoals } from "@/hooks/goal/usePrefetchGoals";
-import type { GoalWithParticipant } from "@/schemas/goal.schema";
-import { useAuthStore } from "@/store/auth.store";
-import { getCurrentDayString } from "@/utils/date.utils";
+import { Platform, RefreshControl, Text, View } from "react-native";
 
 const getGreeting = () => {
 	const h = new Date().getHours();
@@ -35,6 +38,7 @@ export default function HomeScreen() {
 	const { user } = useAuthStore();
 	const userId = user?.id;
 	const { handleError } = useErrorHandler();
+	const colors = useThemeColors();
 
 	const [selectedGoal, setSelectedGoal] = useState<GoalWithParticipant | null>(
 		null,
@@ -56,7 +60,7 @@ export default function HomeScreen() {
 		error,
 	} = useHomeData(userId);
 
-	usePrefetchGoals(goals, userId);
+	usePrefetchGoalDetails(goals, userId);
 
 	const inviteCount = invites?.length ?? 0;
 	const { toggleCompletion } = useGoalToggle(userId);
@@ -72,8 +76,6 @@ export default function HomeScreen() {
 			setRefreshing(false);
 		}
 	}, [queryClient]);
-
-	const showNoGoalsDueToday = !isLoading && groupedGoals.today.length === 0;
 
 	const handleToggle = async (
 		goal: GoalWithParticipant,
@@ -102,62 +104,83 @@ export default function HomeScreen() {
 	};
 
 	return (
-		<View className="flex-1">
-			<Screen className="bg-surface-bg">
-				<ScrollView
-					showsVerticalScrollIndicator={false}
-					contentContainerClassName="flex-grow px-6 py-4"
-					refreshControl={
-						<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-					}
-				>
-					<View className="w-full max-w-4xl self-center flex-col gap-6 pb-32">
-						<GreetingHeader
-							greeting={getGreeting()}
-							dayString={getCurrentDayString()}
-							profileName={profileName}
-							avatarUrl={avatarUrl}
-							inviteCount={inviteCount}
-							onAvatarPress={() => navigation.openDrawer()}
-						/>
+		<Screen
+			scrollable
+			contentContainerClassName="px-6 py-4"
+			refreshControl={
+				<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+			}
+			fixedChildren={
+				<>
+					<FloatingActionButton
+						onPress={() => router.push("/app/goal/new" as Href)}
+					/>
 
-						<TodaySection
-							goals={groupedGoals.today}
-							userId={userId}
-							error={error}
-							isLoading={isLoading}
-							showNoGoalsDueToday={showNoGoalsDueToday}
-							participantAvatars={participantAvatars}
-							onToggle={handleToggle}
-							onPress={(id) => router.push(`/app/goal/${id}` as Href)}
+					{selectedGoal && (
+						<AttachmentBottomSheet
+							ref={attachmentSheetRef}
+							goal={selectedGoal}
+							onComplete={async (attachmentData) => {
+								if (!userId || !selectedGoal) return;
+								try {
+									await toggleCompletion(selectedGoal.id, false, attachmentData);
+								} catch {}
+							}}
 						/>
-
-						<UpcomingSection
-							goals={groupedGoals.upcoming}
-							userId={userId}
-							participantAvatars={participantAvatars}
-							onPress={(id) => router.push(`/app/goal/${id}` as Href)}
+					)}
+				</>
+			}
+		>
+			<View className="w-full max-w-4xl self-center flex-col gap-6 pb-32">
+				<View className="h-16 w-full flex-row items-center justify-between">
+					<View className="flex-col items-start justify-center gap-[5px]">
+						<Text className="font-bold text-3xl leading-10 tracking-tight text-text-strong">
+							{getGreeting()}
+						</Text>
+						<Text className="font-medium text-lg leading-7 text-text-light">
+							{getCurrentDayString()}
+						</Text>
+					</View>
+					<View className="flex-row items-center gap-3">
+						{Platform.OS === "web" && (
+							<CircleIconButton onPress={handleRefresh} disabled={refreshing}>
+								<ArrowsClockwise
+									size={UI_SIZES.icon.md}
+									color={colors.textStrong}
+									weight="bold"
+								/>
+							</CircleIconButton>
+						)}
+						<Avatar
+							name={profileName}
+							imageUrl={avatarUrl}
+							badgeCount={inviteCount}
+							size={64}
+							onPress={() => navigation.openDrawer()}
 						/>
 					</View>
-				</ScrollView>
-			</Screen>
+				</View>
 
-			<FloatingActionButton
-				onPress={() => router.push("/app/goal/new" as Href)}
-			/>
-
-			{selectedGoal && (
-				<AttachmentBottomSheet
-					ref={attachmentSheetRef}
-					goal={selectedGoal}
-					onComplete={async (attachmentData) => {
-						if (!userId || !selectedGoal) return;
-						try {
-							await toggleCompletion(selectedGoal.id, false, attachmentData);
-						} catch {}
-					}}
+				<GoalsSection
+					title="Today"
+					goals={groupedGoals.today}
+					userId={userId}
+					error={error}
+					isLoading={isLoading}
+					emptyMessage="No goals due today"
+					participantAvatars={participantAvatars}
+					onToggle={handleToggle}
+					onPress={(id: string) => router.push(`/app/goal/${id}` as Href)}
 				/>
-			)}
-		</View>
+
+				<GoalsSection
+					title="Upcoming"
+					goals={groupedGoals.upcoming}
+					userId={userId}
+					participantAvatars={participantAvatars}
+					onPress={(id: string) => router.push(`/app/goal/${id}` as Href)}
+				/>
+			</View>
+		</Screen>
 	);
 }

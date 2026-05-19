@@ -1,15 +1,15 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import { router } from "expo-router";
-import { useForm } from "react-hook-form";
-import { FormField } from "@/components/forms/FormField";
 import { AuthScreen } from "@/components/layout/AuthScreen";
 import FilledButton from "@/components/ui/FilledButton";
+import { FormField } from "@/components/ui/FormField";
 import { supabase } from "@/lib/supabase";
 import {
 	type RegisterForm,
 	RegisterFormSchema,
 } from "@/schemas/profile.schema";
 import { showAlert } from "@/utils/toast.utils";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { router } from "expo-router";
+import { useForm } from "react-hook-form";
 
 export default function RegisterScreen() {
 	const {
@@ -31,10 +31,8 @@ export default function RegisterScreen() {
 	const onSubmit = async (data: RegisterForm) => {
 		clearErrors(["email", "username"]);
 
-		const username = data.username.trim();
-		const email = data.email.trim();
-		const nicknameInput = data.nickname?.trim() ?? "";
-		const nickname = nicknameInput.length > 0 ? nicknameInput : null;
+		const { email, username, password } = data;
+		const nickname = data.nickname || null;
 
 		try {
 			const { data: isUsernameAvailable, error: usernameCheckError } =
@@ -58,7 +56,7 @@ export default function RegisterScreen() {
 
 		const { data: signUpData, error } = await supabase.auth.signUp({
 			email,
-			password: data.password,
+			password,
 			options: { data: { username, nickname } },
 		});
 

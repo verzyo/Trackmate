@@ -1,14 +1,10 @@
+import { ModalScreen } from "@/components/layout/ModalScreen";
+import { cn } from "@/utils/cn";
 import type { ReactNode, RefObject } from "react";
 import {
-	KeyboardAvoidingView,
-	Platform,
-	type ScrollView as RNScrollView,
-	ScrollView,
-	View,
+    type ScrollView as RNScrollView,
+    View,
 } from "react-native";
-import { Screen } from "@/components/layout/Screen";
-import PageHeader from "@/components/ui/PageHeader";
-import { cn } from "@/utils/cn";
 
 type FormShellVariant = "auth" | "goal";
 
@@ -36,41 +32,22 @@ export function FormShell({
 	const isAuth = variant === "auth";
 
 	return (
-		<Screen className="bg-surface-bg">
-			<View className={cn("flex-1", isDark && "dark")}>
-				<KeyboardAvoidingView
-					behavior="height"
-					keyboardVerticalOffset={0}
-					className="flex-1"
-				>
-					<ScrollView
-						ref={scrollViewRef}
-						showsVerticalScrollIndicator={false}
-						automaticallyAdjustKeyboardInsets
-						keyboardDismissMode="on-drag"
-						keyboardShouldPersistTaps="handled"
-						contentContainerClassName={cn(
-							"flex-grow items-center",
-							isAuth ? "justify-center px-6 py-10" : "px-6 py-4",
-						)}
-						contentContainerStyle={{
-							paddingBottom:
-								Math.max(insetsBottom + 24, 32) +
-								(Platform.OS === "android" ? keyboardHeight : 0),
-						}}
-					>
-						<View
-							className={cn(
-								isAuth ? "w-full max-w-md gap-10" : "w-full max-w-3xl gap-6",
-								contentClassName,
-							)}
-						>
-							{title ? <PageHeader title={title} /> : null}
-							{children}
-						</View>
-					</ScrollView>
-				</KeyboardAvoidingView>
+		<ModalScreen
+			ref={scrollViewRef}
+			title={title || ""}
+			contentContainerClassName={cn(
+				isAuth ? "items-center justify-center" : "",
+				contentClassName,
+			)}
+		>
+			<View
+				className={cn(
+					isAuth ? "w-full max-w-md gap-10" : "w-full max-w-3xl gap-6",
+					isDark && "dark",
+				)}
+			>
+				{children}
 			</View>
-		</Screen>
+		</ModalScreen>
 	);
 }

@@ -1,7 +1,7 @@
 import type { Session, User } from "@supabase/supabase-js";
 import { create } from "zustand";
-import { supabase } from "@/lib/supabase";
 import { queryClient } from "@/lib/queryClient";
+import { supabase } from "@/lib/supabase";
 
 type AuthState = {
 	session: Session | null;
@@ -28,8 +28,13 @@ export const useAuthStore = create<AuthState>((set) => ({
 		} = supabase.auth.onAuthStateChange((event, session) => {
 			if (!isActive) return;
 
-			if (event === "SIGNED_OUT" || event === "USER_UPDATED") {
+			if (event === "SIGNED_OUT") {
 				queryClient.clear();
+			}
+
+			if (event === "USER_UPDATED") {
+				// Only invalidate profile queries instead of clearing everything
+				queryClient.invalidateQueries({ queryKey: ["profile"] });
 			}
 
 			set({ session, user: session?.user ?? null, initialized: true });

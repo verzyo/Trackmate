@@ -1,6 +1,5 @@
+import { FilledButton } from "@/components/ui/FilledButton";
 import { View } from "react-native";
-import FilledButton from "@/components/ui/FilledButton";
-import MutedBorderButton from "@/components/ui/MutedBorderButton";
 
 type GoalActionButtonsProps = {
 	showPrimaryAction: boolean;
@@ -37,11 +36,13 @@ export function GoalActionButtons({
 			style={{ paddingBottom: Math.max(insetsBottom, 16) }}
 			pointerEvents="box-none"
 		>
-			<View className="w-full max-w-4xl self-center gap-3">
+			<View className="w-full max-w-3xl self-center gap-3">
 				{isCompletedToday && !isInviteState ? (
-					<MutedBorderButton
+					<FilledButton
 						onPress={onUndoComplete}
 						disabled={isPending}
+						variant="muted"
+						withShadow={false}
 						className="bg-label-bg opacity-100"
 						label={primaryButtonLabel}
 					/>
@@ -55,9 +56,11 @@ export function GoalActionButtons({
 				)}
 
 				{isInviteState ? (
-					<MutedBorderButton
+					<FilledButton
 						onPress={onDeclineInvite}
 						disabled={isPending}
+						variant="muted"
+						withShadow={false}
 						className="h-14 bg-surface-fg"
 						labelClassName="text-base"
 						label={secondaryButtonLabel}

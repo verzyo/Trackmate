@@ -1,38 +1,22 @@
-import { CheckIcon, FireIcon } from "phosphor-react-native";
-import {
-	cloneElement,
-	isValidElement,
-	memo,
-	type ReactElement,
-	type ReactNode,
-	useMemo,
-} from "react";
-import { Pressable, Text, View } from "react-native";
 import AvatarStack from "@/components/ui/AvatarStack";
-import PersonalTag from "@/components/ui/PersonalTag";
+import { GoalIcon } from "@/components/ui/GoalIcon";
+import { Tag } from "@/components/ui/Tag";
 import type { GoalWithParticipant } from "@/schemas/goal.schema";
 import { cn } from "@/utils/cn";
-import { hexToRgba } from "@/utils/color.utils";
+import { CheckIcon, FireIcon } from "phosphor-react-native";
+import { memo, useMemo } from "react";
+import { Pressable, Text, View } from "react-native";
 
-function filledIcon(icon: ReactNode, color: string, size = 28): ReactNode {
-	if (!isValidElement(icon)) return icon;
-	return cloneElement(icon as ReactElement<Record<string, unknown>>, {
-		color,
-		size,
-		weight: "fill",
-	});
-}
-
-type GoalItemProps = {
+type GoalCardProps = {
 	goal: GoalWithParticipant;
 	variant?: "today" | "upcoming";
 	userId?: string;
 	isCompleted?: boolean;
 	streak?: number;
-	subtitle?: string;
+	daysDue?: number;
 	onToggle?: () => void;
 	onPress?: () => void;
-	icon?: ReactNode;
+	iconName?: string;
 	color?: string;
 	participantAvatars?: {
 		user_id: string;
@@ -42,19 +26,19 @@ type GoalItemProps = {
 	}[];
 };
 
-export const GoalItem = memo(function GoalItem({
+export const GoalCard = memo(function GoalCard({
 	goal,
 	variant = "today",
 	userId,
 	isCompleted = false,
 	streak = 0,
-	subtitle,
+	daysDue,
 	onToggle,
 	onPress,
-	icon,
+	iconName = "Target",
 	color = "#4f46e5",
 	participantAvatars = [],
-}: GoalItemProps) {
+}: GoalCardProps) {
 	const isUpcoming = variant === "upcoming";
 	const isPersonal = (goal.goal_participants?.length ?? 0) <= 1;
 	const isCompletedToday = isCompleted && !isUpcoming;
@@ -69,12 +53,6 @@ export const GoalItem = memo(function GoalItem({
 
 	const completedCount = participantAvatars.filter((p) => p.completed).length;
 	const totalCount = participantAvatars.length;
-
-	const iconBg = hexToRgba(color, 0.15);
-
-	const daysUntilDue = subtitle
-		? parseInt(subtitle.replace(/\D/g, ""), 10) || undefined
-		: undefined;
 
 	const sortedParticipants = useMemo(() => {
 		return [...participantAvatars].sort((a, b) => {
@@ -97,12 +75,12 @@ export const GoalItem = memo(function GoalItem({
 
 			<View className="flex-row items-center justify-between self-stretch">
 				<View className="flex-1 flex-row items-center gap-4 pr-4">
-					<View
-						className="h-16 w-16 shrink-0 items-center justify-center rounded-3xl"
-						style={{ backgroundColor: iconBg }}
-					>
-						{filledIcon(icon, color)}
-					</View>
+					<GoalIcon
+						icon={iconName}
+						color={color}
+						size={32}
+						containerClassName="rounded-3xl"
+					/>
 
 					<View className="flex-1 flex-col justify-center gap-1">
 						<Text
@@ -119,17 +97,16 @@ export const GoalItem = memo(function GoalItem({
 
 						<View className="flex-row flex-wrap items-center gap-2">
 							{isPersonal ? (
-								<PersonalTag />
+								<Tag label="Personal" variant="personal" />
 							) : (
 								<AvatarStack avatars={otherAvatars} size={24} overlap={6} />
 							)}
 							{streak > 0 && (
-								<View className="flex-row items-center gap-1 rounded-full bg-orange-100 px-2 py-0.5">
-									<FireIcon size={12} color="#ea580c" weight="fill" />
-									<Text className="font-bold text-orange-600 text-xs">
-										{streak}
-									</Text>
-								</View>
+								<Tag 
+									label={streak.toString()} 
+									variant="streak" 
+									icon={<FireIcon size={12} color="#ea580c" weight="fill" />} 
+								/>
 							)}
 						</View>
 					</View>
@@ -138,7 +115,7 @@ export const GoalItem = memo(function GoalItem({
 				{isUpcoming ? (
 					<View className="shrink-0 items-center justify-center">
 						<Text className="font-medium text-base leading-5 text-action-primary">
-							{daysUntilDue === 1 ? "in 1 day" : `in ${daysUntilDue} days`}
+							{daysDue === 1 ? "in 1 day" : `in ${daysDue} days`}
 						</Text>
 					</View>
 				) : (
@@ -185,3 +162,5 @@ export const GoalItem = memo(function GoalItem({
 		</Pressable>
 	);
 });
+
+export default GoalCard;
