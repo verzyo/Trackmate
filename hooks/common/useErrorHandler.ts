@@ -1,4 +1,4 @@
-import { getErrorMessage, showAlert } from "@/utils/error.utils";
+import { getErrorMessage, showAlert } from "@/utils/toast.utils";
 
 export function useErrorHandler() {
 	const handleError = (error: unknown, fallback?: string, title = "Error") => {

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { Invitee } from "@/components/forms/InviteManager";
 import { fetchProfileByUsername } from "@/services/profile.service";
-import { getErrorMessage, showAlert } from "@/utils/error.utils";
+import { getErrorMessage, showAlert } from "@/utils/toast.utils";
 
 export function useInviteManagement(
 	userId: string | undefined,

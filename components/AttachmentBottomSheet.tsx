@@ -24,7 +24,7 @@ import type {
 import { uploadAttachment } from "@/services/attachment.service";
 import { useAuthStore } from "@/store/auth.store";
 import { cn } from "@/utils/cn";
-import { showAlert } from "@/utils/error.utils";
+import { showAlert } from "@/utils/toast.utils";
 
 type Props = {
 	goal: GoalWithParticipant;

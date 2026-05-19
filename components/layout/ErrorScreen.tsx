@@ -1,6 +1,6 @@
-import { cn } from "@/utils/cn";
 import React from "react";
-import { Pressable, Text, View, useColorScheme } from "react-native";
+import { Pressable, Text, useColorScheme, View } from "react-native";
+import { cn } from "@/utils/cn";
 
 interface Props {
 	children: React.ReactNode;

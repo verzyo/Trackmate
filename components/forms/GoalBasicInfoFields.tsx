@@ -1,6 +1,6 @@
-import type { GoalForm } from "@/schemas/goal.schema";
 import type { Control } from "react-hook-form";
 import { View } from "react-native";
+import type { GoalForm } from "@/schemas/goal.schema";
 import { FormField } from "./FormField";
 
 type GoalBasicInfoFieldsProps = {

@@ -69,6 +69,76 @@ const cancelCompletionQueries = async (
 	});
 };
 
+const updateOptimisticCompletions = (
+	queryClient: ReturnType<typeof useQueryClient>,
+	variables: CompletionVariables,
+	isAdding: boolean,
+) => {
+	const today = new Date().toISOString().split("T")[0];
+
+	queryClient.setQueryData<string[]>(
+		goalKeys.todaysCompletions(variables.userId),
+		(old) => {
+			if (isAdding) {
+				return old ? [...old, variables.goalId] : [variables.goalId];
+			}
+			return old ? old.filter((id) => id !== variables.goalId) : [];
+		},
+	);
+
+	queryClient.setQueryData<{ completed_date: string }[]>(
+		goalKeys.completions(variables.goalId, variables.userId),
+		(old) => {
+			if (isAdding) {
+				return old
+					? [...old, { completed_date: today }]
+					: [{ completed_date: today }];
+			}
+			return old ? old.filter((c) => c.completed_date !== today) : [];
+		},
+	);
+
+	queryClient.setQueriesData<{ goal_id: string; user_id: string }[]>(
+		{ queryKey: goalKeys.todaysCompletionsForGoals() },
+		(old) => {
+			if (isAdding) {
+				return old
+					? [
+							...old,
+							{
+								goal_id: variables.goalId,
+								user_id: variables.userId,
+							},
+						]
+					: old;
+			}
+			return old
+				? old.filter(
+						(c) =>
+							!(
+								c.goal_id === variables.goalId && c.user_id === variables.userId
+							),
+					)
+				: old;
+		},
+	);
+
+	if (isAdding) {
+		queryClient.setQueryData(
+			goalKeys.todayCompletion(variables.goalId, variables.userId),
+			{
+				id: "temp-id",
+				attachment_data: variables.attachmentData || null,
+			},
+		);
+	} else {
+		queryClient.setQueryData(
+			goalKeys.todayCompletion(variables.goalId, variables.userId),
+			null,
+		);
+	}
+};
+
 export const useCreateGoal = () => {
 	const queryClient = useQueryClient();
 	return useMutation({
@@ -200,67 +270,31 @@ export const useCompleteGoal = () => {
 	return useMutation({
 		mutationFn: ({ goalId, userId, attachmentData }: CompletionVariables) =>
 			completeGoal(goalId, userId, attachmentData),
-		onMutate: async (newCompletion) => {
-			await cancelCompletionQueries(queryClient, newCompletion);
+		onMutate: async (variables) => {
+			await cancelCompletionQueries(queryClient, variables);
 
 			const previousCompletions = queryClient.getQueryData<string[]>(
-				goalKeys.todaysCompletions(newCompletion.userId),
+				goalKeys.todaysCompletions(variables.userId),
 			);
 
 			const previousGoalCompletions = queryClient.getQueryData<
 				{ completed_date: string }[]
-			>(goalKeys.completions(newCompletion.goalId, newCompletion.userId));
+			>(goalKeys.completions(variables.goalId, variables.userId));
 
-			queryClient.setQueryData<string[]>(
-				goalKeys.todaysCompletions(newCompletion.userId),
-				(old) =>
-					old ? [...old, newCompletion.goalId] : [newCompletion.goalId],
-			);
-
-			queryClient.setQueryData<{ completed_date: string }[]>(
-				goalKeys.completions(newCompletion.goalId, newCompletion.userId),
-				(old) => {
-					const today = new Date().toISOString().split("T")[0];
-					return old
-						? [...old, { completed_date: today }]
-						: [{ completed_date: today }];
-				},
-			);
-
-			queryClient.setQueriesData<{ goal_id: string; user_id: string }[]>(
-				{ queryKey: goalKeys.todaysCompletionsForGoals() },
-				(old) =>
-					old
-						? [
-								...old,
-								{
-									goal_id: newCompletion.goalId,
-									user_id: newCompletion.userId,
-								},
-							]
-						: old,
-			);
-
-			queryClient.setQueryData(
-				goalKeys.todayCompletion(newCompletion.goalId, newCompletion.userId),
-				{
-					id: "temp-id",
-					attachment_data: newCompletion.attachmentData || null,
-				},
-			);
+			updateOptimisticCompletions(queryClient, variables, true);
 
 			return { previousCompletions, previousGoalCompletions };
 		},
-		onError: (_err, newCompletion, context) => {
+		onError: (_err, variables, context) => {
 			if (context?.previousCompletions) {
 				queryClient.setQueryData(
-					goalKeys.todaysCompletions(newCompletion.userId),
+					goalKeys.todaysCompletions(variables.userId),
 					context.previousCompletions,
 				);
 			}
 			if (context?.previousGoalCompletions) {
 				queryClient.setQueryData(
-					goalKeys.completions(newCompletion.goalId, newCompletion.userId),
+					goalKeys.completions(variables.goalId, variables.userId),
 					context.previousGoalCompletions,
 				);
 			}
@@ -289,37 +323,7 @@ export const useUncompleteGoal = () => {
 				{ completed_date: string }[]
 			>(goalKeys.completions(variables.goalId, variables.userId));
 
-			queryClient.setQueryData<string[]>(
-				goalKeys.todaysCompletions(variables.userId),
-				(old) => (old ? old.filter((id) => id !== variables.goalId) : []),
-			);
-
-			queryClient.setQueryData<{ completed_date: string }[]>(
-				goalKeys.completions(variables.goalId, variables.userId),
-				(old) => {
-					const today = new Date().toISOString().split("T")[0];
-					return old ? old.filter((c) => c.completed_date !== today) : [];
-				},
-			);
-
-			queryClient.setQueriesData<{ goal_id: string; user_id: string }[]>(
-				{ queryKey: goalKeys.todaysCompletionsForGoals() },
-				(old) =>
-					old
-						? old.filter(
-								(c) =>
-									!(
-										c.goal_id === variables.goalId &&
-										c.user_id === variables.userId
-									),
-							)
-						: old,
-			);
-
-			queryClient.setQueryData(
-				goalKeys.todayCompletion(variables.goalId, variables.userId),
-				null,
-			);
+			updateOptimisticCompletions(queryClient, variables, false);
 
 			return { previousCompletions, previousGoalCompletions };
 		},

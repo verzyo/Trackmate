@@ -1,3 +1,11 @@
+import {
+	type DrawerContentComponentProps,
+	DrawerContentScrollView,
+} from "@react-navigation/drawer";
+import { type Href, useRouter } from "expo-router";
+import { EnvelopeSimple, User } from "phosphor-react-native";
+import { Pressable, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import Avatar from "@/components/ui/Avatar";
 import MutedBorderButton from "@/components/ui/MutedBorderButton";
 import { useThemeColors } from "@/hooks/common/useThemeColors";
@@ -5,14 +13,6 @@ import { useProfile } from "@/hooks/profile/useProfileHooks";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store/auth.store";
 import { cn } from "@/utils/cn";
-import {
-    type DrawerContentComponentProps,
-    DrawerContentScrollView,
-} from "@react-navigation/drawer";
-import { type Href, useRouter } from "expo-router";
-import { EnvelopeSimple, User } from "phosphor-react-native";
-import { Pressable, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 export function CustomDrawerContent(props: DrawerContentComponentProps) {
 	const { user } = useAuthStore();

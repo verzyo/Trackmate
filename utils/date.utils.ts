@@ -56,6 +56,15 @@ export const formatToISODate = (date: Date): string => {
 	return date.toISOString().split("T")[0];
 };
 
+export const getCurrentDayString = () => {
+	const date = new Date();
+	return new Intl.DateTimeFormat("en-US", {
+		weekday: "long",
+		month: "short",
+		day: "numeric",
+	}).format(date);
+};
+
 export const getNextDueDate = (
 	goal: GoalWithParticipant,
 	userId: string,

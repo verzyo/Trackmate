@@ -16,8 +16,8 @@ import { GoalParticipantsList } from "@/components/goal/GoalParticipantsList";
 import { GoalPendingInvitesList } from "@/components/goal/GoalPendingInvitesList";
 import { GoalPointsChart } from "@/components/goal/GoalPointsChart";
 import { GoalStatsCard } from "@/components/goal/GoalStatsCard";
+import AppLoadingScreen from "@/components/layout/LoadingScreen";
 import { Screen } from "@/components/layout/Screen";
-import AppLoadingScreen from "@/components/ui/AppLoadingScreen";
 import { useThemeColors } from "@/hooks/common/useThemeColors";
 import {
 	useAcceptInvite,
@@ -43,7 +43,7 @@ import { useProfilesByIds } from "@/hooks/profile/useProfileHooks";
 import type { AttachmentData } from "@/schemas/goal.schema";
 import { useAuthStore } from "@/store/auth.store";
 import { getNextDueDate, isTodayUTC } from "@/utils/date.utils";
-import { getErrorMessage, showAlert } from "@/utils/error.utils";
+import { getErrorMessage, showAlert } from "@/utils/toast.utils";
 
 export default function GoalDetailsModal() {
 	const { id, inviteId, participantId } = useLocalSearchParams<{

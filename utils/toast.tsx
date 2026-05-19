@@ -1,9 +1,8 @@
-import { X, XIcon } from "phosphor-react-native";
-import { Pressable, Text, View } from "react-native";
+import { XIcon } from "phosphor-react-native";
+import { Pressable, Text, useColorScheme, View } from "react-native";
 import type { ToastConfig as RNToastConfig } from "react-native-toast-message";
 import Toast from "react-native-toast-message";
 import { cn } from "./cn";
-import { useColorScheme } from "react-native";
 
 type ToastKind = "success" | "error" | "info";
 

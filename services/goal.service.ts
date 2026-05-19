@@ -205,6 +205,7 @@ export const fetchTodayCompletion = async (goalId: string, userId: string) => {
 		.eq("user_id", userId)
 		.eq("completed_date", today)
 		.maybeSingle();
+
 	if (error) throw error;
 	return data;
 };
@@ -223,12 +224,14 @@ export const fetchTodaysCompletions = async (userId: string) => {
 
 export const fetchTodaysCompletionsForGoals = async (goalIds: string[]) => {
 	if (!goalIds.length) return [];
+
 	const today = formatToISODate(getTodayUTC());
 	const { data, error } = await supabase
 		.from("goal_completions")
 		.select("goal_id, user_id")
 		.eq("completed_date", today)
 		.in("goal_id", goalIds);
+
 	if (error) throw error;
 	return data;
 };
@@ -249,6 +252,7 @@ export const fetchGoalStreak = async (goalId: string, userId: string) => {
 		p_goal_id: goalId,
 		p_user_id: userId,
 	});
+
 	if (error) throw error;
 	return data as number;
 };

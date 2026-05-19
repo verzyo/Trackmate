@@ -1,5 +1,3 @@
-import { useThemeColors } from "@/hooks/common/useThemeColors";
-import { cn } from "@/utils/cn";
 import {
 	type Control,
 	Controller,
@@ -7,6 +5,8 @@ import {
 	type Path,
 } from "react-hook-form";
 import { Text, TextInput, type TextInputProps, View } from "react-native";
+import { useThemeColors } from "@/hooks/common/useThemeColors";
+import { cn } from "@/utils/cn";
 
 type FormFieldProps<T extends FieldValues> = TextInputProps & {
 	control: Control<T>;

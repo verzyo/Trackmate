@@ -12,7 +12,7 @@ export const fetchProfile = async (userId: string) => {
 		.from("profiles")
 		.select("*")
 		.eq("id", userId)
-		.maybeSingle();
+		.single();
 
 	if (error) throw error;
 	return data ? ProfileSchema.parse(data) : data;
@@ -24,6 +24,7 @@ export const fetchProfilesByIds = async (userIds: string[]) => {
 		.from("profiles")
 		.select("id, username, nickname, avatar_url")
 		.in("id", userIds);
+
 	if (error) throw error;
 	return PublicProfileSchema.array().parse(data ?? []);
 };

@@ -1,10 +1,9 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQueries, useQuery } from "@tanstack/react-query";
 import * as ImagePicker from "expo-image-picker";
 import { queryClient } from "@/lib/queryClient";
 import {
 	deleteMyAccount,
 	fetchProfile,
-	fetchProfilesByIds,
 	updateProfile,
 } from "@/services/profile.service";
 
@@ -52,11 +51,20 @@ export const useProfile = (userId?: string | null) => {
 export const useProfilesByIds = (userIds: string[]) => {
 	const normalizedUserIds = Array.from(new Set(userIds)).sort();
 
-	return useQuery({
-		queryKey: ["profiles", "byIds", ...normalizedUserIds],
-		queryFn: () => fetchProfilesByIds(normalizedUserIds),
-		enabled: normalizedUserIds.length > 0,
+	const queries = useQueries({
+		queries: normalizedUserIds.map((id) => ({
+			queryKey: ["profile", id],
+			queryFn: () => fetchProfile(id),
+		})),
 	});
+
+	return {
+		data: queries
+			.map((q) => q.data)
+			.filter((d): d is NonNullable<typeof d> => !!d),
+		isLoading: queries.some((q) => q.isLoading),
+		error: queries.find((q) => q.error)?.error,
+	};
 };
 
 export const useUpdateProfile = (userId: string) => {

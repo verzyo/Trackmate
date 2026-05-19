@@ -9,7 +9,7 @@ import { GoalFormShell } from "@/components/forms/GoalFormShell";
 import { InviteManager } from "@/components/forms/InviteManager";
 import { GoalAppearancePicker } from "@/components/goal/GoalAppearancePicker";
 import { GoalEditActions } from "@/components/goal/GoalEditActions";
-import AppLoadingScreen from "@/components/ui/AppLoadingScreen";
+import AppLoadingScreen from "@/components/layout/LoadingScreen";
 import FilledButton from "@/components/ui/FilledButton";
 import { useErrorHandler } from "@/hooks/common/useErrorHandler";
 import { useKeyboard } from "@/hooks/common/useKeyboard";

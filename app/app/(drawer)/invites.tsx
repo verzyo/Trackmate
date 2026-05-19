@@ -19,7 +19,7 @@ import {
 } from "@/hooks/goal/useGoalMutations";
 import { goalKeys, useInvites } from "@/hooks/goal/useGoalQueries";
 import { useAuthStore } from "@/store/auth.store";
-import { getErrorMessage, showAlert } from "@/utils/error.utils";
+import { getErrorMessage, showAlert } from "@/utils/toast.utils";
 
 export default function InvitesScreen() {
 	const insets = useSafeAreaInsets();

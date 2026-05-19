@@ -1,8 +1,7 @@
-import { AuthSwitchPrompt } from "@/components/auth/AuthSwitchPrompt";
+import type { ReactNode } from "react";
+import { Pressable, Text, View } from "react-native";
 import { Screen } from "@/components/layout/Screen";
 import { cn } from "@/utils/cn";
-import type { ReactNode } from "react";
-import { Text, View } from "react-native";
 
 interface AuthScreenProps {
 	title: string;
@@ -12,6 +11,27 @@ interface AuthScreenProps {
 	redirectAction: string;
 	onRedirectPress: () => void;
 	contentClassName?: string;
+}
+
+type AuthSwitchProps = {
+	promptText: string;
+	actionText: string;
+	onPress: () => void;
+};
+
+function AuthSwitch({ promptText, actionText, onPress }: AuthSwitchProps) {
+	return (
+		<View className="flex-row items-center justify-center gap-2">
+			<Text className="text-text-light font-medium text-base">
+				{promptText}
+			</Text>
+			<Pressable onPress={onPress}>
+				<Text className="text-action-primary font-bold text-base">
+					{actionText}
+				</Text>
+			</Pressable>
+		</View>
+	);
 }
 
 export function AuthScreen({
@@ -40,7 +60,7 @@ export function AuthScreen({
 
 				<View className={cn("gap-4", contentClassName)}>{children}</View>
 
-				<AuthSwitchPrompt
+				<AuthSwitch
 					promptText={redirectPrompt}
 					actionText={redirectAction}
 					onPress={onRedirectPress}
