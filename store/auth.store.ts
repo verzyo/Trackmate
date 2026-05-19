@@ -1,6 +1,7 @@
 import type { Session, User } from "@supabase/supabase-js";
 import { create } from "zustand";
 import { supabase } from "@/lib/supabase";
+import { queryClient } from "@/lib/queryClient";
 
 type AuthState = {
 	session: Session | null;
@@ -24,8 +25,13 @@ export const useAuthStore = create<AuthState>((set) => ({
 
 		const {
 			data: { subscription },
-		} = supabase.auth.onAuthStateChange((_event, session) => {
+		} = supabase.auth.onAuthStateChange((event, session) => {
 			if (!isActive) return;
+
+			if (event === "SIGNED_OUT" || event === "USER_UPDATED") {
+				queryClient.clear();
+			}
+
 			set({ session, user: session?.user ?? null, initialized: true });
 		});
 

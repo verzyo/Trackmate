@@ -4,8 +4,11 @@ import type { GoalWithParticipant } from "@/schemas/goal.schema";
 import {
 	fetchGoal,
 	fetchGoalCompletions,
+	fetchGoalLeaderboard,
 	fetchGoalMonthlyPoints,
+	fetchGoalMonthlyPointsForAll,
 	fetchGoalStreak,
+	fetchRecentAttachments,
 	fetchTodayCompletion,
 } from "@/services/goal.service";
 import { goalKeys } from "./useGoalQueries";
@@ -39,6 +42,18 @@ export function usePrefetchGoals(
 			queryClient.prefetchQuery({
 				queryKey: goalKeys.completions(goal.id, userId),
 				queryFn: () => fetchGoalCompletions(goal.id, userId),
+			});
+			queryClient.prefetchQuery({
+				queryKey: goalKeys.leaderboard(goal.id),
+				queryFn: () => fetchGoalLeaderboard(goal.id),
+			});
+			queryClient.prefetchQuery({
+				queryKey: goalKeys.monthlyPointsAll(goal.id),
+				queryFn: () => fetchGoalMonthlyPointsForAll(goal.id),
+			});
+			queryClient.prefetchQuery({
+				queryKey: goalKeys.attachments(goal.id),
+				queryFn: () => fetchRecentAttachments(goal.id),
 			});
 		}
 	}, [goals, queryClient, userId]);
