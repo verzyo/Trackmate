@@ -1,19 +1,10 @@
 import type { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useRef, useState } from "react";
-import { Platform, Pressable, View } from "react-native";
+import { Platform, View } from "react-native";
+import { ColorPicker } from "@/components/goal/fields/ColorPicker";
 import { IconPickerBottomSheet } from "@/components/overlays/IconPickerBottomSheet";
 import { GoalIcon } from "@/components/ui/GoalIcon";
-
-export const GOAL_APPEARANCE_COLORS = [
-	"#ef4444",
-	"#f97316",
-	"#eab308",
-	"#22c55e",
-	"#14b8a6",
-	"#3b82f6",
-	"#ec4899",
-	"#8b5cf6",
-];
+import { cn } from "@/utils/cn";
 
 type GoalAppearancePickerProps = {
 	selectedIcon: string;
@@ -48,11 +39,13 @@ export function GoalAppearancePicker({
 	return (
 		<>
 			<View
-				className={
+				className={cn(
+					"w-full",
 					stackColorsUnderIcon
-						? "w-full items-center gap-4"
-						: "flex-row items-center justify-between"
-				}
+						? "items-center gap-4"
+						: "flex-row items-center justify-between",
+					Platform.OS === "web" && "flex-row items-center justify-between",
+				)}
 			>
 				<GoalIcon
 					icon={selectedIcon}
@@ -63,35 +56,14 @@ export function GoalAppearancePicker({
 					containerClassName="rounded-[32px]"
 				/>
 
-				<View
-					className={
-						stackColorsUnderIcon
-							? "w-[228px] self-center flex-row flex-wrap justify-center gap-3"
-							: "ml-4 max-w-[230px] flex-1 flex-row flex-wrap justify-end gap-3"
-					}
-				>
-					{GOAL_APPEARANCE_COLORS.map((color) => {
-						const isSelected = selectedColor === color;
-						return (
-							<Pressable
-								key={color}
-								onPress={() => onColorChange(color)}
-								className="h-12 w-12 items-center justify-center"
-							>
-								<View
-									className="h-10 w-10 rounded-full"
-									style={{ backgroundColor: color }}
-								/>
-								{isSelected && (
-									<View
-										className="absolute h-12 w-12 rounded-full border-2"
-										style={{ borderColor: color }}
-									/>
-								)}
-							</Pressable>
-						);
-					})}
-				</View>
+				<ColorPicker
+					selectedColor={selectedColor}
+					onColorChange={onColorChange}
+					containerClassName={cn(
+						stackColorsUnderIcon ? "" : "ml-4 max-w-[240px] flex-1 justify-end",
+						Platform.OS === "web" && "ml-auto flex-none",
+					)}
+				/>
 			</View>
 
 			<IconPickerBottomSheet

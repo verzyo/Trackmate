@@ -1,3 +1,8 @@
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as ImagePicker from "expo-image-picker";
+import { useEffect, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
+import { Alert, Platform, Pressable, Text, View } from "react-native";
 import { ModalScreen } from "@/components/layout/ModalScreen";
 import ImagePickerBottomSheet, {
 	type ImagePickerBottomSheetRef,
@@ -19,11 +24,6 @@ import {
 } from "@/schemas/profile.schema";
 import { removeAvatar, uploadAvatar } from "@/services/profile.service";
 import { useAuthStore } from "@/store/auth.store";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as ImagePicker from "expo-image-picker";
-import { useEffect, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
-import { Alert, Platform, Pressable, Text, View } from "react-native";
 
 export default function ProfileScreen() {
 	const { user } = useAuthStore();

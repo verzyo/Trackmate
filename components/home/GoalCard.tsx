@@ -1,11 +1,11 @@
+import { CheckIcon, FireIcon } from "phosphor-react-native";
+import { memo, useMemo } from "react";
+import { Pressable, Text, View } from "react-native";
 import AvatarStack from "@/components/ui/AvatarStack";
 import { GoalIcon } from "@/components/ui/GoalIcon";
 import { Tag } from "@/components/ui/Tag";
 import type { GoalWithParticipant } from "@/schemas/goal.schema";
 import { cn } from "@/utils/cn";
-import { CheckIcon, FireIcon } from "phosphor-react-native";
-import { memo, useMemo } from "react";
-import { Pressable, Text, View } from "react-native";
 
 type GoalCardProps = {
 	goal: GoalWithParticipant;
@@ -101,11 +101,11 @@ export const GoalCard = memo(function GoalCard({
 							) : (
 								<AvatarStack avatars={otherAvatars} size={24} overlap={6} />
 							)}
-							{streak > 0 && (
-								<Tag 
-									label={streak.toString()} 
-									variant="streak" 
-									icon={<FireIcon size={12} color="#ea580c" weight="fill" />} 
+							{streak >= 3 && (
+								<Tag
+									label={streak.toString()}
+									variant="streak"
+									icon={<FireIcon size={12} color="#ea580c" weight="fill" />}
 								/>
 							)}
 						</View>

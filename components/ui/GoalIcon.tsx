@@ -1,8 +1,8 @@
 import { PencilSimple } from "phosphor-react-native";
 import { Pressable, View } from "react-native";
+import { cn } from "@/utils/cn";
 import { hexToRgba } from "@/utils/color.utils";
 import { DynamicIcon } from "@/utils/icons";
-import { cn } from "@/utils/cn";
 
 type GoalIconProps = {
 	icon: string;
@@ -30,7 +30,7 @@ export function GoalIcon({
 			className={cn(
 				"items-center justify-center",
 				isDashed && "border-2 border-dashed",
-				containerClassName
+				containerClassName,
 			)}
 			style={{
 				width: size * 2,
@@ -41,9 +41,9 @@ export function GoalIcon({
 			}}
 		>
 			<DynamicIcon name={icon} size={size} color={color} weight="fill" />
-			
+
 			{isInteractive && (
-				<View 
+				<View
 					className="absolute -right-1 -bottom-1 items-center justify-center rounded-full bg-action-primary border-4 border-surface-bg"
 					style={{
 						width: size * 0.68,

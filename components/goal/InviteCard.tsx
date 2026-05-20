@@ -1,7 +1,7 @@
+import { Text, View } from "react-native";
 import Avatar from "@/components/ui/Avatar";
 import { FilledButton } from "@/components/ui/FilledButton";
 import type { GoalInviteWithDetails } from "@/schemas/goal.schema";
-import { Text, View } from "react-native";
 
 type InviteCardProps = {
 	invite: GoalInviteWithDetails;

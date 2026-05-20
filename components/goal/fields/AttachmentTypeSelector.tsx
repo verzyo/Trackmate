@@ -4,8 +4,7 @@ import {
 	type FieldValues,
 	type Path,
 } from "react-hook-form";
-import { View } from "react-native";
-import { SegmentedControl } from "@/components/ui/SegmentedControl";
+import { Switch } from "@/components/goal/fields/Switch";
 import {
 	ATTACHMENT_TYPES,
 	type AttachmentType,
@@ -30,21 +29,17 @@ export function AttachmentTypeSelector<T extends FieldValues>({
 	];
 
 	return (
-		<View className="w-full gap-4">
-			<Controller
-				control={control}
-				name={nameType}
-				render={({ field: { onChange, value } }) => (
-					<SegmentedControl
-						options={options}
-						value={value}
-						onChange={(val) => {
-							onChange(val);
-						}}
-						disabled={disabled}
-					/>
-				)}
-			/>
-		</View>
+		<Controller
+			control={control}
+			name={nameType}
+			render={({ field: { onChange, value } }) => (
+				<Switch
+					options={options}
+					value={value}
+					onChange={onChange}
+					disabled={disabled}
+				/>
+			)}
+		/>
 	);
 }

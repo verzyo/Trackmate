@@ -26,7 +26,7 @@ export function GoalPendingInvitesList({
 	return (
 		<View className="w-full gap-3">
 			<Text
-				className="text-xl font-medium text-text-default"
+				className="text-xl font-medium text-text"
 				style={{ color: colors.textDefault }}
 			>
 				Pending
@@ -61,7 +61,12 @@ export function GoalPendingInvitesList({
 							</View>
 						</View>
 
-						<Tag label="PENDING" variant="default" className="px-2 py-1" labelClassName="text-[10px]" />
+						<Tag
+							label="PENDING"
+							variant="default"
+							className="px-2 py-1"
+							labelClassName="text-[10px]"
+						/>
 					</View>
 				))}
 			</View>

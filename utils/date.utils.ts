@@ -39,7 +39,7 @@ export const differenceInDaysUTC = (
 	return Math.round(diffMs / (1000 * 60 * 60 * 24));
 };
 
-export const addDaysUTC = (date: Date, days: number): Date => {
+const addDaysUTC = (date: Date, days: number): Date => {
 	const result = new Date(
 		Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
 	);
@@ -47,7 +47,7 @@ export const addDaysUTC = (date: Date, days: number): Date => {
 	return result;
 };
 
-export const getDayOfWeekUTC = (date: Date): number => {
+const getDayOfWeekUTC = (date: Date): number => {
 	const day = date.getUTCDay();
 	return day === 0 ? 7 : day;
 };

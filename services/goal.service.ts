@@ -4,7 +4,7 @@ import type {
 	AttachmentItem,
 	CreateGoalParams,
 	LeaderboardEntry,
-	ParticipantMonthlyPoints,
+	ParticipantDailyPoints,
 	UpdateGoalMetadataParams,
 } from "@/schemas/goal.schema";
 import {
@@ -12,7 +12,7 @@ import {
 	GoalInviteWithDetailsSchema,
 	GoalWithParticipantSchema,
 	LeaderboardEntrySchema,
-	ParticipantMonthlyPointsSchema,
+	ParticipantDailyPointsSchema,
 } from "@/schemas/goal.schema";
 import { formatToISODate, getTodayUTC } from "@/utils/date.utils";
 
@@ -83,6 +83,15 @@ export const deleteGoal = async (id: string) => {
 export const leaveGoal = async (goalId: string) => {
 	const { error } = await supabase.rpc("leave_goal", {
 		p_goal_id: goalId,
+	});
+
+	if (error) throw error;
+};
+
+export const kickParticipant = async (goalId: string, userId: string) => {
+	const { error } = await supabase.rpc("kick_participant", {
+		p_goal_id: goalId,
+		p_user_id: userId,
 	});
 
 	if (error) throw error;
@@ -280,14 +289,6 @@ export const fetchGoalCompletions = async (goalId: string, userId: string) => {
 	return data;
 };
 
-export const getSignedUrl = async (path: string) => {
-	const { data, error } = await supabase.storage
-		.from("attachments")
-		.createSignedUrl(path, 3600);
-	if (error) throw error;
-	return data?.signedUrl;
-};
-
 export const fetchGoalLeaderboard = async (
 	goalId: string,
 ): Promise<LeaderboardEntry[]> => {
@@ -304,19 +305,19 @@ export const fetchGoalLeaderboard = async (
 	}
 };
 
-export const fetchGoalMonthlyPointsForAll = async (
+export const fetchGoalRollingDailyPoints = async (
 	goalId: string,
-): Promise<ParticipantMonthlyPoints[]> => {
-	const { data, error } = await supabase.rpc("get_goal_monthly_points_all", {
+): Promise<ParticipantDailyPoints[]> => {
+	const { data, error } = await supabase.rpc("get_goal_rolling_daily_points", {
 		p_goal_id: goalId,
 	});
 	if (error) {
 		throw error;
 	}
 	try {
-		return ParticipantMonthlyPointsSchema.array().parse(data ?? []);
+		return ParticipantDailyPointsSchema.array().parse(data ?? []);
 	} catch (_parseError) {
-		return data as ParticipantMonthlyPoints[];
+		return data as ParticipantDailyPoints[];
 	}
 };
 

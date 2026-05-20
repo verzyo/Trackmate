@@ -1,5 +1,5 @@
-import { FilledButton } from "@/components/ui/FilledButton";
 import { View } from "react-native";
+import { FilledButton } from "@/components/ui/FilledButton";
 
 type GoalActionButtonsProps = {
 	showPrimaryAction: boolean;

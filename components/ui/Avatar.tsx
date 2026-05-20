@@ -1,9 +1,9 @@
-import { useThemeColors } from "@/hooks/common/useThemeColors";
-import { cn } from "@/utils/cn";
 import { Image } from "expo-image";
 import { PencilSimple, Plus } from "phosphor-react-native";
 import { useEffect, useState } from "react";
 import { Pressable, Text, View } from "react-native";
+import { useThemeColors } from "@/hooks/common/useThemeColors";
+import { cn } from "@/utils/cn";
 
 interface AvatarProps {
 	name?: string;
@@ -35,7 +35,7 @@ export function Avatar({
 
 	useEffect(() => {
 		setImageFailed(false);
-	}, [imageUrl]);
+	}, []);
 
 	const normalizedImageUrl =
 		typeof imageUrl === "string" ? imageUrl.trim() : "";

@@ -3,7 +3,7 @@ import type { RefObject } from "react";
 import { useCallback, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import type { ScrollView, TextInput } from "react-native";
-import { GOAL_APPEARANCE_COLORS } from "@/components/goal/GoalAppearancePicker";
+import { GOAL_APPEARANCE_COLORS } from "@/components/goal/fields/ColorPicker";
 import {
 	ATTACHMENT_TYPES,
 	type AttachmentType,

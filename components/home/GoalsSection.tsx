@@ -1,10 +1,13 @@
+import { Text, View } from "react-native";
 import { GoalCard } from "@/components/home/GoalCard";
 import type { GoalWithParticipant } from "@/schemas/goal.schema";
-import { Text, View } from "react-native";
 
 type GoalsSectionProps = {
 	title: string;
-	goals: (GoalWithParticipant & { isCompleted?: boolean; daysUntil?: number })[];
+	goals: (GoalWithParticipant & {
+		isCompleted?: boolean;
+		daysUntil?: number;
+	})[];
 	userId: string | undefined;
 	isLoading?: boolean;
 	error?: Error | null;
@@ -64,7 +67,11 @@ export function GoalsSection({
 								daysDue={goal.daysUntil}
 								iconName={participant?.icon || "Target"}
 								color={participant?.color || "#4f46e5"}
-								onToggle={onToggle ? () => onToggle(goal, !!goal.isCompleted) : undefined}
+								onToggle={
+									onToggle
+										? () => onToggle(goal, !!goal.isCompleted)
+										: undefined
+								}
 								onPress={() => onPress(goal.id)}
 								participantAvatars={participantAvatars[goal.id] || []}
 							/>

@@ -1,18 +1,23 @@
-import { GoalActionButtons } from "@/components/goal/GoalActionButtons";
-import { GoalAttachmentsList } from "@/components/goal/GoalAttachmentsList";
-import { GoalConsistencyHeatmap } from "@/components/goal/GoalConsistencyHeatmap";
-import { GoalFrequencyCard } from "@/components/goal/GoalFrequencyCard";
-import { GoalLeaderboardCard } from "@/components/goal/GoalLeaderboardCard";
-import { GoalParticipantsList } from "@/components/goal/GoalParticipantsList";
-import { GoalPendingInvitesList } from "@/components/goal/GoalPendingInvitesList";
-import { GoalPointsChart } from "@/components/goal/GoalPointsChart";
-import { GoalStatsCard } from "@/components/goal/GoalStatsCard";
+import { useQueryClient } from "@tanstack/react-query";
+import { type Href, router, useLocalSearchParams } from "expo-router";
+import { useMemo, useRef } from "react";
+import { Text, useWindowDimensions, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { GoalActionButtons } from "@/components/goal/details/GoalActionButtons";
+import { GoalAttachmentsList } from "@/components/goal/details/GoalAttachmentsList";
+import { GoalConsistencyHeatmap } from "@/components/goal/details/GoalConsistencyHeatmap";
+import { GoalFrequencyCard } from "@/components/goal/details/GoalFrequencyCard";
+import { GoalInfo } from "@/components/goal/details/GoalInfo";
+import { GoalLeaderboardCard } from "@/components/goal/details/GoalLeaderboardCard";
+import { GoalParticipantsList } from "@/components/goal/details/GoalParticipantsList";
+import { GoalPendingInvitesList } from "@/components/goal/details/GoalPendingInvitesList";
+import { GoalPointsChart } from "@/components/goal/details/GoalPointsChart";
+import { GoalStatsCard } from "@/components/goal/details/GoalStatsCard";
 import AppLoadingScreen from "@/components/layout/LoadingScreen";
 import { ModalScreen } from "@/components/layout/ModalScreen";
 import AttachmentBottomSheet, {
 	type AttachmentBottomSheetRef,
 } from "@/components/overlays/AttachmentBottomSheet";
-import { GoalIcon } from "@/components/ui/GoalIcon";
 import { useThemeColors } from "@/hooks/common/useThemeColors";
 import {
 	useAcceptInvite,
@@ -27,24 +32,22 @@ import {
 	useGoalCompletions,
 	useGoalLeaderboard,
 	useGoalMonthlyPoints,
-	useGoalMonthlyPointsForAll,
 	useGoalPendingInvites,
+	useGoalRollingDailyPoints,
 	useGoalStreak,
 	useRecentAttachments,
 	useTodayCompletion,
 	useTodaysCompletionsForGoals,
 } from "@/hooks/goal/useGoalQueries";
 import { useProfilesByIds } from "@/hooks/profile/useProfileHooks";
-import type { AttachmentData } from "@/schemas/goal.schema";
+import type {
+	AttachmentData,
+	ParticipantDailyPoints,
+} from "@/schemas/goal.schema";
 import { useAuthStore } from "@/store/auth.store";
 import { cn } from "@/utils/cn";
 import { getNextDueDate, isTodayUTC } from "@/utils/date.utils";
 import { getErrorMessage, showAlert } from "@/utils/toast.utils";
-import { useQueryClient } from "@tanstack/react-query";
-import { type Href, router, useLocalSearchParams } from "expo-router";
-import { useMemo, useRef } from "react";
-import { Text, useWindowDimensions, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function GoalDetailsModal() {
 	const { id, inviteId, participantId } = useLocalSearchParams<{
@@ -79,8 +82,8 @@ export default function GoalDetailsModal() {
 		useGoalMonthlyPoints(goalId as string, viewUserId);
 	const { data: leaderboard = [], isLoading: isLeaderboardLoading } =
 		useGoalLeaderboard(goalId as string);
-	const { data: monthlyPointsAll = [], isLoading: isMonthlyPointsAllLoading } =
-		useGoalMonthlyPointsForAll(goalId as string);
+	const { data: rollingDailyPoints = [], isLoading: isDailyPointsLoading } =
+		useGoalRollingDailyPoints(goalId as string);
 	const { data: attachments = [], isLoading: isAttachmentsLoading } =
 		useRecentAttachments(goalId as string, 5);
 	const { data: pendingInvites = [] } = useGoalPendingInvites(goalId as string);
@@ -265,7 +268,7 @@ export default function GoalDetailsModal() {
 					profileMap.get(viewUserId)?.nickname ||
 					profileMap.get(viewUserId)?.username ||
 					"User"
-			  }'s Details`
+				}'s Details`
 			: "Goal Details";
 
 	return (
@@ -273,11 +276,6 @@ export default function GoalDetailsModal() {
 			title={title}
 			variant={isParticipant && !isViewingOther ? "edit" : "default"}
 			onEdit={() => router.push(`/app/goal/edit/${goalId}` as Href)}
-			contentContainerStyle={{
-				paddingBottom: showPrimaryAction
-					? Math.max(insets.bottom + 120, 144)
-					: Math.max(insets.bottom + 32, 40),
-			}}
 			fixedChildren={
 				<>
 					<GoalActionButtons
@@ -329,31 +327,13 @@ export default function GoalDetailsModal() {
 				</>
 			}
 		>
-			<View className="flex-row items-center gap-4 mb-2">
-				<GoalIcon
-					icon={iconName}
-					color={iconColor}
-					size={64}
-					containerClassName="rounded-[32px]"
-				/>
-
-				<View className="flex-1 gap-1.5">
-					<Text
-						className={cn(
-							"font-bold text-text-strong",
-							goal.title.length > 16 ? "text-2xl leading-8" : "text-3xl leading-9",
-						)}
-					>
-						{goal.title}
-					</Text>
-
-					{goal.description ? (
-						<Text className="text-base leading-6 text-text-default">
-							{goal.description}
-						</Text>
-					) : null}
-				</View>
-			</View>
+			<GoalInfo
+				title={goal.title}
+				description={goal.description}
+				iconName={iconName}
+				iconColor={iconColor}
+				className="mb-2"
+			/>
 
 			<GoalFrequencyCard
 				frequencyType={goal.frequency_type}
@@ -380,25 +360,34 @@ export default function GoalDetailsModal() {
 			) : null}
 
 			{isWideScreen ? (
-				<View className="flex-row items-stretch gap-4">
+				<View
+					className={cn(
+						"flex-row items-stretch gap-4",
+						isPersonalGoal && "justify-center",
+					)}
+				>
 					{isParticipant && !isPersonalGoal && !isViewingOther && (
 						<View className="flex-1">
 							<GoalPointsChart
-								data={monthlyPointsAll}
-								loading={isMonthlyPointsAllLoading}
+								data={rollingDailyPoints}
+								loading={isDailyPointsLoading}
+								currentUserId={currentUserId}
 							/>
 						</View>
 					)}
 					{isViewingOther && !isPersonalGoal && viewUserId && (
 						<View className="flex-1">
 							<GoalPointsChart
-								data={monthlyPointsAll.filter((p) => p.user_id === viewUserId)}
-								loading={isMonthlyPointsAllLoading}
+								data={rollingDailyPoints.filter(
+									(p: ParticipantDailyPoints) => p.user_id === viewUserId,
+								)}
+								loading={isDailyPointsLoading}
+								currentUserId={currentUserId}
 							/>
 						</View>
 					)}
 					{!isInviteState && (
-						<View className="flex-1">
+						<View className={cn(isPersonalGoal ? "w-full max-w-xl" : "flex-1")}>
 							<GoalConsistencyHeatmap
 								completedDates={completedDateKeys}
 								frequencyType={goal.frequency_type}
@@ -413,15 +402,19 @@ export default function GoalDetailsModal() {
 				<>
 					{isParticipant && !isPersonalGoal && !isViewingOther ? (
 						<GoalPointsChart
-							data={monthlyPointsAll}
-							loading={isMonthlyPointsAllLoading}
+							data={rollingDailyPoints}
+							loading={isDailyPointsLoading}
+							currentUserId={currentUserId}
 						/>
 					) : null}
 
 					{isViewingOther && !isPersonalGoal && viewUserId && (
 						<GoalPointsChart
-							data={monthlyPointsAll.filter((p) => p.user_id === viewUserId)}
-							loading={isMonthlyPointsAllLoading}
+							data={rollingDailyPoints.filter(
+								(p: ParticipantDailyPoints) => p.user_id === viewUserId,
+							)}
+							loading={isDailyPointsLoading}
+							currentUserId={currentUserId}
 						/>
 					)}
 
@@ -437,13 +430,14 @@ export default function GoalDetailsModal() {
 				</>
 			)}
 
-			{(isParticipant || isInviteState) && (
-				<GoalParticipantsList
-					participants={participantItems}
-					goalId={goalId as string}
-					currentUserId={currentUserId}
-				/>
-			)}
+			{((isParticipant && !isPersonalGoal) || isInviteState) &&
+				!isViewingOther && (
+					<GoalParticipantsList
+						participants={participantItems}
+						goalId={goalId as string}
+						currentUserId={currentUserId}
+					/>
+				)}
 
 			{!isViewingOther && (
 				<GoalAttachmentsList
@@ -454,6 +448,10 @@ export default function GoalDetailsModal() {
 
 			{!isViewingOther && isOwner && pendingInvites.length > 0 && (
 				<GoalPendingInvitesList invites={pendingInvites} />
+			)}
+
+			{showPrimaryAction && (
+				<View style={{ height: Math.max(insets.bottom + 120, 140) }} />
 			)}
 		</ModalScreen>
 	);

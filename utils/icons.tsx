@@ -1,16 +1,11 @@
 import type { IconProps } from "phosphor-react-native";
 import * as PhosphorIcons from "phosphor-react-native";
-import type { ComponentType, ReactNode } from "react";
+import type { ComponentType } from "react";
 
 const Icons = PhosphorIcons as unknown as Record<
 	string,
 	ComponentType<IconProps>
 >;
-
-export function getIconComponent(iconName: string): ReactNode {
-	const IconComp = Icons[iconName] || PhosphorIcons.Target;
-	return <IconComp />;
-}
 
 export interface DynamicIconProps extends IconProps {
 	name: string;

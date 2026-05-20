@@ -144,16 +144,16 @@ export const LeaderboardEntrySchema = z.object({
 });
 export type LeaderboardEntry = z.infer<typeof LeaderboardEntrySchema>;
 
-export const ParticipantMonthlyPointsSchema = z.object({
+export const ParticipantDailyPointsSchema = z.object({
 	user_id: z.string(),
 	username: z.string(),
 	nickname: z.string().nullable(),
 	avatar_url: z.string().nullable(),
-	month: z.string(),
-	points: z.number(),
+	day_date: z.string(),
+	daily_points: z.number(),
 });
-export type ParticipantMonthlyPoints = z.infer<
-	typeof ParticipantMonthlyPointsSchema
+export type ParticipantDailyPoints = z.infer<
+	typeof ParticipantDailyPointsSchema
 >;
 
 export const AttachmentItemSchema = z.object({

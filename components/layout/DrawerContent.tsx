@@ -1,8 +1,8 @@
 import {
-	DrawerContentScrollView,
 	type DrawerContentComponentProps,
+	DrawerContentScrollView,
 } from "@react-navigation/drawer";
-import { useRouter, type Href } from "expo-router";
+import { type Href, useRouter } from "expo-router";
 import { EnvelopeSimple, User } from "phosphor-react-native";
 import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
@@ -101,11 +101,7 @@ export function DrawerContent(props: DrawerContentComponentProps) {
 								onPress={() => router.push(item.route)}
 								className="flex-row items-center gap-4 px-4 py-4 rounded-2xl bg-transparent"
 							>
-								<Icon
-									size={22}
-									weight="regular"
-									color={colors.textDefault}
-								/>
+								<Icon size={22} weight="regular" color={colors.textDefault} />
 								<Text
 									className="text-base font-semibold"
 									style={{ color: colors.textDefault }}

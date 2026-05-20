@@ -144,12 +144,12 @@ function HeatmapCell({
 
 	return (
 		<View
-			className="aspect-square flex-1 rounded-xl"
+			className="aspect-square flex-1 rounded-md"
 			style={{ backgroundColor }}
 		>
 			{isToday && (
 				<View
-					className="absolute inset-0 rounded-xl"
+					className="absolute inset-0 rounded-md"
 					style={{
 						borderWidth: 2,
 						borderColor: colors.textDefault,
@@ -158,7 +158,7 @@ function HeatmapCell({
 			)}
 			{state === "unscheduled" && !isToday && (
 				<View
-					className="absolute inset-0 rounded-xl"
+					className="absolute inset-0 rounded-md"
 					style={{
 						borderWidth: 1.5,
 						borderColor: colors.border,
@@ -178,7 +178,6 @@ export function GoalConsistencyHeatmap({
 	weeklyDays,
 }: GoalConsistencyHeatmapProps) {
 	const colors = useThemeColors();
-	const heatmapContentMaxWidth = 320;
 	const today = normalizeDate(new Date());
 	const gridStart = addDays(getWeekStart(today), -21);
 	const normalizedStartDate = startDate
@@ -195,36 +194,33 @@ export function GoalConsistencyHeatmap({
 
 	return (
 		<View
-			className="w-full flex-1 rounded-[32px] border border-border bg-surface-fg p-6"
+			className="w-full max-w-xl self-center rounded-[32px] border border-border bg-surface-fg p-6"
 			style={{
-				minHeight: Platform.OS === "web" ? 300 : undefined,
 				padding: Platform.OS === "web" ? 20 : 24,
 			}}
 		>
-			<View className="mb-4 flex-row items-center justify-between">
+			<View className="mb-4 flex-row items-center justify-between gap-2">
 				<Text
-					className="text-xl font-bold text-text-strong"
+					className="text-xl font-bold text-text-strong flex-1"
 					style={{ color: colors.textStrong }}
+					numberOfLines={1}
 				>
 					Consistency
 				</Text>
 				<Text
-					className="text-sm font-medium text-text-light"
+					className="text-sm font-medium text-text-light shrink-0"
 					style={{ color: colors.textLight }}
 				>
 					Last 28 Days
 				</Text>
 			</View>
 
-			<View
-				className="w-full self-center"
-				style={{ maxWidth: heatmapContentMaxWidth }}
-			>
+			<View className="w-full">
 				<View className="mb-3 flex-row gap-2">
 					{DAY_COLUMNS.map((day) => (
 						<View key={day.value} className="flex-1 items-center">
 							<Text
-								className="text-sm font-medium text-text-light"
+								className="text-xs font-medium text-text-light"
 								style={{ color: colors.textLight }}
 							>
 								{day.label}
@@ -240,20 +236,19 @@ export function GoalConsistencyHeatmap({
 							className="flex-row gap-2"
 						>
 							{week.map((date) => (
-								<View key={formatDate(date)} className="aspect-square flex-1">
-									<HeatmapCell
-										isToday={date.getTime() === today.getTime()}
-										state={getCellState({
-											date,
-											today,
-											completedSet,
-											frequencyType,
-											frequencyValue,
-											startDate: normalizedStartDate,
-											weeklyDays: scheduledDays,
-										})}
-									/>
-								</View>
+								<HeatmapCell
+									key={formatDate(date)}
+									isToday={date.getTime() === today.getTime()}
+									state={getCellState({
+										date,
+										today,
+										completedSet,
+										frequencyType,
+										frequencyValue,
+										startDate: normalizedStartDate,
+										weeklyDays: scheduledDays,
+									})}
+								/>
 							))}
 						</View>
 					))}

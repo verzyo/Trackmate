@@ -114,7 +114,7 @@ export function GoalAttachmentsList({
 	if (loading) {
 		return (
 			<View className="w-full gap-3">
-				<Text className="text-xl font-medium text-text-default">
+				<Text className="text-xl font-medium text-text">
 					Recent Attachments
 				</Text>
 				<View className="items-center justify-center py-8">
@@ -130,9 +130,7 @@ export function GoalAttachmentsList({
 
 	return (
 		<View className="w-full gap-3">
-			<Text className="text-xl font-medium text-text-default">
-				Recent Attachments
-			</Text>
+			<Text className="text-xl font-medium text-text">Recent Attachments</Text>
 
 			<View className="gap-3">
 				{attachments.map((attachment) => (
@@ -222,7 +220,7 @@ const AttachmentContent = React.memo(function AttachmentContent({
 							weight="bold"
 							style={{ marginTop: 2 }}
 						/>
-						<Text className="flex-1 text-base text-text-default leading-[22px]">
+						<Text className="flex-1 text-base text-text leading-[22px]">
 							{data.content}
 						</Text>
 					</View>

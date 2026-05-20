@@ -1,5 +1,4 @@
-import { Plus } from "phosphor-react-native";
-import { Pressable, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import Avatar from "@/components/ui/Avatar";
 import { useThemeColors } from "@/hooks/common/useThemeColors";
 

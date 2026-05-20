@@ -1,7 +1,7 @@
 import type { Icon } from "phosphor-react-native";
-import { CircleIconButton } from "./CircleIconButton";
 import { UI_SIZES } from "@/constants/ui";
 import { useThemeColors } from "@/hooks/common/useThemeColors";
+import { CircleIconButton } from "./CircleIconButton";
 
 type ModalButtonProps = {
 	onPress: () => void;

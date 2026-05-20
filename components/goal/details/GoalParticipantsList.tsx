@@ -34,7 +34,7 @@ export function GoalParticipantsList({
 	return (
 		<View className="w-full gap-3">
 			<Text
-				className="text-xl font-medium text-text-default"
+				className="text-xl font-medium text-text"
 				style={{ color: colors.textDefault }}
 			>
 				Participants

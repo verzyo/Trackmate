@@ -64,7 +64,7 @@ export function WeekDaySelector({
 						<Text
 							className={cn(
 								"font-bold text-sm",
-								isSelected ? "text-white" : "text-text-default",
+								isSelected ? "text-white" : "text-text",
 							)}
 						>
 							{day.label}

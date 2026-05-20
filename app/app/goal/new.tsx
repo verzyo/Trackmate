@@ -1,22 +1,15 @@
 import { router } from "expo-router";
-import { useColorScheme } from "nativewind";
 import { useRef, useState } from "react";
 import type { ScrollView } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { DatePicker } from "@/components/forms/DatePicker";
-import { FormSection } from "@/components/forms/FormSection";
-import { GoalBasicInfoFields } from "@/components/forms/GoalBasicInfoFields";
-import { GoalFormShell } from "@/components/forms/GoalFormShell";
-import { InviteManager } from "@/components/forms/InviteManager";
-import { AttachmentTypeSelector } from "@/components/goal/AttachmentTypeSelector";
-import { GoalAppearancePicker } from "@/components/goal/GoalAppearancePicker";
-import { GoalFrequencyEditor } from "@/components/goal/GoalFrequencyEditor";
+import { AttachmentTypeSelector } from "@/components/goal/fields/AttachmentTypeSelector";
+import { GoalFieldsSection } from "@/components/goal/fields/GoalFieldsSection";
+import { GoalFrequencyEditor } from "@/components/goal/fields/GoalFrequencyEditor";
+import { StartDatePicker } from "@/components/goal/fields/StartDatePicker";
+import { GoalFormScreen } from "@/components/layout/GoalFormScreen";
 import FilledButton from "@/components/ui/FilledButton";
 import { ATTACHMENT_TYPES } from "@/constants/attachmentTypes";
 import { useErrorHandler } from "@/hooks/common/useErrorHandler";
-import { useKeyboard } from "@/hooks/common/useKeyboard";
-import { useThemeColors } from "@/hooks/common/useThemeColors";
 import { useToday } from "@/hooks/common/useToday";
 import { useGoalForm } from "@/hooks/goal/useGoalForm";
 import { useCreateGoal, useCreateInvite } from "@/hooks/goal/useGoalMutations";
@@ -24,17 +17,13 @@ import { useInviteManagement } from "@/hooks/goal/useInviteManagement";
 import type { GoalForm } from "@/schemas/goal.schema";
 import { useAuthStore } from "@/store/auth.store";
 import { formatToISODate } from "@/utils/date.utils";
-
 import { transformGoalFormData } from "@/utils/goal.utils";
 
 export default function NewGoalScreen() {
 	const { user } = useAuthStore();
 	const userId = user?.id;
-	const colors = useThemeColors();
 	const { handleError } = useErrorHandler();
-	const _insets = useSafeAreaInsets();
 	const scrollViewRef = useRef<ScrollView>(null);
-	const { keyboardHeight } = useKeyboard();
 
 	const today = useToday();
 	const [startDate, setStartDate] = useState(today);
@@ -101,35 +90,31 @@ export default function NewGoalScreen() {
 		}
 	};
 
-	const { colorScheme } = useColorScheme();
-	const isDark = colorScheme === "dark";
-
 	return (
-		<GoalFormShell
+		<GoalFormScreen
 			title="Create Goal"
+			control={control}
+			errors={errors}
+			isOwner={true}
+			selectedIcon={selectedIcon}
+			selectedColor={selectedColor}
+			onIconChange={(icon) => setValue("icon", icon)}
+			onColorChange={(color) => setValue("color", color)}
+			invitees={invitees}
+			onAddInvite={addInvite}
+			onRemoveInvite={removeInvite}
+			handleInviteInputFocus={handleInviteInputFocus}
+			currentUserId={userId}
 			scrollViewRef={scrollViewRef}
-			insetsBottom={_insets.bottom}
-			keyboardHeight={keyboardHeight}
-			isDark={isDark}
+			actions={
+				<FilledButton
+					onPress={handleSubmit(onSubmit)}
+					className="mt-4"
+					label="Create Goal"
+				/>
+			}
 		>
-			<FormSection title="Appearance" titleColor={colors.textStrong}>
-				<GoalAppearancePicker
-					selectedIcon={selectedIcon}
-					selectedColor={selectedColor}
-					onIconChange={(icon) => setValue("icon", icon)}
-					onColorChange={(color) => setValue("color", color)}
-				/>
-			</FormSection>
-
-			<FormSection title="Basic Info" titleColor={colors.textStrong}>
-				<GoalBasicInfoFields
-					control={control}
-					titleError={errors.title?.message}
-					descriptionError={errors.description?.message}
-				/>
-			</FormSection>
-
-			<FormSection title="Frequency*" titleColor={colors.textStrong}>
+			<GoalFieldsSection title="Frequency*">
 				<GoalFrequencyEditor
 					frequencyType={freqType}
 					onFrequencyTypeChange={(val) =>
@@ -145,32 +130,15 @@ export default function NewGoalScreen() {
 					onToggleDay={toggleDay}
 					weeklyDaysError={errors.weekly_days?.message}
 				/>
-			</FormSection>
+			</GoalFieldsSection>
 
-			<FormSection title="Start Date" titleColor={colors.textStrong}>
-				<DatePicker value={startDate} onChange={setStartDate} />
-			</FormSection>
+			<GoalFieldsSection title="Start Date">
+				<StartDatePicker value={startDate} onChange={setStartDate} />
+			</GoalFieldsSection>
 
-			<FormSection title="Attachment" titleColor={colors.textStrong}>
+			<GoalFieldsSection title="Attachment">
 				<AttachmentTypeSelector control={control} nameType="attachment_type" />
-			</FormSection>
-
-			<FormSection title="Participants" titleColor={colors.textStrong}>
-				<InviteManager
-					invitees={invitees}
-					onAdd={addInvite}
-					onRemove={removeInvite}
-					onInputFocus={handleInviteInputFocus}
-					onInputPress={handleInviteInputFocus}
-					userId={userId}
-				/>
-			</FormSection>
-
-			<FilledButton
-				onPress={handleSubmit(onSubmit)}
-				className="mt-4"
-				label="Create Goal"
-			/>
-		</GoalFormShell>
+			</GoalFieldsSection>
+		</GoalFormScreen>
 	);
 }

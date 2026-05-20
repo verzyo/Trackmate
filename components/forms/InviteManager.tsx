@@ -1,7 +1,3 @@
-import { Avatar } from "@/components/ui/Avatar";
-import { Tag } from "@/components/ui/Tag";
-import { useThemeColors } from "@/hooks/common/useThemeColors";
-import { useAssociatedPeople } from "@/hooks/profile/useAssociatedPeople";
 import { X } from "phosphor-react-native";
 import { useCallback, useRef, useState } from "react";
 import {
@@ -12,6 +8,10 @@ import {
 	TextInput,
 	View,
 } from "react-native";
+import { Avatar } from "@/components/ui/Avatar";
+import { Tag } from "@/components/ui/Tag";
+import { useThemeColors } from "@/hooks/common/useThemeColors";
+import { useAssociatedPeople } from "@/hooks/profile/useAssociatedPeople";
 import { SuggestedUserAvatar } from "./SuggestedUserAvatar";
 
 export type Invitee = {
@@ -19,12 +19,17 @@ export type Invitee = {
 	username: string;
 	nickname?: string;
 	avatar_url?: string;
+	isPending?: boolean;
+	isMember?: boolean;
+	inviteId?: string;
 };
 
 type InviteManagerProps = {
 	invitees: Invitee[];
 	onAdd: (username: string) => Promise<void>;
 	onRemove: (id: string) => void;
+	onCancelInvite?: (inviteId: string) => void;
+	onKickMember?: (userId: string) => void;
 	onInputFocus?: (input: TextInput | null) => void;
 	onInputPress?: (input: TextInput | null) => void;
 	userId?: string;
@@ -35,6 +40,8 @@ export function InviteManager({
 	invitees,
 	onAdd,
 	onRemove,
+	onCancelInvite,
+	onKickMember,
 	onInputFocus,
 	onInputPress,
 	userId,
@@ -159,13 +166,33 @@ export function InviteManager({
 								</View>
 							</View>
 							<View className="flex-row items-center gap-3">
-								<Tag label="PENDING" variant="default" />
+								{invitee.isMember ? (
+									<Tag label="MEMBER" variant="default" />
+								) : (
+									<Tag label="PENDING" variant="default" />
+								)}
 								<Pressable
-									onPress={() => onRemove(invitee.id)}
+									onPress={() => {
+										if (invitee.isMember && onKickMember) {
+											onKickMember(invitee.id);
+										} else if (
+											invitee.isPending &&
+											invitee.inviteId &&
+											onCancelInvite
+										) {
+											onCancelInvite(invitee.inviteId);
+										} else {
+											onRemove(invitee.id);
+										}
+									}}
 									hitSlop={8}
 									className="p-1"
 								>
-									<X size={20} color={colors.textLight} weight="bold" />
+									<X
+										size={20}
+										color={invitee.isMember ? "#ef4444" : colors.textLight}
+										weight="bold"
+									/>
 								</Pressable>
 							</View>
 						</View>

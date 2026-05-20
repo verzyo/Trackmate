@@ -41,7 +41,7 @@ export function SegmentedControl<T extends string>({
 						<Text
 							className={cn(
 								"font-bold text-base",
-								isActive ? "text-action-primary" : "text-text-default",
+								isActive ? "text-action-primary" : "text-text",
 							)}
 							style={{
 								color: isActive ? colors.actionPrimary : colors.textDefault,

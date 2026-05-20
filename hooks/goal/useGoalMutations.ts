@@ -1,3 +1,4 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import type {
 	AttachmentData,
@@ -12,12 +13,12 @@ import {
 	createInvite,
 	declineInvite,
 	deleteGoal,
+	kickParticipant,
 	leaveGoal,
 	uncompleteGoal,
 	updateCompletionWithAttachment,
 	updateGoalMetadata,
 } from "@/services/goal.service";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { goalKeys } from "./useGoalQueries";
 
 type CompletionVariables = {
@@ -51,6 +52,7 @@ const completionInvalidateKeys = (variables: CompletionVariables) =>
 		goalKeys.todaysCompletions(variables.userId),
 		goalKeys.streak(variables.goalId, variables.userId),
 		goalKeys.monthlyPoints(variables.goalId, variables.userId),
+		goalKeys.rollingDailyPoints(variables.goalId),
 		goalKeys.todaysCompletionsForGoals(),
 	] as const;
 
@@ -75,7 +77,7 @@ const updateOptimisticCompletions = (
 	isAdding: boolean,
 ) => {
 	const today = new Date().toISOString().split("T")[0];
-	const currentMonth = new Date().toISOString().slice(0, 7);
+	const _currentMonth = new Date().toISOString().slice(0, 7);
 
 	queryClient.setQueryData<string[]>(
 		goalKeys.todaysCompletions(variables.userId),
@@ -186,21 +188,14 @@ const updateOptimisticCompletions = (
 	);
 
 	queryClient.setQueryData<any[]>(
-		goalKeys.monthlyPointsAll(variables.goalId),
+		goalKeys.rollingDailyPoints(variables.goalId),
 		(old) => {
 			if (!old) return old;
-			const monthToMatch = currentMonth;
 			return old.map((entry) => {
-				const isUserMatch = entry.user_id === variables.userId;
-				const isMonthMatch =
-					entry.month === monthToMatch ||
-					(typeof entry.month === "string" &&
-						entry.month.startsWith(monthToMatch));
-
-				if (isUserMatch && isMonthMatch) {
+				if (entry.user_id === variables.userId && entry.day_date === today) {
 					return {
 						...entry,
-						points: Math.max(0, (Number(entry.points) || 0) + pointsDelta),
+						daily_points: isAdding ? pointsDelta : 0,
 					};
 				}
 				return entry;
@@ -522,8 +517,9 @@ export const useUpdateCompletion = () => {
 };
 
 export const useCreateInvite = () => {
-	return createMutationWithInvalidation(
-		({
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: ({
 			goalId,
 			inviterId,
 			inviteeId,
@@ -532,8 +528,15 @@ export const useCreateInvite = () => {
 			inviterId: string;
 			inviteeId: string;
 		}) => createInvite(goalId, inviterId, inviteeId),
-		(variables) => [goalKeys.invites(variables.inviteeId)],
-	);
+		onSuccess: (_, variables) => {
+			queryClient.invalidateQueries({
+				queryKey: goalKeys.invites(variables.inviteeId),
+			});
+			queryClient.invalidateQueries({
+				queryKey: goalKeys.pendingInvites(variables.goalId),
+			});
+		},
+	});
 };
 
 export const useAcceptInvite = () => {
@@ -556,10 +559,44 @@ export const useAcceptInvite = () => {
 
 export const useDeclineInvite = () => {
 	return createMutationWithInvalidation(
-		({ inviteId, userId: _userId }: { inviteId: string; userId: string }) =>
+		({ inviteId, userId }: { inviteId: string; userId: string }) =>
 			declineInvite(inviteId),
 		(variables) => [goalKeys.invites(variables.userId)],
 	);
+};
+
+export const useDeleteInvite = () => {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: ({ inviteId, goalId }: { inviteId: string; goalId: string }) =>
+			declineInvite(inviteId),
+		onSuccess: (_, variables) => {
+			queryClient.invalidateQueries({
+				queryKey: goalKeys.pendingInvites(variables.goalId),
+			});
+			queryClient.invalidateQueries({ queryKey: ["goals"] });
+		},
+		onError: (error) => {
+			console.error("Delete invite error:", error);
+		},
+	});
+};
+
+export const useKickParticipant = () => {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: ({ goalId, userId }: { goalId: string; userId: string }) =>
+			kickParticipant(goalId, userId),
+		onSuccess: (_, variables) => {
+			queryClient.invalidateQueries({
+				queryKey: goalKeys.detail(variables.goalId),
+			});
+			queryClient.invalidateQueries({ queryKey: goalKeys.lists() });
+		},
+		onError: (error) => {
+			console.error("Kick participant error:", error);
+		},
+	});
 };
 
 export const useUpdateParticipant = () => {

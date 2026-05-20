@@ -208,9 +208,7 @@ const AttachmentBottomSheet = forwardRef<AttachmentBottomSheetRef, Props>(
 				<BottomSheetView>
 					<View className="p-6">
 						<View className="flex-row items-center justify-between mb-6">
-							<Text className="text-xl font-bold text-text-strong">
-								{getTitle()}
-							</Text>
+							<Text className="text-xl font-bold text-text">{getTitle()}</Text>
 							<Pressable onPress={() => bottomSheetRef.current?.dismiss()}>
 								<X size={24} color={colors.textLight} weight="bold" />
 							</Pressable>
@@ -219,7 +217,7 @@ const AttachmentBottomSheet = forwardRef<AttachmentBottomSheetRef, Props>(
 						{isSubmitting && (
 							<View className="items-center justify-center py-8">
 								<ActivityIndicator color={colors.actionPrimary} size="large" />
-								<Text className="mt-4 text-text-default">Processing...</Text>
+								<Text className="mt-4 text-text">Processing...</Text>
 							</View>
 						)}
 

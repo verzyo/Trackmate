@@ -1,7 +1,7 @@
-import { Screen } from "@/components/layout/Screen";
-import { cn } from "@/utils/cn";
 import type { ReactNode } from "react";
 import { Pressable, Text, View } from "react-native";
+import { Screen } from "@/components/layout/Screen";
+import { cn } from "@/utils/cn";
 
 interface AuthScreenProps {
 	title: string;

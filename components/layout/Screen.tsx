@@ -1,8 +1,13 @@
-import { cn } from "@/utils/cn";
 import React, { type ReactNode } from "react";
-import { useColorScheme, View, type ViewProps, type ScrollView } from "react-native";
+import {
+	type ScrollView,
+	useColorScheme,
+	View,
+	type ViewProps,
+} from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { cn } from "@/utils/cn";
 
 type ScreenProps = ViewProps & {
 	children: ReactNode;

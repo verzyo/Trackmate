@@ -1,8 +1,15 @@
-import { type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Text, View } from "react-native";
 import { cn } from "@/utils/cn";
 
-type TagVariant = "default" | "success" | "warning" | "danger" | "info" | "streak" | "personal";
+type TagVariant =
+	| "default"
+	| "success"
+	| "warning"
+	| "danger"
+	| "info"
+	| "streak"
+	| "personal";
 
 interface TagProps {
 	label: string;
@@ -57,7 +64,7 @@ export function Tag({
 			className={cn(
 				"flex-row items-center justify-center gap-1 rounded-full px-2.5 py-0.5",
 				currentVariant.container,
-				className
+				className,
 			)}
 		>
 			{icon}
@@ -66,7 +73,7 @@ export function Tag({
 					"text-xs font-bold",
 					variant === "personal" && "uppercase tracking-wider",
 					currentVariant.text,
-					labelClassName
+					labelClassName,
 				)}
 			>
 				{label}

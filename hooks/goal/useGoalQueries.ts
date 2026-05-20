@@ -4,8 +4,8 @@ import {
 	fetchGoalCompletions,
 	fetchGoalLeaderboard,
 	fetchGoalMonthlyPoints,
-	fetchGoalMonthlyPointsForAll,
 	fetchGoalPendingInvites,
+	fetchGoalRollingDailyPoints,
 	fetchGoalStreak,
 	fetchGoals,
 	fetchInvites,
@@ -37,6 +37,8 @@ export const goalKeys = {
 		[...goalKeys.detail(goalId), "leaderboard"] as const,
 	monthlyPointsAll: (goalId: string) =>
 		[...goalKeys.detail(goalId), "monthlyPointsAll"] as const,
+	rollingDailyPoints: (goalId: string) =>
+		[...goalKeys.detail(goalId), "rollingDailyPoints"] as const,
 	attachments: (goalId: string) =>
 		[...goalKeys.detail(goalId), "attachments"] as const,
 	pendingInvites: (goalId: string) =>
@@ -131,10 +133,10 @@ export const useGoalLeaderboard = (goalId: string | undefined) => {
 	});
 };
 
-export const useGoalMonthlyPointsForAll = (goalId: string | undefined) => {
+export const useGoalRollingDailyPoints = (goalId: string | undefined) => {
 	return useQuery({
-		queryKey: goalKeys.monthlyPointsAll(goalId ?? ""),
-		queryFn: () => fetchGoalMonthlyPointsForAll(goalId as string),
+		queryKey: goalKeys.rollingDailyPoints(goalId ?? ""),
+		queryFn: () => fetchGoalRollingDailyPoints(goalId as string),
 		enabled: !!goalId,
 	});
 };

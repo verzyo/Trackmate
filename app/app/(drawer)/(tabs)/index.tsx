@@ -1,3 +1,10 @@
+import type { DrawerNavigationProp } from "@react-navigation/drawer";
+import { useNavigation } from "@react-navigation/native";
+import { useQueryClient } from "@tanstack/react-query";
+import { type Href, router } from "expo-router";
+import { ArrowsClockwise } from "phosphor-react-native";
+import { useCallback, useRef, useState } from "react";
+import { Platform, RefreshControl, Text, View } from "react-native";
 import FloatingActionButton from "@/components/home/FloatingActionButton";
 import { GoalsSection } from "@/components/home/GoalsSection";
 import { Screen } from "@/components/layout/Screen";
@@ -17,13 +24,6 @@ import { usePrefetchGoalDetails } from "@/hooks/prefetch/usePrefetchGoalDetails"
 import type { GoalWithParticipant } from "@/schemas/goal.schema";
 import { useAuthStore } from "@/store/auth.store";
 import { getCurrentDayString } from "@/utils/date.utils";
-import type { DrawerNavigationProp } from "@react-navigation/drawer";
-import { useNavigation } from "@react-navigation/native";
-import { useQueryClient } from "@tanstack/react-query";
-import { type Href, router } from "expo-router";
-import { ArrowsClockwise } from "phosphor-react-native";
-import { useCallback, useRef, useState } from "react";
-import { Platform, RefreshControl, Text, View } from "react-native";
 
 const getGreeting = () => {
 	const h = new Date().getHours();
@@ -123,7 +123,11 @@ export default function HomeScreen() {
 							onComplete={async (attachmentData) => {
 								if (!userId || !selectedGoal) return;
 								try {
-									await toggleCompletion(selectedGoal.id, false, attachmentData);
+									await toggleCompletion(
+										selectedGoal.id,
+										false,
+										attachmentData,
+									);
 								} catch {}
 							}}
 						/>

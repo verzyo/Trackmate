@@ -51,7 +51,11 @@ export function FilledButton({
 			)}
 		>
 			<Text
-				className={cn("text-lg font-bold", textClasses[variant], labelClassName)}
+				className={cn(
+					"text-lg font-bold",
+					textClasses[variant],
+					labelClassName,
+				)}
 			>
 				{label}
 			</Text>

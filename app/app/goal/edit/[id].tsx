@@ -1,57 +1,73 @@
 import { router, useLocalSearchParams } from "expo-router";
-import { useColorScheme } from "nativewind";
 import { useEffect, useRef, useState } from "react";
 import type { ScrollView } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { FormSection } from "@/components/forms/FormSection";
-import { GoalBasicInfoFields } from "@/components/forms/GoalBasicInfoFields";
-import { GoalFormShell } from "@/components/forms/GoalFormShell";
-import { InviteManager } from "@/components/forms/InviteManager";
-import { GoalAppearancePicker } from "@/components/goal/GoalAppearancePicker";
 import { GoalEditActions } from "@/components/goal/GoalEditActions";
+import { GoalFormScreen } from "@/components/layout/GoalFormScreen";
 import AppLoadingScreen from "@/components/layout/LoadingScreen";
 import FilledButton from "@/components/ui/FilledButton";
 import { useErrorHandler } from "@/hooks/common/useErrorHandler";
-import { useKeyboard } from "@/hooks/common/useKeyboard";
-import { useThemeColors } from "@/hooks/common/useThemeColors";
-import { useToday } from "@/hooks/common/useToday";
 import { useGoalForm } from "@/hooks/goal/useGoalForm";
 import {
 	useCreateInvite,
 	useDeleteGoal,
+	useDeleteInvite,
+	useKickParticipant,
 	useLeaveGoal,
 	useUpdateGoalMetadata,
 	useUpdateParticipant,
 } from "@/hooks/goal/useGoalMutations";
-import { useGoal } from "@/hooks/goal/useGoalQueries";
+import { useGoal, useGoalPendingInvites } from "@/hooks/goal/useGoalQueries";
 import { useInviteManagement } from "@/hooks/goal/useInviteManagement";
+import { useProfilesByIds } from "@/hooks/profile/useProfileHooks";
 import type { GoalForm, UpdateGoalMetadataParams } from "@/schemas/goal.schema";
 import { useAuthStore } from "@/store/auth.store";
 
 export default function EditGoalScreen() {
 	const { id } = useLocalSearchParams<{ id: string }>();
-	const colors = useThemeColors();
 	const { handleError } = useErrorHandler();
-	const { colorScheme } = useColorScheme();
-	const isDark = colorScheme === "dark";
-	const insets = useSafeAreaInsets();
 	const scrollViewRef = useRef<ScrollView>(null);
-	const { keyboardHeight } = useKeyboard();
+	const { user } = useAuthStore();
+	const userId = user?.id;
 	const { data: goal, isLoading: isGoalLoading } = useGoal(id as string);
+	const { data: pendingInvites } = useGoalPendingInvites(id as string);
 	const updateMetadataMutation = useUpdateGoalMetadata();
 	const deleteGoalMutation = useDeleteGoal();
 	const createInviteMutation = useCreateInvite();
+	const deleteInviteMutation = useDeleteInvite();
+	const kickParticipantMutation = useKickParticipant();
 	const leaveGoalMutation = useLeaveGoal();
 	const updateParticipantMutation = useUpdateParticipant();
-
-	const { user } = useAuthStore();
-	const userId = user?.id;
 	const isOwner = goal?.owner_id === userId;
-	const _today = useToday();
+
+	const participantIds =
+		goal?.goal_participants
+			.map((p) => p.user_id)
+			.filter((pId) => pId !== goal.owner_id) || [];
+	const { data: memberProfiles } = useProfilesByIds(participantIds);
+
 	const { invitees, addInvite, removeInvite } = useInviteManagement(
 		userId,
 		goal?.goal_participants.map((p) => p.user_id),
 	);
+
+	const allInvites = [
+		...(memberProfiles?.map((mp) => ({
+			id: mp.id,
+			username: mp.username,
+			nickname: mp.nickname,
+			avatar_url: mp.avatar_url,
+			isMember: true,
+		})) || []),
+		...(pendingInvites?.map((pi: any) => ({
+			id: pi.invitee_id,
+			username: pi.invitee.username,
+			nickname: pi.invitee.nickname,
+			avatar_url: pi.invitee.avatar_url,
+			isPending: true,
+			inviteId: pi.id,
+		})) || []),
+		...invitees,
+	];
 	const [selectedIcon, setSelectedIcon] = useState("Flag");
 	const [selectedColor, setSelectedColor] = useState("#3b82f6");
 	const [initialIcon, setInitialIcon] = useState("Flag");
@@ -176,56 +192,49 @@ export default function EditGoalScreen() {
 		updateParticipantMutation.isPending;
 
 	return (
-		<GoalFormShell
+		<GoalFormScreen
 			title="Edit Goal"
+			control={control}
+			errors={errors}
+			isOwner={isOwner}
+			selectedIcon={selectedIcon}
+			selectedColor={selectedColor}
+			onIconChange={setSelectedIcon}
+			onColorChange={setSelectedColor}
+			invitees={allInvites}
+			onAddInvite={addInvite}
+			onRemoveInvite={removeInvite}
+			onCancelInvite={(inviteId) =>
+				deleteInviteMutation.mutate(
+					{ inviteId, goalId: id as string },
+					{
+						onError: (error) => handleError(error, "Failed to cancel invite"),
+					},
+				)
+			}
+			onKickMember={(memberId) =>
+				kickParticipantMutation.mutate(
+					{ goalId: id as string, userId: memberId },
+					{
+						onError: (error) => handleError(error, "Failed to kick member"),
+					},
+				)
+			}
+			handleInviteInputFocus={handleInviteInputFocus}
+			currentUserId={userId}
+			existingParticipants={goal?.goal_participants.map((p) => p.user_id)}
 			scrollViewRef={scrollViewRef}
-			insetsBottom={insets.bottom}
-			keyboardHeight={keyboardHeight}
-			isDark={isDark}
-		>
-			<FormSection title="Appearance" titleColor={colors.textStrong}>
-				<GoalAppearancePicker
-					selectedIcon={selectedIcon}
-					selectedColor={selectedColor}
-					onIconChange={setSelectedIcon}
-					onColorChange={setSelectedColor}
-					stackColorsUnderIcon={!isOwner}
-				/>
-			</FormSection>
-
-			{isOwner && (
-				<FormSection title="Basic Info" titleColor={colors.textStrong}>
-					<GoalBasicInfoFields
-						control={control}
-						titleError={errors.title?.message}
-						descriptionError={errors.description?.message}
-						editable={isOwner}
+			actions={
+				<>
+					<FilledButton
+						onPress={handleSubmit(onSave)}
+						disabled={isLoading}
+						className="mt-4"
+						label={isLoading ? "Saving..." : "Save Goal"}
 					/>
-				</FormSection>
-			)}
-
-			{isOwner && (
-				<FormSection title="Participants" titleColor={colors.textStrong}>
-					<InviteManager
-						invitees={invitees}
-						onAdd={addInvite}
-						onRemove={removeInvite}
-						onInputFocus={handleInviteInputFocus}
-						onInputPress={handleInviteInputFocus}
-						userId={userId}
-						existingParticipants={goal?.goal_participants.map((p) => p.user_id)}
-					/>
-				</FormSection>
-			)}
-
-			<FilledButton
-				onPress={handleSubmit(onSave)}
-				disabled={isLoading}
-				className="mt-4"
-				label={isLoading ? "Saving..." : "Save Goal"}
-			/>
-
-			<GoalEditActions goalId={id as string} isOwner={isOwner} />
-		</GoalFormShell>
+					<GoalEditActions goalId={id as string} isOwner={isOwner} />
+				</>
+			}
+		/>
 	);
 }

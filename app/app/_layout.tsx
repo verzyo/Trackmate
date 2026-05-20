@@ -1,7 +1,7 @@
 import { Stack } from "expo-router";
 import { LoadingScreen } from "@/components/layout/LoadingScreen";
-import { usePrefetchHome } from "@/hooks/prefetch/usePrefetchHome";
 import { useThemeColors } from "@/hooks/common/useThemeColors";
+import { usePrefetchHome } from "@/hooks/prefetch/usePrefetchHome";
 import { useAuthStore } from "@/store/auth.store";
 
 export default function AppLayout() {

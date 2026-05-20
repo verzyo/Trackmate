@@ -33,7 +33,6 @@ export const useAuthStore = create<AuthState>((set) => ({
 			}
 
 			if (event === "USER_UPDATED") {
-				// Only invalidate profile queries instead of clearing everything
 				queryClient.invalidateQueries({ queryKey: ["profile"] });
 			}
 

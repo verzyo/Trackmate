@@ -9,11 +9,12 @@ import {
 } from "react-native";
 import { LineChart } from "react-native-gifted-charts";
 import { useThemeColors } from "@/hooks/common/useThemeColors";
-import type { ParticipantMonthlyPoints } from "@/schemas/goal.schema";
+import type { ParticipantDailyPoints } from "@/schemas/goal.schema";
 
 interface GoalPointsChartProps {
-	data: ParticipantMonthlyPoints[];
+	data: ParticipantDailyPoints[];
 	loading?: boolean;
+	currentUserId?: string;
 }
 
 const CHART_STYLES = [
@@ -27,89 +28,99 @@ const CHART_STYLES = [
 	{ color: "#ef4444", fill: "rgba(239, 68, 68, 0.15)" },
 ];
 
-const MOBILE_MONTHS = 6;
-const WEB_WIDE_MONTHS = 6;
-const WEB_MEDIUM_MONTHS = 5;
-const WEB_COMPACT_MONTHS = 5;
-
-export function GoalPointsChart({ data, loading }: GoalPointsChartProps) {
+export function GoalPointsChart({
+	data,
+	loading,
+	currentUserId,
+}: GoalPointsChartProps) {
 	const colors = useThemeColors();
 	const [cardWidth, setCardWidth] = useState(0);
 	const { width } = useWindowDimensions();
 	const containerWidth = cardWidth || width;
-	const visibleMonthCount =
-		Platform.OS !== "web"
-			? MOBILE_MONTHS
-			: containerWidth >= 520
-				? WEB_WIDE_MONTHS
-				: containerWidth >= 420
-					? WEB_MEDIUM_MONTHS
-					: WEB_COMPACT_MONTHS;
 
 	const { chartData, legend, maxValue } = useMemo(() => {
 		if (data.length === 0) return { chartData: [], legend: [], maxValue: 10 };
 
-		const allMonths = Array.from(new Set(data.map((d) => d.month))).sort();
-		const months = allMonths.slice(-visibleMonthCount);
+		const days = Array.from(new Set(data.map((item) => item.day_date)))
+			.sort()
+			.slice(-28);
 
-		const userGroups = data.reduce(
-			(acc, item) => {
-				if (!acc[item.user_id]) {
-					acc[item.user_id] = {
-						user_id: item.user_id,
-						username: item.username,
-						nickname: item.nickname,
-						avatar_url: item.avatar_url,
-						pointsByMonth: {},
+		const users = new Map<
+			string,
+			{
+				user_id: string;
+				name: string;
+				pointsByDay: Record<string, number>;
+			}
+		>();
+
+		for (const item of data) {
+			if (!users.has(item.user_id)) {
+				users.set(item.user_id, {
+					user_id: item.user_id,
+					name: item.nickname || item.username,
+					pointsByDay: {},
+				});
+			}
+
+			const user = users.get(item.user_id);
+			if (user) {
+				user.pointsByDay[item.day_date] = item.daily_points;
+			}
+		}
+
+		const allLines = Array.from(users.values())
+			.map((user) => {
+				let total = 0;
+				const line = days.map((day, index) => {
+					total += user.pointsByDay[day] || 0;
+					const daysAgo = String(days.length - index);
+					const showLabel = index % 4 === 0 || index === days.length - 1;
+
+					return {
+						value: total,
+						label: showLabel ? daysAgo : "",
 					};
-				}
-				acc[item.user_id].pointsByMonth[item.month] = item.points;
-				return acc;
-			},
-			{} as Record<
-				string,
-				{
-					user_id: string;
-					username: string;
-					nickname: string | null;
-					avatar_url: string | null;
-					pointsByMonth: Record<string, number>;
-				}
-			>,
-		);
+				});
 
-		const chartLines = Object.values(userGroups).map((user, index) => {
-			let cumulative = allMonths
-				.filter((month) => !months.includes(month))
-				.reduce((sum, month) => sum + (user.pointsByMonth[month] || 0), 0);
+				return {
+					user_id: user.user_id,
+					name: user.name,
+					total,
+					data: line,
+				};
+			})
+			.sort((a, b) => b.total - a.total);
+
+		const top3 = allLines.slice(0, 3);
+		const currentUserLine = allLines.find((l) => l.user_id === currentUserId);
+		const isCurrentUserInTop3 = top3.some((l) => l.user_id === currentUserId);
+
+		const linesToDisplay = [...top3];
+		if (currentUserLine && !isCurrentUserInTop3) {
+			linesToDisplay.push(currentUserLine);
+		}
+
+		const chartLines = linesToDisplay.map((line, index) => {
 			const style = CHART_STYLES[index % CHART_STYLES.length];
 
-			const lineData = months.map((month) => {
-				cumulative += user.pointsByMonth[month] || 0;
-				return {
-					value: cumulative,
-					label: formatMonthLabel(month),
-				};
-			});
-
 			return {
-				data: lineData,
+				data: line.data,
 				color: style.color,
 				fillColor: style.fill,
-				user,
-				index,
+				name: line.name,
+				userId: line.user_id,
 			};
 		});
 
 		const legendItems = chartLines.map((line) => ({
-			name: line.user.nickname || line.user.username,
+			name: line.name,
 			color: line.color,
-			userId: line.user.user_id,
-			index: line.index,
+			userId: line.userId,
 		}));
 
 		const allValues = chartLines.flatMap((line) =>
-			line.data.map((d) => d.value),
+			line.data.map((point: { value: number }) => point.value),
 		);
 		const calculatedMax = Math.max(...allValues, 10);
 		const roundedMax = Math.ceil(calculatedMax / 5) * 5;
@@ -119,7 +130,7 @@ export function GoalPointsChart({ data, loading }: GoalPointsChartProps) {
 			legend: legendItems,
 			maxValue: roundedMax || 10,
 		};
-	}, [data, visibleMonthCount]);
+	}, [data, currentUserId]);
 
 	const handleCardLayout = ({ nativeEvent }: LayoutChangeEvent) => {
 		const nextWidth = Math.round(nativeEvent.layout.width);
@@ -149,18 +160,16 @@ export function GoalPointsChart({ data, loading }: GoalPointsChartProps) {
 	}
 
 	const cardPadding = Platform.OS === "web" ? 20 : 24;
-	const yAxisLabelWidth = 35;
+	const yAxisLabelWidth = 28;
 	const isReady = Platform.OS !== "web" || cardWidth > 0;
 	const chartWidth = Math.max(
 		containerWidth - cardPadding * 2 - yAxisLabelWidth,
 		200,
 	);
 	const pointCount = chartData[0]?.data.length || 0;
-	const edgeSpacing = Platform.OS === "web" ? 14 : 10;
+	const edgeSpacing = 0;
 	const spacing =
-		pointCount > 1
-			? Math.max((chartWidth - edgeSpacing * 2) / (pointCount - 1), 40)
-			: 0;
+		pointCount > 1 ? (chartWidth - edgeSpacing * 2) / (pointCount - 1) : 0;
 
 	return (
 		<View
@@ -170,12 +179,17 @@ export function GoalPointsChart({ data, loading }: GoalPointsChartProps) {
 			}}
 			onLayout={handleCardLayout}
 		>
-			<Text className="text-xl font-bold text-text-strong mb-2">
-				Points Progress
-			</Text>
+			<View className="flex-row items-center justify-between mb-2">
+				<Text className="text-xl font-bold text-text-strong">
+					Points Progress
+				</Text>
+				<Text className="text-sm font-medium text-text-light">
+					Last 28 Days
+				</Text>
+			</View>
 
 			{isReady && (
-				<View className="relative">
+				<View className="relative pt-2">
 					<LineChart
 						data={chartData[0]?.data || []}
 						data2={chartData[1]?.data}
@@ -208,7 +222,6 @@ export function GoalPointsChart({ data, loading }: GoalPointsChartProps) {
 						endOpacity4={0.0}
 						endOpacity5={0.0}
 						curved
-						isAnimated={Platform.OS !== "web"}
 						curveType={1}
 						thickness={3}
 						thickness2={3}
@@ -216,6 +229,7 @@ export function GoalPointsChart({ data, loading }: GoalPointsChartProps) {
 						thickness4={3}
 						thickness5={3}
 						hideDataPoints
+						dataPointsRadius={2}
 						disableScroll
 						spacing={spacing}
 						initialSpacing={edgeSpacing}
@@ -225,6 +239,8 @@ export function GoalPointsChart({ data, loading }: GoalPointsChartProps) {
 						rulesColor={colors.border}
 						xAxisColor={colors.border}
 						yAxisColor={colors.border}
+						xAxisIndicesHeight={0}
+						xAxisIndicesWidth={0}
 						yAxisTextStyle={{
 							color: colors.textLight,
 							fontSize: 11,
@@ -245,8 +261,6 @@ export function GoalPointsChart({ data, loading }: GoalPointsChartProps) {
 						xAxisLabelsAtBottom
 						labelsExtraHeight={24}
 						xAxisTextNumberOfLines={1}
-						animateOnDataChange
-						animationDuration={800}
 						yAxisLabelPrefix=""
 						showVerticalLines={false}
 					/>
@@ -273,9 +287,4 @@ export function GoalPointsChart({ data, loading }: GoalPointsChartProps) {
 			)}
 		</View>
 	);
-}
-
-function formatMonthLabel(monthStr: string): string {
-	const date = new Date(`${monthStr}-01`);
-	return date.toLocaleDateString("en-US", { month: "short" });
 }

@@ -1,17 +1,17 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
+import { goalKeys } from "@/hooks/goal/useGoalQueries";
 import type { GoalWithParticipant } from "@/schemas/goal.schema";
 import {
 	fetchGoal,
 	fetchGoalCompletions,
 	fetchGoalLeaderboard,
 	fetchGoalMonthlyPoints,
-	fetchGoalMonthlyPointsForAll,
+	fetchGoalRollingDailyPoints,
 	fetchGoalStreak,
 	fetchRecentAttachments,
 	fetchTodayCompletion,
 } from "@/services/goal.service";
-import { goalKeys } from "@/hooks/goal/useGoalQueries";
 
 export function usePrefetchGoalDetails(
 	goals: GoalWithParticipant[] | undefined,
@@ -48,8 +48,8 @@ export function usePrefetchGoalDetails(
 				queryFn: () => fetchGoalLeaderboard(goal.id),
 			});
 			queryClient.prefetchQuery({
-				queryKey: goalKeys.monthlyPointsAll(goal.id),
-				queryFn: () => fetchGoalMonthlyPointsForAll(goal.id),
+				queryKey: goalKeys.rollingDailyPoints(goal.id),
+				queryFn: () => fetchGoalRollingDailyPoints(goal.id),
 			});
 			queryClient.prefetchQuery({
 				queryKey: goalKeys.attachments(goal.id),

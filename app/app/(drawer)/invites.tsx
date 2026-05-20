@@ -1,26 +1,21 @@
+import { useQueryClient } from "@tanstack/react-query";
+import { router } from "expo-router";
+import { useCallback, useState } from "react";
+import { ActivityIndicator, RefreshControl, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { InviteCard } from "@/components/goal/InviteCard";
 import { ModalScreen } from "@/components/layout/ModalScreen";
 import { useThemeColors } from "@/hooks/common/useThemeColors";
 import {
-    useAcceptInvite,
-    useDeclineInvite,
+	useAcceptInvite,
+	useDeclineInvite,
 } from "@/hooks/goal/useGoalMutations";
 import { goalKeys, useInvites } from "@/hooks/goal/useGoalQueries";
 import { useAuthStore } from "@/store/auth.store";
 import { getErrorMessage, showAlert } from "@/utils/toast.utils";
-import { useQueryClient } from "@tanstack/react-query";
-import { router } from "expo-router";
-import { useCallback, useState } from "react";
-import {
-    ActivityIndicator,
-    RefreshControl,
-    Text,
-    View
-} from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function InvitesScreen() {
-	const insets = useSafeAreaInsets();
+	const _insets = useSafeAreaInsets();
 	const colors = useThemeColors();
 	const { user } = useAuthStore();
 	const userId = user?.id;
