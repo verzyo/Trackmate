@@ -148,7 +148,7 @@ export default function LandingScreen() {
 							variant="secondary"
 							onPress={() => {
 								window.open(
-									"https://expo.dev/artifacts/eas/iHKvgauXFrbE1ZSmgH2QcW.apk",
+									"https://expo.dev/artifacts/eas/7z6K1rgezzZZADdBdQNe2X.apk",
 									"_blank",
 								);
 							}}
